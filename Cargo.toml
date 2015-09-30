@@ -5,3 +5,4 @@ authors = ["David Mally <djmally@gmail.com>"]
 
 [dependencies]
 num = "*"
+uuid = "*"
