@@ -2,6 +2,7 @@ mod js_obj;
 mod js_type;
 
 use std::string::String;
+use std::vec::Vec;
 
 pub struct JsUndef;
 pub struct JsNull;
@@ -22,3 +23,4 @@ impl JsStr {
     }
 }
 
+type JsArr<JsT> = Vec<Box<JsT>>;
