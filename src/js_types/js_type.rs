@@ -3,13 +3,8 @@ use std::hash::{Hash, Hasher};
 use uuid::Uuid;
 
 pub struct JsType {
-    uid: u64,
-    t: Box<JsT>,
-}
-
-pub struct JsType {
     uid: Uuid,
-    thing: Box<JsT>,
+    t: Box<JsT>,
 }
 
 impl JsType {
