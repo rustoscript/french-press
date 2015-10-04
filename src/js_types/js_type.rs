@@ -1,8 +1,14 @@
 use std::cmp::Ordering;
+use uuid::Uuid;
 
 pub struct JsType {
     uid: u64,
-    thing: Box<JsThing>,
+    thing: Box<JsT>,
+}
+
+impl JsType {
+    fn new(thing: Box<JsT>) -> JsType {
+    }
 }
 
 impl PartialEq for JsType {
@@ -29,4 +35,4 @@ impl Ord for JsType {
     }
 }
 
-pub trait JsThing {}
+pub trait JsT {}
