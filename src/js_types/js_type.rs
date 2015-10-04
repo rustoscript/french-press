@@ -1,13 +1,23 @@
 use std::cmp::Ordering;
+use std::hash::{Hash, Hasher};
 use uuid::Uuid;
 
 pub struct JsType {
     uid: u64,
+    t: Box<JsT>,
+}
+
+pub struct JsType {
+    uid: Uuid,
     thing: Box<JsT>,
 }
 
 impl JsType {
-    fn new(thing: Box<JsT>) -> JsType {
+    fn new(t: Box<JsT>) -> JsType {
+        JsType {
+            uid: Uuid::new_v4(),
+            t: t,
+        }
     }
 }
 
@@ -23,15 +33,15 @@ impl PartialEq for JsType {
 
 impl Eq for JsType{}
 
-impl PartialOrd for JsType {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.uid.cmp(&other.uid))
+impl Hash for JsType {
+    fn hash<H>(&self, state: &mut H) where H: Hasher {
+        self.uid.hash(state);
     }
-}
 
-impl Ord for JsType {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.uid.cmp(&other.uid)
+    fn hash_slice<H>(data: &[Self], state: &mut H) where H: Hasher {
+        for ref d in data {
+            d.uid.hash(state);
+        }
     }
 }
 
