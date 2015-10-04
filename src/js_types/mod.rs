@@ -4,12 +4,20 @@ mod js_type;
 use std::string::String;
 use std::vec::Vec;
 
+// `undefined`
 pub struct JsUndef;
+// `null`
 pub struct JsNull;
+// `bool`
 pub struct JsBool(bool);
+// `number`
 pub struct JsNum(f64);
+// `symbol`
 pub struct JsSym(String);
+// `array`
+pub type JsArr<JsT> = Vec<Box<JsT>>;
 
+// `string`
 pub struct JsStr {
     text: String,
 }
@@ -23,4 +31,3 @@ impl JsStr {
     }
 }
 
-type JsArr<JsT> = Vec<Box<JsT>>;
