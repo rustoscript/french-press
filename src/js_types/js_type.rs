@@ -1,18 +1,19 @@
+use std::string::String;
+use js_types::js_obj::JsObjStruct;
+use js_types::js_str::JsStrStruct;
 use std::cmp::Ordering;
 use std::hash::{Hash, Hasher};
 use uuid::Uuid;
 
-pub trait JsTrait {}
-
 pub struct JsT {
-    uid: Uuid,
-    t: Box<JsTrait>,
+    pub uuid: Uuid,
+    pub t: JsType,
 }
 
 impl JsT {
-    pub fn new(t: Box<JsTrait>) -> JsT {
+    pub fn new(t: JsType) -> JsT {
         JsT {
-            uid: Uuid::new_v4(),
+            uuid: Uuid::new_v4(),
             t: t,
         }
     }
@@ -20,7 +21,7 @@ impl JsT {
 
 impl PartialEq for JsT {
     fn eq(&self, other: &Self) -> bool {
-        self.uid == other.uid
+        self.uuid == other.uuid
     }
 
     fn ne(&self, other: &Self) -> bool {
@@ -32,13 +33,24 @@ impl Eq for JsT {}
 
 impl Hash for JsT {
     fn hash<H>(&self, state: &mut H) where H: Hasher {
-        self.uid.hash(state);
+        self.uuid.hash(state);
     }
 
     fn hash_slice<H>(data: &[Self], state: &mut H) where H: Hasher {
         for ref d in data {
-            d.uid.hash(state);
+            d.uuid.hash(state);
         }
     }
 }
 
+pub enum JsType {
+    JsUndef,
+    JsNull,
+    JsNum(f64),
+    JsSym(String),
+    JsStr(JsStrStruct),
+    JsObj(JsObjStruct),
+}
+
+// `array`
+pub type JsArr = Vec<JsType>;
