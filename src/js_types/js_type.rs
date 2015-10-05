@@ -2,21 +2,23 @@ use std::cmp::Ordering;
 use std::hash::{Hash, Hasher};
 use uuid::Uuid;
 
-pub struct JsType {
+pub trait JsTrait {}
+
+pub struct JsT {
     uid: Uuid,
-    t: Box<JsT>,
+    t: Box<JsTrait>,
 }
 
-impl JsType {
-    fn new(t: Box<JsT>) -> JsType {
-        JsType {
+impl JsT {
+    pub fn new(t: Box<JsTrait>) -> JsT {
+        JsT {
             uid: Uuid::new_v4(),
             t: t,
         }
     }
 }
 
-impl PartialEq for JsType {
+impl PartialEq for JsT {
     fn eq(&self, other: &Self) -> bool {
         self.uid == other.uid
     }
@@ -26,9 +28,9 @@ impl PartialEq for JsType {
     }
 }
 
-impl Eq for JsType{}
+impl Eq for JsT {}
 
-impl Hash for JsType {
+impl Hash for JsT {
     fn hash<H>(&self, state: &mut H) where H: Hasher {
         self.uid.hash(state);
     }
@@ -40,4 +42,3 @@ impl Hash for JsType {
     }
 }
 
-pub trait JsT {}
