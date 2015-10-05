@@ -1,46 +1,51 @@
 use std::collections::hash_map::HashMap;
 use std::vec::Vec;
-use js_types::js_type::{JsTrait, JsT};
+use js_types::js_type::{JsType,JsT};
 
-
-pub struct JsObj {
-    proto: JsProto,
-    dict: HashMap<JsT, JsT>,
+pub struct JsObjStruct {
+    pub proto: JsProto,
+    pub dict: HashMap<JsT, JsT>,
 }
 
-impl JsTrait for JsObj {}
-
-impl JsObj {
-    pub fn new(proto: JsProto, kv_pairs: Vec<(JsT, JsT)>) -> JsObj {
+impl JsObjStruct {
+    pub fn new(proto: JsProto, kv_pairs: Vec<(JsT, JsT)>) -> JsObjStruct {
         let mut obj_map = HashMap::new();
         kv_pairs.into_iter().map(|(k,v)| obj_map.insert(k, v));
-        JsObj {
+        JsObjStruct {
             proto: None,
             dict: obj_map,
         }
     }
 }
 
-pub type JsProto = Option<Box<JsObj>>;
+pub type JsProto = Option<Box<JsObjStruct>>;
 
 #[cfg(test)]
 mod test {
-    use js_types::js_obj::JsObj;
-    use js_types::js_type::JsT;
-    use js_types::js_primitive::{JsNum, JsStr};
+    use js_types::js_obj::JsObjStruct;
+    use js_types::js_type::{JsType,JsT};
+    use js_types::js_str::JsStrStruct;
+
     #[test]
     fn test_js_obj() {
         let mut vec: Vec<(JsT, JsT)> = Vec::new();
         for i in 0..10 {
-            let k = JsT::new(Box::new(JsNum(i as f64)));
-            let v = JsT::new(Box::new(JsStr::new(&format!("test{}", i))));
+            let k = JsT::new(JsType::JsNum(i as f64));
+            let v = JsT::new(JsType::JsStr(JsStrStruct::new(
+                                            &format!("test{}", i))));
             vec.push((k,v));
         }
-        let o = JsObj::new(None, vec);
+        let o = JsObjStruct::new(None, vec);
         for (k, v) in o.dict {
-            assert!(k >= 0); // Problem: is this type erased at runtime?
-            assert!(k < 10);
-            assert!(v.starts_with("test"));
+            match k.t {
+                JsType::JsNum(ki) => { assert!(ki >= 0.0f64);
+                                       assert!(ki < 10.0f64) },
+                _ => panic!("Expected a JsNum!"),
+            };
+            match v.t {
+                JsType::JsStr(vs) => assert!(vs.text.starts_with("test")),
+                _ => panic!("Expected a JsStr!"),
+            };
         }
     }
 
