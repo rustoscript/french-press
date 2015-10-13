@@ -1,30 +1,47 @@
 use std::collections::hash_map::HashMap;
+use std::string::String;
 use std::vec::Vec;
 use js_types::js_type::{JsType,JsT};
 
 pub struct JsObjStruct {
     pub proto: JsProto,
+    pub name: String,
     pub dict: HashMap<JsT, JsT>,
 }
 
 impl JsObjStruct {
-    pub fn new(proto: JsProto, kv_pairs: Vec<(JsT, JsT)>) -> JsObjStruct {
-        let mut obj_map = HashMap::new();
-        kv_pairs.into_iter().map(|(k,v)| obj_map.insert(k, v));
+    pub fn new(proto: JsProto, name: &str, kv_pairs: Vec<(JsT, JsT)>) -> JsObjStruct {
+        let mut dict = HashMap::new();
+        kv_pairs.into_iter().map(|(k,v)| dict.insert(k, v));
         JsObjStruct {
             proto: None,
-            dict: obj_map,
+            name: String::from(name),
+            dict: dict,
         }
+    }
+
+    pub fn add_key(&mut self, k: JsT, v: JsT) {
+        self.dict.insert(k, v);
     }
 }
 
 pub type JsProto = Option<Box<JsObjStruct>>;
 
+// TODO nice JS object creation macro
+//macro_rules! js_obj {
+//    ( $kt:ty : $ke:expr => $vt:ty : $ve:expr ),* {
+//        {
+//
+//        }
+//    };
+//}
+
+
 #[cfg(test)]
-mod test {
-    use js_types::js_obj::JsObjStruct;
+mod tests {
+    use super::*;
     use js_types::js_type::{JsType,JsT};
-    use js_types::js_str::JsStrStruct;
+    use js_types::js_str::{JsStrStruct};
 
     #[test]
     fn test_js_obj() {
@@ -35,7 +52,7 @@ mod test {
                                             &format!("test{}", i))));
             vec.push((k,v));
         }
-        let o = JsObjStruct::new(None, vec);
+        let o = JsObjStruct::new(None, "test", vec);
         for (k, v) in o.dict {
             match k.t {
                 JsType::JsNum(ki) => { assert!(ki >= 0.0f64);
@@ -47,6 +64,7 @@ mod test {
                 _ => panic!("Expected a JsStr!"),
             };
         }
+        assert_eq!(&o.name, "test");
     }
 
 }
