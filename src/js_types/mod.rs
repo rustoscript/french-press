@@ -1,3 +1,3 @@
-mod js_obj;
-mod js_type;
-mod js_str;
+pub mod js_obj;
+pub mod js_type;
+pub mod js_str;
