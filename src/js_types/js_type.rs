@@ -6,6 +6,7 @@ use std::hash::{Hash, Hasher};
 use uuid::Uuid;
 
 pub struct JsT {
+    pub binding: Option<String>,
     pub uuid: Uuid,
     pub t: JsType,
 }
@@ -13,6 +14,15 @@ pub struct JsT {
 impl JsT {
     pub fn new(t: JsType) -> JsT {
         JsT {
+            binding: None,
+            uuid: Uuid::new_v4(),
+            t: t,
+        }
+    }
+
+    pub fn bind(binding: &str, t: JsType) -> JsT {
+        JsT {
+            binding: Some(String::from(binding)),
             uuid: Uuid::new_v4(),
             t: t,
         }
