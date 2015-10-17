@@ -14,7 +14,7 @@ impl<'a> Compartment<'a> {
         }
     }
 
-    pub fn alloc_inside(&self, js_t: JsT) {
-        self.arena.alloc(js_t);
+    pub fn alloc_inside(&self, js_t: JsT) -> &mut JsT {
+        self.arena.alloc(js_t)
     }
 }
