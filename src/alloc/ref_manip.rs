@@ -1,6 +1,7 @@
 use js_types::js_type::{JsT, JsType};
 use std::vec::Vec;
 use std::collections::hash_set::HashSet;
+use std::collections::vec_deque::VecDeque;
 use uuid::Uuid;
 
 /// A graph node that stores a set of object UIDs, as well as a list of
@@ -20,7 +21,6 @@ struct LivenessNode {
 }
 
 struct LivenessGraph {
-    root: LivenessNode,
     nodes: Vec<LivenessNode>,
 }
 
@@ -40,11 +40,31 @@ impl LivenessNode {
         self.ins = self.uses.union(&self.outs.difference(&self.defs).cloned().collect())
                             .cloned().collect();
 
-        self.outs = self.succ.clone().into_iter().flat_map(|succ| succ.ins).collect();
+        self.outs = self.succ.clone().into_iter().flat_map(|s| s.ins).collect();
     }
 
     // TODO Given a list of AST instructions, parse out what UUIDs are used
 
+}
+
+impl LivenessGraph {
+    fn new() -> LivenessGraph {
+        LivenessGraph {
+            nodes: Vec::new(),
+        }
+    }
+
+    fn graph_flow(&mut self) {
+        let mut node_queue: VecDeque<&mut LivenessNode> = self.nodes.iter_mut().collect();
+        while let Some(n) = node_queue.pop_front() {
+            let old_ins = n.ins.clone();
+            let old_outs = n.outs.clone();
+            n.node_flow();
+            if old_outs != n.outs {
+                n.succ.iter_mut().map(|s| node_queue.push_back(s));
+            }
+        }
+    }
 }
 
 
