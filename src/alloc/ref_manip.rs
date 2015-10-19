@@ -24,6 +24,8 @@ struct LivenessGraph {
     nodes: Vec<LivenessNode>,
 }
 
+type Statement = i32; // TODO, placeholder
+
 impl LivenessNode {
     fn new() -> LivenessNode {
         LivenessNode {
@@ -44,6 +46,13 @@ impl LivenessNode {
     }
 
     // TODO Given a list of AST instructions, parse out what UUIDs are used
+    fn compute_uses(&mut self, statements: Vec<Statement>) {
+
+    }
+
+    fn compute_defs(&mut self, statements: Vec<Statement>) {
+
+    }
 
 }
 
