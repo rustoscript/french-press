@@ -1,7 +1,10 @@
 use std::cell::RefCell;
-use std::mem;
 use std::cmp;
+use std::mem;
+
+use alloc::ref_manip::UuidMap;
 use js_types::js_type::JsT;
+use uuid::Uuid;
 
 // Initial Arena size in bytes
 const INITIAL_SIZE: usize = 1024;
@@ -9,8 +12,8 @@ const INITIAL_SIZE: usize = 1024;
 const MIN_CAP: usize = 1;
 
 struct ChunkList<T> {
-    curr: Vec<T>,
-    rest: Vec<Vec<T>>,
+    curr: Vec<RefCell<T>>,
+    rest: Vec<Vec<RefCell<T>>>,
 }
 
 impl<T> ChunkList<T> {
@@ -43,21 +46,15 @@ impl<T> GranularArena<T> {
         }
     }
 
-    fn alloc(&self, val: T) -> &mut T {
+    fn alloc(&self, val: T) -> &RefCell<T> {
         let mut chunks = self.chunks.borrow_mut();
         let next_item_idx = chunks.curr.len();
-        chunks.curr.push(val);
+        chunks.curr.push(RefCell::new(val));
 
         let new_item_ref = {
-            let new_item_ref = &mut chunks.curr[next_item_idx];
+            let new_item_ref = &chunks.curr[next_item_idx];
 
-            // According to what I've read online, this extends the lifetime of
-            // the returned ref from that of `chunks` as borrowed on line 47 to
-            // that of `self`. This is allowable because we never grow the inner
-            // `Vec`s beyond their initial cap, and the returned reference is
-            // unique since it's &mut, which means the arene never gives away
-            // refs to existing items.
-            unsafe { mem::transmute::<&mut T, &mut T>(new_item_ref) }
+            unsafe { mem::transmute::<&RefCell<T>, &RefCell<T>>(new_item_ref) }
         };
 
         if chunks.curr.len() == chunks.curr.capacity() {
@@ -73,20 +70,27 @@ impl<T> GranularArena<T> {
     // it to force such a thing?
 }
 
-pub struct Compartment {
+pub struct Scope<'u> {
     source: String,
+    parent: Option<Box<Scope<'u>>>,
+    children: Vec<Box<Scope<'u>>>,
     arena: GranularArena<JsT>,
+    uuid_map: UuidMap<'u>,
 }
 
-impl Compartment {
-    pub fn new(source: &str) -> Compartment {
-        Compartment {
+impl<'u> Scope<'u> {
+    pub fn new(source: &str) -> Scope<'u> {
+        Scope {
             source: String::from(source),
+            parent: None,
+            children: Vec::new(),
             arena: GranularArena::new(),
+            uuid_map: UuidMap::new(),
         }
     }
 
-    pub fn alloc_inside(&self, js_t: JsT) -> &mut JsT {
-        self.arena.alloc(js_t)
+    pub fn alloc_inside(&'u mut self, js_t: JsT) {
+        let jst_ref = self.arena.alloc(js_t);
+        self.uuid_map.insert_ref(jst_ref);
     }
 }
