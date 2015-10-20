@@ -3,6 +3,7 @@ use std::string::String;
 use std::vec::Vec;
 use js_types::js_type::{JsType,JsT};
 
+#[derive(Clone)]
 pub struct JsObjStruct {
     pub proto: JsProto,
     pub name: String,
