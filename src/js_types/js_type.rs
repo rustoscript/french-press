@@ -5,8 +5,17 @@ use std::cmp::Ordering;
 use std::hash::{Hash, Hasher};
 use uuid::Uuid;
 
+#[derive(Clone)]
+pub enum Marking {
+    White,
+    Grey,
+    Black,
+}
+
+#[derive(Clone)]
 pub struct JsT {
     pub binding: Option<String>,
+    pub gc_flag: Marking,
     pub uuid: Uuid,
     pub t: JsType,
 }
@@ -15,6 +24,7 @@ impl JsT {
     pub fn new(t: JsType) -> JsT {
         JsT {
             binding: None,
+            gc_flag: Marking::Grey,
             uuid: Uuid::new_v4(),
             t: t,
         }
@@ -23,6 +33,7 @@ impl JsT {
     pub fn bind(binding: &str, t: JsType) -> JsT {
         JsT {
             binding: Some(String::from(binding)),
+            gc_flag: Marking::Grey,
             uuid: Uuid::new_v4(),
             t: t,
         }
@@ -53,6 +64,7 @@ impl Hash for JsT {
     }
 }
 
+#[derive(Clone)]
 pub enum JsType {
     JsUndef,
     JsNull,
