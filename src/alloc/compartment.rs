@@ -1,9 +1,10 @@
 use std::cell::RefCell;
+use std::collections::hash_map::HashMap;
 use std::cmp;
 use std::mem;
 
 use alloc::ref_manip::UuidMap;
-use js_types::js_type::JsT;
+use js_types::js_type::{JsT, Marking};
 use uuid::Uuid;
 
 // Initial Arena size in bytes
@@ -11,94 +12,46 @@ const INITIAL_SIZE: usize = 1024;
 // Minimum Arena capacity is at least 1 byte
 const MIN_CAP: usize = 1;
 
-struct ChunkList<T> {
-    curr: Vec<RefCell<T>>,
-    rest: Vec<Vec<RefCell<T>>>,
-}
-
-impl<T> ChunkList<T> {
-    fn grow(&mut self) {
-        let new_cap = self.curr.capacity()
-                               .checked_mul(2)
-                               .expect("ChunkList: In method `grow`, `checked_mul` returned None. Aborting!");
-        let chunk = mem::replace(&mut self.curr, Vec::with_capacity(new_cap));
-        self.rest.push(chunk);
-    }
-}
-
-struct GranularArena<T> {
-    chunks: RefCell<ChunkList<T>>,
-}
-
-impl<T> GranularArena<T> {
-    fn new() -> GranularArena<T> {
-        let sz = cmp::max(1, mem::size_of::<T>());
-        GranularArena::with_capacity(INITIAL_SIZE / sz)
-    }
-
-    fn with_capacity(cap: usize) -> GranularArena<T> {
-        let cap = cmp::max(MIN_CAP, cap);
-        GranularArena {
-            chunks: RefCell::new(ChunkList {
-                curr: Vec::with_capacity(cap),
-                rest: Vec::new(),
-            }),
-        }
-    }
-
-    fn alloc(&self, val: T) -> &RefCell<T> {
-        let mut chunks = self.chunks.borrow_mut();
-        let next_item_idx = chunks.curr.len();
-        chunks.curr.push(RefCell::new(val));
-
-        let new_item_ref = {
-            let new_item_ref = &chunks.curr[next_item_idx];
-
-            unsafe { mem::transmute::<&RefCell<T>, &RefCell<T>>(new_item_ref) }
-        };
-
-        if chunks.curr.len() == chunks.curr.capacity() {
-            chunks.grow();
-        }
-
-        new_item_ref
-    }
-
-    // TODO Figure out what granular deallocation will mean
-    // TODO Is there a better way to allocate? Should I group items that are
-    // temporally-local together? They sort of will be anyway, but is it worth
-    // it to force such a thing?
-}
-
-pub struct Scope<'r> {
+pub struct Scope {
     pub source: String,
-    parent: Option<Box<Scope<'r>>>,
-    children: Vec<Box<Scope<'r>>>,
-    arena: GranularArena<JsT>,
-    uuid_map: UuidMap<'r>,
+    parent: Option<Box<Scope>>,
+    children: Vec<Box<Scope>>,
+    arena: HashMap<Uuid, RefCell<JsT>>,
 }
 
-impl<'r> Scope<'r> {
+impl Scope {
     pub fn new(source: &str) -> Scope {
         Scope {
             source: String::from(source),
             parent: None,
             children: Vec::new(),
-            arena: GranularArena::new(),
-            uuid_map: UuidMap::new(),
+            arena: HashMap::new(),
         }
     }
 
-    pub fn alloc_inside(&mut self, jst: JsT) -> Uuid {
+    pub fn alloc(&mut self, jst: JsT) -> Uuid {
         let uuid = jst.uuid;
-        let jst_ref: &RefCell<JsT> = self.arena.alloc(jst);
-        self.uuid_map.insert_by_refcell(jst_ref);
+        self.arena.insert(uuid, RefCell::new(jst));
         uuid
     }
 
-    pub fn get_val_copy(&self, uuid: Uuid) -> Option<JsT> {
-        self.uuid_map.get_by_uuid(uuid)
+    pub fn dealloc(&mut self, uuid: &Uuid) -> bool {
+        if let Some(_) = self.arena.remove(uuid) { true } else { false }
     }
+
+    pub fn get_jst_copy(&self, uuid: &Uuid) -> Option<JsT> {
+        if let Some(jst) = self.arena.get(uuid) {
+            Some(jst.clone().into_inner())
+        } else { None }
+    }
+
+    pub fn mark_uuid(&mut self, uuid: &Uuid, marking: Marking) -> bool {
+        if let Some(jst_refcell) = self.arena.get_mut(uuid) {
+            jst_refcell.borrow_mut().gc_flag = marking;
+            true
+        } else { false }
+    }
+
 }
 
 #[cfg(test)]
@@ -112,7 +65,11 @@ mod tests {
         let test_jst1 = JsT::new(JsType::JsNum(1.0));
 
         let mut test_scope = Scope::new("test");
-        let uuid0 = test_scope.alloc_inside(test_jst0);
-        test_scope.uuid_map.mark_uuid(uuid0, Marking::Black);
+        let uuid0 = test_scope.alloc(test_jst0);
+        test_scope.mark_uuid(&uuid0, Marking::Black);
+        let uuid1 = test_scope.alloc(test_jst1);
+        test_scope.mark_uuid(&uuid1, Marking::White);
+        assert_eq!(test_scope.get_jst_copy(&uuid0).unwrap().gc_flag, Marking::Black);
+        assert_eq!(test_scope.get_jst_copy(&uuid1).unwrap().gc_flag, Marking::White);
     }
 }

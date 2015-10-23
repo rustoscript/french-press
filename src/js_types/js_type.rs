@@ -5,7 +5,7 @@ use std::cmp::Ordering;
 use std::hash::{Hash, Hasher};
 use uuid::Uuid;
 
-#[derive(Clone)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Marking {
     White,
     Grey,
