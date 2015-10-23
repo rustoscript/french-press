@@ -70,16 +70,16 @@ impl<T> GranularArena<T> {
     // it to force such a thing?
 }
 
-pub struct Scope<'u> {
-    source: String,
-    parent: Option<Box<Scope<'u>>>,
-    children: Vec<Box<Scope<'u>>>,
+pub struct Scope<'r> {
+    pub source: String,
+    parent: Option<Box<Scope<'r>>>,
+    children: Vec<Box<Scope<'r>>>,
     arena: GranularArena<JsT>,
-    uuid_map: UuidMap<'u>,
+    uuid_map: UuidMap<'r>,
 }
 
-impl<'u> Scope<'u> {
-    pub fn new(source: &str) -> Scope<'u> {
+impl<'r> Scope<'r> {
+    pub fn new(source: &str) -> Scope {
         Scope {
             source: String::from(source),
             parent: None,
@@ -89,8 +89,30 @@ impl<'u> Scope<'u> {
         }
     }
 
-    pub fn alloc_inside(&'u mut self, js_t: JsT) {
-        let jst_ref = self.arena.alloc(js_t);
-        self.uuid_map.insert_ref(jst_ref);
+    pub fn alloc_inside(&mut self, jst: JsT) -> Uuid {
+        let uuid = jst.uuid;
+        let jst_ref: &RefCell<JsT> = self.arena.alloc(jst);
+        self.uuid_map.insert_by_refcell(jst_ref);
+        uuid
+    }
+
+    pub fn get_val_copy(&self, uuid: Uuid) -> Option<JsT> {
+        self.uuid_map.get_by_uuid(uuid)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use js_types::js_type::{JsT, JsType, Marking};
+
+    #[test]
+    fn test_new_scope() {
+        let test_jst0 = JsT::new(JsType::JsNum(0.0));
+        let test_jst1 = JsT::new(JsType::JsNum(1.0));
+
+        let mut test_scope = Scope::new("test");
+        let uuid0 = test_scope.alloc_inside(test_jst0);
+        test_scope.uuid_map.mark_uuid(uuid0, Marking::Black);
     }
 }
