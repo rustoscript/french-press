@@ -21,24 +21,34 @@ impl<'r> UuidMap<'r> {
         }
     }
 
-    /*pub fn from_jsts(jsts: Vec<RefCell<JsT>>) -> UuidMap<'r> {
-        let mut tmp_map = HashMap::new();
-        jsts.iter().map(|j| tmp_map.insert(j.borrow.uuid, j));
-        UuidMap {
-            inner: tmp_map,
-        }
-    }*/
-
-    pub fn insert_ref(&mut self, jst: &'r RefCell<JsT>) {
+    pub fn insert_by_refcell(&mut self, jst: &'r RefCell<JsT>) {
         self.inner.insert(jst.borrow().uuid, jst);
     }
 
-    pub fn drop_uuid(&mut self, uuid: Uuid) {
+    pub fn insert_by_val(&mut self, jst: JsT) -> bool {
+        if let Some(ref refcell) = self.inner.get(&jst.uuid) {
+            let mut inner = refcell.borrow_mut();
+            *inner = jst;
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn remove_by_uuid(&mut self, uuid: Uuid) {
         self.inner.remove(&uuid);
     }
 
-    pub fn drop_ref(&mut self, jst: RefCell<JsT>) {
+    pub fn remove_by_ref(&mut self, jst: &'r RefCell<JsT>) {
         self.inner.remove(&jst.borrow().uuid);
+    }
+
+    pub fn get_by_uuid(&self, uuid: Uuid) -> Option<JsT> {
+        if let Some(ref refcell) = self.inner.get(&uuid) {
+            Some(refcell.borrow().clone())
+        } else {
+            None
+        }
     }
 
     pub fn mark_uuid(&mut self, uuid: Uuid, marking: Marking) {
