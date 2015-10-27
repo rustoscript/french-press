@@ -3,56 +3,8 @@ use std::collections::hash_map::HashMap;
 use std::collections::hash_set::HashSet;
 use std::collections::vec_deque::VecDeque;
 use std::vec::Vec;
-use js_types::js_type::{JsT, JsType};
+use js_types::js_type::{JsVar, JsType};
 use uuid::Uuid;
-
-
-/// A map from uuids to references to objects. The interface to the garbage
-/// collector, this map gets updated whenever a GC cycle is performed. References
-/// that are no longer live may be dropped from the map.
-pub struct UuidMap<'r> {
-    inner: HashMap<Uuid, &'r RefCell<JsT>>,
-}
-
-impl<'r> UuidMap<'r> {
-    pub fn new() -> UuidMap<'r> {
-        UuidMap {
-            inner: HashMap::new(),
-        }
-    }
-
-    pub fn insert_by_refcell(&mut self, jst: &'r RefCell<JsT>) {
-        self.inner.insert(jst.borrow().uuid, jst);
-    }
-
-    pub fn insert_by_val(&mut self, jst: JsT) -> bool {
-        if let Some(ref refcell) = self.inner.get(&jst.uuid) {
-            let mut inner = refcell.borrow_mut();
-            *inner = jst;
-            true
-        } else {
-            false
-        }
-    }
-
-    pub fn remove_by_uuid(&mut self, uuid: Uuid) {
-        self.inner.remove(&uuid);
-    }
-
-    pub fn remove_by_ref(&mut self, jst: &'r RefCell<JsT>) {
-        self.inner.remove(&jst.borrow().uuid);
-    }
-
-    pub fn get_by_uuid(&self, uuid: Uuid) -> Option<JsT> {
-        if let Some(ref refcell) = self.inner.get(&uuid) {
-            Some(refcell.borrow().clone())
-        } else {
-            None
-        }
-    }
-}
-
-
 
 /// A graph node that stores sets of object uuids, as well as a list of
 /// pointers to nodes it can flow to.
@@ -128,7 +80,7 @@ impl LivenessGraph {
 
 
 pub struct StackFrame<'m> {
-    members: Vec<&'m JsT>,
+    members: Vec<&'m JsVar>,
 }
 
 impl<'m> StackFrame<'m> {
@@ -136,7 +88,7 @@ impl<'m> StackFrame<'m> {
         StackFrame { members: Vec::new(), }
     }
 
-    pub fn alloc_ref(&mut self, refce: &'m mut JsT)  {
+    pub fn alloc_ref(&mut self, refce: &'m mut JsVar)  {
         self.members.push(refce);
     }
 }
