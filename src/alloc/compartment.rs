@@ -4,7 +4,6 @@ use std::collections::hash_set::HashSet;
 use std::cmp;
 use std::mem;
 
-use alloc::ref_manip::UuidMap;
 use js_types::js_type::{JsVar, JsType};
 use uuid::Uuid;
 
@@ -14,34 +13,36 @@ const INITIAL_SIZE: usize = 1024;
 const MIN_CAP: usize = 1;
 
 pub struct Scope {
-    pub source: String,
     parent: Option<Box<Scope>>,
     children: Vec<Box<Scope>>,
-    black_set: HashMap<Uuid, RefCell<JsT>>,
-    grey_set: HashMap<Uuid, RefCell<JsT>>,
-    white_set: HashMap<Uuid, RefCell<JsT>>,
+    black_set: HashMap<Uuid, RefCell<JsVar>>,
+    grey_set: HashMap<Uuid, RefCell<JsVar>>,
+    white_set: HashMap<Uuid, RefCell<JsVar>>,
+    get_roots: Box<Fn() -> HashSet<Uuid>>,
 }
 
 impl Scope {
-    pub fn new(source: &str) -> Scope {
+    pub fn new<F>(get_roots: F) -> Scope
+        where F: Fn() -> HashSet<Uuid> + 'static {
         Scope {
-            source: String::from(source),
             parent: None,
             children: Vec::new(),
             black_set: HashMap::new(),
             grey_set: HashMap::new(),
             white_set: HashMap::new(),
+            get_roots: Box::new(get_roots),
         }
     }
 
-    pub fn as_child(source: &str, parent: Box<Scope>) -> Scope {
+    pub fn as_child<F>(parent: Box<Scope>, get_roots: F) -> Scope
+        where F: Fn() -> HashSet<Uuid> + 'static {
         Scope {
-            source: String::from(source),
             parent: Some(parent),
             children: Vec::new(),
             black_set: HashMap::new(),
             grey_set: HashMap::new(),
             white_set: HashMap::new(),
+            get_roots: Box::new(get_roots),
         }
     }
 
