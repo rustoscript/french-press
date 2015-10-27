@@ -1,17 +1,17 @@
 use std::collections::hash_map::HashMap;
 use std::string::String;
 use std::vec::Vec;
-use js_types::js_type::{JsType,JsT};
+use js_types::js_type::{JsType,JsVar};
 
 #[derive(Clone)]
 pub struct JsObjStruct {
     pub proto: JsProto,
     pub name: String,
-    pub dict: HashMap<JsT, JsT>,
+    pub dict: HashMap<JsVar, JsVar>,
 }
 
 impl JsObjStruct {
-    pub fn new(proto: JsProto, name: &str, kv_pairs: Vec<(JsT, JsT)>) -> JsObjStruct {
+    pub fn new(proto: JsProto, name: &str, kv_pairs: Vec<(JsVar, JsVar)>) -> JsObjStruct {
         let mut dict = HashMap::new();
         kv_pairs.into_iter().map(|(k,v)| dict.insert(k, v));
         JsObjStruct {
@@ -21,7 +21,7 @@ impl JsObjStruct {
         }
     }
 
-    pub fn add_key(&mut self, k: JsT, v: JsT) {
+    pub fn add_key(&mut self, k: JsVar, v: JsVar) {
         self.dict.insert(k, v);
     }
 }
@@ -41,15 +41,15 @@ pub type JsProto = Option<Box<JsObjStruct>>;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use js_types::js_type::{JsType,JsT};
+    use js_types::js_type::{JsType,JsVar};
     use js_types::js_str::{JsStrStruct};
 
     #[test]
     fn test_js_obj() {
-        let mut vec: Vec<(JsT, JsT)> = Vec::new();
+        let mut vec: Vec<(JsVar, JsVar)> = Vec::new();
         for i in 0..10 {
-            let k = JsT::new(JsType::JsNum(i as f64));
-            let v = JsT::new(JsType::JsStr(JsStrStruct::new(
+            let k = JsVar::new(JsType::JsNum(i as f64));
+            let v = JsVar::new(JsType::JsStr(JsStrStruct::new(
                                             &format!("test{}", i))));
             vec.push((k,v));
         }

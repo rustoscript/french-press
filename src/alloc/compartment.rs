@@ -5,7 +5,7 @@ use std::cmp;
 use std::mem;
 
 use alloc::ref_manip::UuidMap;
-use js_types::js_type::{JsT, JsType};
+use js_types::js_type::{JsVar, JsType};
 use uuid::Uuid;
 
 // Initial Arena size in bytes
@@ -53,7 +53,7 @@ impl Scope {
         self.children.push(child);
     }
 
-    pub fn alloc(&mut self, jst: JsT) -> Uuid {
+    pub fn alloc(&mut self, jst: JsVar) -> Uuid {
         let uuid = jst.uuid;
         self.white_set.insert(uuid, RefCell::new(jst));
         uuid
@@ -63,7 +63,7 @@ impl Scope {
         if let Some(_) = self.white_set.remove(uuid) { true } else { false }
     }
 
-    pub fn get_jst_copy(&self, uuid: &Uuid) -> Option<JsT> {
+    pub fn get_jst_copy(&self, uuid: &Uuid) -> Option<JsVar> {
         if let Some(jst) = self.black_set.get(uuid) {
             Some(jst.clone().into_inner())
         } else if let Some(jst) = self.grey_set.get(uuid) {
@@ -71,6 +71,10 @@ impl Scope {
         } else if let Some(jst) = self.white_set.get(uuid) {
             Some(jst.clone().into_inner())
         } else { None }
+    }
+
+    pub fn update_var(&mut self, var: JsVar) -> bool {
+        unimplemented!()
     }
 
     /// TODO Compute the roots of the current scope-- any variable that is
@@ -105,7 +109,7 @@ impl Scope {
         // TODO mark object as black, mark all white objs it refs as grey
         for (_, v) in self.grey_set.drain() {
             match (*v.borrow()).t {
-                JsType::JsObj(ref obj) => unimplemented!(),
+                JsType::JsPtr(ref ptr) => unimplemented!(),
                 _ => ()
             }
         }
@@ -116,12 +120,12 @@ impl Scope {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use js_types::js_type::{JsT, JsType, Marking};
+    use js_types::js_type::{JsVar, JsType, Marking};
 
     #[test]
     fn test_new_scope() {
-        let test_jst0 = JsT::new(JsType::JsNum(0.0));
-        let test_jst1 = JsT::new(JsType::JsNum(1.0));
+        let test_jst0 = JsVar::new(JsType::JsNum(0.0));
+        let test_jst1 = JsVar::new(JsType::JsNum(1.0));
 
         let mut test_scope = Scope::new("test");
         let uuid0 = test_scope.alloc(test_jst0);
