@@ -3,7 +3,7 @@ use std::collections::hash_map::HashMap;
 use std::collections::hash_set::HashSet;
 use std::collections::vec_deque::VecDeque;
 use std::vec::Vec;
-use js_types::js_type::{JsT, JsType, Marking};
+use js_types::js_type::{JsT, JsType};
 use uuid::Uuid;
 
 
@@ -48,12 +48,6 @@ impl<'r> UuidMap<'r> {
             Some(refcell.borrow().clone())
         } else {
             None
-        }
-    }
-
-    pub fn mark_uuid(&mut self, uuid: Uuid, marking: Marking) {
-        if let Some(jst) = self.inner.get_mut(&uuid) {
-            jst.borrow_mut().gc_flag = marking;
         }
     }
 }
