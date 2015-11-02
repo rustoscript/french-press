@@ -54,9 +54,9 @@ impl Scope {
         self.children.push(child);
     }
 
-    pub fn alloc(&mut self, jst: JsVar) -> Uuid {
-        let uuid = jst.uuid;
-        self.white_set.insert(uuid, RefCell::new(jst));
+    pub fn alloc(&mut self, var: JsVar) -> Uuid {
+        let uuid = var.uuid;
+        self.white_set.insert(uuid, RefCell::new(var));
         uuid
     }
 
@@ -64,13 +64,13 @@ impl Scope {
         if let Some(_) = self.white_set.remove(uuid) { true } else { false }
     }
 
-    pub fn get_jst_copy(&self, uuid: &Uuid) -> Option<JsVar> {
-        if let Some(jst) = self.black_set.get(uuid) {
-            Some(jst.clone().into_inner())
-        } else if let Some(jst) = self.grey_set.get(uuid) {
-            Some(jst.clone().into_inner())
-        } else if let Some(jst) = self.white_set.get(uuid) {
-            Some(jst.clone().into_inner())
+    pub fn get_var_copy(&self, uuid: &Uuid) -> Option<JsVar> {
+        if let Some(var) = self.black_set.get(uuid) {
+            Some(var.clone().into_inner())
+        } else if let Some(var) = self.grey_set.get(uuid) {
+            Some(var.clone().into_inner())
+        } else if let Some(var) = self.white_set.get(uuid) {
+            Some(var.clone().into_inner())
         } else { None }
     }
 

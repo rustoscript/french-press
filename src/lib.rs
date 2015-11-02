@@ -23,7 +23,7 @@ pub fn alloc(scope: &mut Scope, var: JsVar) -> Uuid {
 }
 
 pub fn load(scope: &Scope, uuid: Uuid) -> Option<JsVar> {
-    scope.get_jst_copy(&uuid)
+    scope.get_var_copy(&uuid)
 }
 
 pub fn store(scope: &mut Scope, var: JsVar) -> bool {
