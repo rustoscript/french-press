@@ -29,7 +29,3 @@ pub fn load(scope: &Scope, uuid: Uuid) -> Option<JsVar> {
 pub fn store(scope: &mut Scope, var: JsVar) -> bool {
     scope.update_var(var)
 }
-
-#[test]
-fn it_works() {
-}
