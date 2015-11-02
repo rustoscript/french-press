@@ -1,6 +1,7 @@
 use std::cell::RefCell;
 use std::collections::hash_map::HashMap;
 use std::collections::hash_set::HashSet;
+use std::rc::Rc;
 use std::cmp;
 use std::mem;
 
@@ -13,7 +14,7 @@ const INITIAL_SIZE: usize = 1024;
 const MIN_CAP: usize = 1;
 
 pub struct Scope {
-    parent: Option<Box<Scope>>,
+    parent: Option<Rc<Scope>>,
     children: Vec<Box<Scope>>,
     black_set: HashMap<Uuid, RefCell<JsVar>>,
     grey_set: HashMap<Uuid, RefCell<JsVar>>,
@@ -34,7 +35,7 @@ impl Scope {
         }
     }
 
-    pub fn as_child<F>(parent: Box<Scope>, get_roots: F) -> Scope
+    pub fn as_child<F>(parent: Rc<Scope>, get_roots: F) -> Scope
         where F: Fn() -> HashSet<Uuid> + 'static {
         Scope {
             parent: Some(parent),
@@ -46,12 +47,12 @@ impl Scope {
         }
     }
 
-    pub fn set_parent(&mut self, parent: Box<Scope>) {
+    pub fn set_parent(&mut self, parent: Rc<Scope>) {
         self.parent = Some(parent);
     }
 
-    pub fn add_child(&mut self, child: Box<Scope>) {
-        self.children.push(child);
+    pub fn add_child(&mut self, child: Scope) {
+        self.children.push(Box::new(child));
     }
 
     pub fn alloc(&mut self, var: JsVar) -> Uuid {
@@ -65,13 +66,7 @@ impl Scope {
     }
 
     pub fn get_var_copy(&self, uuid: &Uuid) -> Option<JsVar> {
-        if let Some(var) = self.black_set.get(uuid) {
-            Some(var.clone().into_inner())
-        } else if let Some(var) = self.grey_set.get(uuid) {
-            Some(var.clone().into_inner())
-        } else if let Some(var) = self.white_set.get(uuid) {
-            Some(var.clone().into_inner())
-        } else { None }
+        self.find_id(uuid).map(|var| var.clone().into_inner())
     }
 
     pub fn update_var(&mut self, var: JsVar) -> bool {
@@ -126,6 +121,17 @@ impl Scope {
                 }
             }
         }
+    }
+
+    pub fn sweep_phase(&mut self) {
+        self.white_set.clear();
+        self.white_set.shrink_to_fit();
+    }
+
+    fn find_id(&self, uuid: &Uuid) -> Option<&RefCell<JsVar>> {
+        self.black_set.get(uuid).or_else(||
+            self.grey_set.get(uuid).or_else(||
+                self.white_set.get(uuid)))
     }
 
     fn grey_children(&mut self, child_ids: HashSet<Uuid>) {
