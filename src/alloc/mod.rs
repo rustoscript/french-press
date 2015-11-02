@@ -1,4 +1,4 @@
-pub mod compartment;
+pub mod scope;
 pub mod ref_manip;
 
 #[cfg(test)]

@@ -9,7 +9,7 @@ mod alloc;
 use std::collections::hash_set::HashSet;
 use uuid::Uuid;
 
-use alloc::compartment::Scope;
+use alloc::scope::Scope;
 use js_types::js_type::JsVar;
 
 // TODO Maybe make a scope manager?
