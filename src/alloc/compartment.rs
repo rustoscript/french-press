@@ -119,7 +119,7 @@ impl Scope {
             if let Some(var) = self.grey_set.remove(&uuid) {
                 let child_ids = self.get_var_children(&var);
                 self.black_set.insert(uuid, var);
-                for child_id in child_ids.into_iter() {
+                for child_id in child_ids {
                     if let Some(var) = self.white_set.remove(&child_id) {
                         self.grey_set.insert(child_id, var);
                     }
@@ -129,7 +129,7 @@ impl Scope {
     }
 
     fn grey_children(&mut self, child_ids: HashSet<Uuid>) {
-        for child_id in child_ids.into_iter() {
+        for child_id in child_ids {
             if let Some(var) = self.white_set.remove(&child_id) {
                 self.grey_set.insert(child_id, var);
             }
