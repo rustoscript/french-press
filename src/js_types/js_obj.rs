@@ -1,6 +1,8 @@
 use std::collections::hash_map::HashMap;
+use std::collections::hash_set::HashSet;
 use std::string::String;
 use std::vec::Vec;
+use uuid::Uuid;
 use js_types::js_type::{JsType,JsVar};
 
 #[derive(Clone)]
@@ -23,6 +25,17 @@ impl JsObjStruct {
 
     pub fn add_key(&mut self, k: JsVar, v: JsVar) {
         self.dict.insert(k, v);
+    }
+
+    pub fn get_children(&self) -> HashSet<Uuid> {
+        let mut child_ids = HashSet::new();
+        for (k,v) in self.dict.iter() {
+            match v.t {
+                JsType::JsPtr(ref p) => { child_ids.insert(k.uuid); },
+                _ => (),
+            }
+        }
+        child_ids
     }
 }
 
