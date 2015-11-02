@@ -156,19 +156,121 @@ impl Scope {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use js_types::js_type::{JsVar, JsType, Marking};
+    use std::collections::hash_set::HashSet;
+    use std::rc::Rc;
+    use js_types::js_type::{JsVar, JsType};
+    use uuid::Uuid;
+
+    fn dummy_get_roots() -> HashSet<Uuid> {
+        HashSet::new()
+    }
+
+    fn make_num(i: f64) -> JsVar {
+        JsVar::new(JsType::JsNum(i))
+    }
 
     #[test]
     fn test_new_scope() {
-        let test_jst0 = JsVar::new(JsType::JsNum(0.0));
-        let test_jst1 = JsVar::new(JsType::JsNum(1.0));
+        let mut test_scope = Scope::new(dummy_get_roots);
+        assert!(test_scope.parent.is_none());
+        assert!(test_scope.black_set.is_empty());
+        assert!(test_scope.grey_set.is_empty());
+        assert!(test_scope.white_set.is_empty());
+        assert_eq!(test_scope.children.len(), 0);
+    }
 
-        let mut test_scope = Scope::new("test");
-        let uuid0 = test_scope.alloc(test_jst0);
-        test_scope.mark_uuid(&uuid0, Marking::Black);
-        let uuid1 = test_scope.alloc(test_jst1);
-        test_scope.mark_uuid(&uuid1, Marking::White);
-        assert_eq!(test_scope.get_jst_copy(&uuid0).unwrap().gc_flag, Marking::Black);
-        assert_eq!(test_scope.get_jst_copy(&uuid1).unwrap().gc_flag, Marking::White);
+    #[test]
+    fn test_as_child_scope() {
+        let parent_scope = Scope::new(dummy_get_roots);
+        let mut test_scope = Scope::as_child(Rc::new(parent_scope), dummy_get_roots);
+
+        assert!(test_scope.parent.is_some());
+        assert!(test_scope.black_set.is_empty());
+        assert!(test_scope.grey_set.is_empty());
+        assert!(test_scope.white_set.is_empty());
+        assert_eq!(test_scope.children.len(), 0);
+    }
+
+    #[test]
+    fn test_set_parent() {
+        let parent_scope = Scope::new(dummy_get_roots);
+        let mut test_scope = Scope::new(dummy_get_roots);
+        assert!(test_scope.parent.is_none());
+        test_scope.set_parent(Rc::new(parent_scope));
+        assert!(test_scope.parent.is_some());
+    }
+
+    #[test]
+    fn test_add_child() {
+        let mut test_scope = Scope::new(dummy_get_roots);
+        let child_scope1 = Scope::new(dummy_get_roots);
+        let child_scope2 = Scope::new(dummy_get_roots);
+        assert_eq!(test_scope.children.len(), 0);
+        test_scope.add_child(child_scope1);
+        assert_eq!(test_scope.children.len(), 1);
+        test_scope.add_child(child_scope2);
+        assert_eq!(test_scope.children.len(), 2);
+    }
+
+    #[test]
+    fn test_alloc() {
+        let mut test_scope = Scope::new(dummy_get_roots);
+        let test_var = make_num(1.0);
+        let test_uuid = test_var.uuid.clone();
+        let uuid = test_scope.alloc(test_var);
+        assert_eq!(test_uuid, uuid);
+        assert!(test_scope.white_set.contains_key(&uuid));
+        assert_eq!(test_scope.white_set.len(), 1);
+        assert_eq!(test_scope.grey_set.len(), 0);
+        assert_eq!(test_scope.black_set.len(), 0);
+    }
+
+    #[test]
+    fn test_dealloc() {
+        let mut test_scope = Scope::new(dummy_get_roots);
+        let test_var = make_num(1.0);
+        let uuid = test_scope.alloc(test_var);
+        let bad_uuid = Uuid::new_v4();
+        assert!(test_scope.dealloc(&uuid));
+        assert_eq!(test_scope.white_set.len(), 0);
+        assert_eq!(test_scope.grey_set.len(), 0);
+        assert_eq!(test_scope.black_set.len(), 0);
+        assert!(!test_scope.dealloc(&bad_uuid));
+    }
+
+    #[test]
+    fn test_get_var_copy() {
+        let mut test_scope = Scope::new(dummy_get_roots);
+        let test_var = make_num(1.0);
+        let uuid = test_scope.alloc(test_var);
+        let bad_uuid = Uuid::new_v4();
+        let var_copy = test_scope.get_var_copy(&uuid);
+        assert!(var_copy.is_some());
+        let var = var_copy.unwrap();
+        assert_eq!(var.uuid, uuid);
+        let bad_copy = test_scope.get_var_copy(&bad_uuid);
+        assert!(bad_copy.is_none());
+    }
+
+    #[test]
+    fn test_update_var() {
+        let mut test_scope = Scope::new(dummy_get_roots);
+        let test_var = make_num(1.0);
+        let uuid = test_scope.alloc(test_var);
+        let mut update = test_scope.get_var_copy(&uuid).unwrap();
+        update = make_num(2.0);
+        assert!(test_scope.update_var(update));
+        let update = test_scope.get_var_copy(&uuid).unwrap();
+        match update {
+            JsVar{ t: JsType::JsNum(i), ..} => assert_eq!(i, 2.0),
+            _ => ()
+        }
+        test_scope.dealloc(&uuid);
+        assert!(!test_scope.update_var(update));
+    }
+
+    #[test]
+    fn test_mark_roots() {
+        let mut test_scope = Scope::new(dummy_get_roots);
     }
 }
