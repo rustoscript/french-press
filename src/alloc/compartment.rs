@@ -4,7 +4,7 @@ use std::collections::hash_set::HashSet;
 use std::cmp;
 use std::mem;
 
-use js_types::js_type::{JsVar, JsType};
+use js_types::js_type::{JsVar, JsType, JsPtrEnum};
 use uuid::Uuid;
 
 // Initial Arena size in bytes
@@ -90,30 +90,59 @@ impl Scope {
     /// be "Any variable that is declared or referenced directly, but a direct
     /// reference (variable usage) supercedes a declaration." The above example
     /// demonstrates why this is necessary.
-    pub fn compute_roots(&self) -> HashSet<Uuid> {
-        unimplemented!();
-    }
+    /// This should come from the interpreter, so I shouldn't actually have to
+    /// care about getting the root set myself.
+
+    //pub fn compute_roots(&self) -> HashSet<Uuid> {
+    //    self.get_roots();
+    //}
 
     /// Roots always get marked as Black, since they're always reachable from
-    /// the current scope.
+    /// the current scope. NB that this assumes all root references are actually
+    /// valid reference types, i.e. they're not numbers, etc.
     pub fn mark_roots(&mut self, marks: HashSet<Uuid>) {
         for mark in marks.iter() {
-            if let Some(jst) = self.white_set.remove(mark) {
-                let uuid = jst.borrow().uuid;
-                self.black_set.insert(uuid, jst);
-                // TODO mark child references as grey
+            if let Some(var) = self.white_set.remove(mark) {
+                let uuid = var.borrow().uuid;
+                // Get all child references
+                let child_ids = self.get_var_children(&var);
+                self.black_set.insert(uuid, var);
+                // Mark child references as grey
+                self.grey_children(child_ids);
             }
         }
     }
 
     pub fn mark_phase(&mut self) {
-        // TODO mark object as black, mark all white objs it refs as grey
-        for (_, v) in self.grey_set.drain() {
-            match (*v.borrow()).t {
-                JsType::JsPtr(ref ptr) => unimplemented!(),
-                _ => ()
+        // Mark any grey object as black, and mark all white objs it refs as grey
+        while let Some(&uuid) = self.grey_set.keys().take(1).next() {
+            if let Some(var) = self.grey_set.remove(&uuid) {
+                let child_ids = self.get_var_children(&var);
+                self.black_set.insert(uuid, var);
+                for child_id in child_ids.into_iter() {
+                    if let Some(var) = self.white_set.remove(&child_id) {
+                        self.grey_set.insert(child_id, var);
+                    }
+                }
             }
         }
+    }
+
+    fn grey_children(&mut self, child_ids: HashSet<Uuid>) {
+        for child_id in child_ids.into_iter() {
+            if let Some(var) = self.white_set.remove(&child_id) {
+                self.grey_set.insert(child_id, var);
+            }
+        }
+    }
+
+    fn get_var_children(&self, var: &RefCell<JsVar>) -> HashSet<Uuid> {
+        if let JsType::JsPtr(ref ptr) = (*var.borrow()).t {
+            match ptr {
+                &JsPtrEnum::JsObj(ref obj) => obj.get_children(),
+                _ => HashSet::new(),
+            }
+        } else { HashSet::new() }
     }
 
 }
