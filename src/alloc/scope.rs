@@ -95,7 +95,8 @@ impl Scope {
     /// Roots always get marked as Black, since they're always reachable from
     /// the current scope. NB that this assumes all root references are actually
     /// valid reference types, i.e. they're not numbers, etc.
-    pub fn mark_roots(&mut self, marks: HashSet<Uuid>) {
+    pub fn mark_roots(&mut self) {
+        let marks = (self.get_roots)();
         for mark in marks.iter() {
             if let Some(var) = self.white_set.remove(mark) {
                 let uuid = var.borrow().uuid;
@@ -158,7 +159,8 @@ mod tests {
     use super::*;
     use std::collections::hash_set::HashSet;
     use std::rc::Rc;
-    use js_types::js_type::{JsVar, JsType};
+    use js_types::js_type::{JsVar, JsType, JsPtrEnum};
+    use js_types::js_obj::{JsObjStruct};
     use uuid::Uuid;
 
     fn dummy_get_roots() -> HashSet<Uuid> {
@@ -167,6 +169,10 @@ mod tests {
 
     fn make_num(i: f64) -> JsVar {
         JsVar::new(JsType::JsNum(i))
+    }
+
+    fn make_obj(kvs: Vec<(JsVar, JsVar)>) -> JsVar {
+        JsVar::new(JsType::JsPtr(JsPtrEnum::JsObj(JsObjStruct::new(None, "test", kvs))))
     }
 
     #[test]
@@ -271,6 +277,34 @@ mod tests {
 
     #[test]
     fn test_mark_roots() {
-        let mut test_scope = Scope::new(dummy_get_roots);
+        let test_uuid = Uuid::new_v4();
+        let mut test_var = make_num(1.0);
+        let mut test_var2 = make_num(2.0);
+        test_var.uuid = test_uuid;
+        let simple_get_roots = move || { let mut set = HashSet::new();
+                                    set.insert(test_uuid);
+                                    set };
+        let mut test_scope = Scope::new(simple_get_roots);
+        let test_uuid = test_scope.alloc(test_var);
+        let test_uuid2 = test_scope.alloc(test_var2);
+        test_scope.mark_roots();
+        assert_eq!(test_scope.black_set.len(), 1);
+        assert!(test_scope.black_set.get(&test_uuid).is_some());
+        assert!(test_scope.black_set.get(&test_uuid2).is_none());
+    }
+
+    fn test_mark_phase() {
+        let test_uuid = Uuid::new_v4();
+        let mut test_var2 = make_num(2.0);
+        let test_key = make_num(1.0);
+        let mut test_var = make_obj(vec![(test_key, test_var2)]);
+        test_var.uuid = test_uuid;
+        let simple_get_roots = move || { let mut set = HashSet::new();
+                                    set.insert(test_uuid);
+                                    set };
+        let mut test_scope = Scope::new(simple_get_roots);
+        let test_uuid = test_scope.alloc(test_var);
+        let test_uuid2 = test_scope.alloc(test_var2);
+        test_scope.mark_roots();
     }
 }
