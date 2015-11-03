@@ -1,5 +1,4 @@
 pub mod scope;
-pub mod ref_manip;
 
 #[cfg(test)]
 mod tests {
