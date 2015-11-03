@@ -3,39 +3,31 @@ use std::collections::hash_set::HashSet;
 use std::string::String;
 use std::vec::Vec;
 use uuid::Uuid;
-use js_types::js_type::{JsType,JsVar};
+use js_types::js_type::{JsType, JsVar, JsKey};
+use alloc::scope::Alloc;
 
 #[derive(Clone)]
 pub struct JsObjStruct {
     pub proto: JsProto,
     pub name: String,
-    pub dict: HashMap<JsVar, JsVar>,
+    pub dict: HashMap<JsKey, Alloc<JsVar>>,
 }
 
 impl JsObjStruct {
-    pub fn new(proto: JsProto, name: &str, kv_pairs: Vec<(JsVar, JsVar)>) -> JsObjStruct {
-        let mut dict = HashMap::new();
-        kv_pairs.into_iter().map(|(k,v)| dict.insert(k, v));
+    pub fn new(proto: JsProto, name: &str, kv_pairs: Vec<(JsKey, Alloc<JsVar>)>) -> JsObjStruct {
         JsObjStruct {
             proto: None,
             name: String::from(name),
-            dict: dict,
+            dict: kv_pairs.into_iter().collect(),
         }
     }
 
-    pub fn add_key(&mut self, k: JsVar, v: JsVar) {
+    pub fn add_key(&mut self, k: JsKey, v: Alloc<JsVar>) {
         self.dict.insert(k, v);
     }
 
     pub fn get_children(&self) -> HashSet<Uuid> {
-        let mut child_ids = HashSet::new();
-        for (k,v) in self.dict.iter() {
-            match v.t {
-                JsType::JsPtr(ref p) => { child_ids.insert(k.uuid); },
-                _ => (),
-            }
-        }
-        child_ids
+        self.dict.values().map(|v| v.borrow().uuid).collect()
     }
 }
 
