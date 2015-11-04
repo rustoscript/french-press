@@ -68,8 +68,7 @@ impl Scope {
     }
 
     pub fn get_var_copy(&self, uuid: &Uuid) -> Option<JsVar> {
-        self.find_id(uuid).map(|var|
-                               (*var.clone()).clone().into_inner())
+        self.find_id(uuid).map(|var| var.borrow().clone())
     }
 
     pub fn update_var(&mut self, var: JsVar) -> bool {
