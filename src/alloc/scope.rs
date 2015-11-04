@@ -68,8 +68,8 @@ impl Scope {
     }
 
     pub fn get_var_copy(&self, uuid: &Uuid) -> Option<JsVar> {
-        //self.find_id(uuid).map(|var| var.clone().into_inner())
-        unimplemented!()
+        self.find_id(uuid).map(|var|
+                               (*var.clone()).clone().into_inner())
     }
 
     pub fn update_var(&mut self, var: JsVar) -> bool {
@@ -94,10 +94,6 @@ impl Scope {
     /// demonstrates why this is necessary.
     /// This should come from the interpreter, so I shouldn't actually have to
     /// care about getting the root set myself.
-
-    //pub fn compute_roots(&self) -> HashSet<Uuid> {
-    //    self.get_roots();
-    //}
 
     /// Roots always get marked as Black, since they're always reachable from
     /// the current scope. NB that this assumes all root references are actually
