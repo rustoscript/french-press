@@ -282,6 +282,7 @@ mod tests {
         let uuid = test_scope.alloc(test_var);
         let mut update = test_scope.get_var_copy(&uuid).unwrap();
         update = make_num(2.0);
+        update.uuid = uuid;
         assert!(test_scope.update_var(update));
         let update = test_scope.get_var_copy(&uuid).unwrap();
         match update {
