@@ -31,7 +31,7 @@ impl ScopeManager {
         mgr
     }
 
-    pub fn add_scope<F>(&mut self, callback: F) where F: Fn() -> HashSet<Uuid> + 'static {
+    pub fn push_scope<F>(&mut self, callback: F) where F: Fn() -> HashSet<Uuid> + 'static {
         unsafe {
             let weak_clone = Rc::downgrade(&*self.curr_scope.clone());
             self.curr_scope =
