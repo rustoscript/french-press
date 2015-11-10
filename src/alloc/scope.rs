@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::collections::hash_map::{Entry, HashMap};
 use std::collections::hash_set::HashSet;
-use std::rc::Rc;
+use std::rc::{Rc, Weak};
 use std::cmp;
 use std::mem;
 
@@ -16,8 +16,8 @@ const MIN_CAP: usize = 1;
 pub type Alloc<T> = Rc<RefCell<T>>;
 
 pub struct Scope {
-    parent: Option<Rc<Scope>>,
-    children: Vec<Box<Scope>>,
+    pub parent: Option<Weak<Scope>>,
+    children: Vec<Rc<Scope>>,
     black_set: HashMap<Uuid, Alloc<JsVar>>,
     grey_set: HashMap<Uuid, Alloc<JsVar>>,
     white_set: HashMap<Uuid, Alloc<JsVar>>,
@@ -37,7 +37,7 @@ impl Scope {
         }
     }
 
-    pub fn as_child<F>(parent: Rc<Scope>, get_roots: F) -> Scope
+    pub fn as_child<F>(parent: Weak<Scope>, get_roots: F) -> Scope
         where F: Fn() -> HashSet<Uuid> + 'static {
         Scope {
             parent: Some(parent),
@@ -49,12 +49,14 @@ impl Scope {
         }
     }
 
-    pub fn set_parent(&mut self, parent: Rc<Scope>) {
-        self.parent = Some(parent);
+    pub fn set_parent(&mut self, parent: &Rc<Scope>) {
+        self.parent = Some(Rc::downgrade(&parent.clone()));
     }
 
-    pub fn add_child(&mut self, child: Scope) {
-        self.children.push(Box::new(child));
+    pub fn add_child(&mut self, child: Scope) -> &mut Rc<Scope> {
+        self.children.push(Rc::new(child));
+        let num_children = self.children.len();
+        &mut self.children[num_children - 1]
     }
 
     pub fn alloc(&mut self, var: JsVar) -> Uuid {
@@ -168,7 +170,7 @@ impl Scope {
 mod tests {
     use super::*;
     use std::collections::hash_set::HashSet;
-    use std::rc::Rc;
+    use std::rc::{Rc, Weak};
     use js_types::js_type::{JsVar, JsType, JsPtrEnum, JsKey, JsKeyEnum};
     use js_types::js_obj::{JsObjStruct};
     use uuid::Uuid;
@@ -197,8 +199,8 @@ mod tests {
 
     #[test]
     fn test_as_child_scope() {
-        let parent_scope = Scope::new(dummy_get_roots);
-        let mut test_scope = Scope::as_child(Rc::new(parent_scope), dummy_get_roots);
+        let parent_scope = Rc::new(Scope::new(dummy_get_roots));
+        let mut test_scope = Scope::as_child(Rc::downgrade(&parent_scope.clone()), dummy_get_roots);
 
         assert!(test_scope.parent.is_some());
         assert!(test_scope.black_set.is_empty());
@@ -209,10 +211,10 @@ mod tests {
 
     #[test]
     fn test_set_parent() {
-        let parent_scope = Scope::new(dummy_get_roots);
+        let parent_scope = Rc::new(Scope::new(dummy_get_roots));
         let mut test_scope = Scope::new(dummy_get_roots);
         assert!(test_scope.parent.is_none());
-        test_scope.set_parent(Rc::new(parent_scope));
+        test_scope.set_parent(&parent_scope);
         assert!(test_scope.parent.is_some());
     }
 
