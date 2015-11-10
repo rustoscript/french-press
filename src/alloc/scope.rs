@@ -17,7 +17,7 @@ pub type Alloc<T> = Rc<RefCell<T>>;
 
 pub struct Scope {
     pub parent: Option<Weak<Scope>>,
-    children: Vec<Rc<Scope>>,
+    pub children: Vec<Rc<Scope>>,
     black_set: HashMap<Uuid, Alloc<JsVar>>,
     grey_set: HashMap<Uuid, Alloc<JsVar>>,
     white_set: HashMap<Uuid, Alloc<JsVar>>,
