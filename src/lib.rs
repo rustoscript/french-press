@@ -55,17 +55,22 @@ impl ScopeManager {
             panic!("Tried to pop to parent scope, but parent did not exist!");
         }
     }
+
+    pub fn alloc(&mut self, var: JsVar) -> Uuid {
+        unsafe { Rc::get_mut(&mut *self.curr_scope).unwrap().alloc(var) }
+    }
+
+    pub fn load(&self, uuid: Uuid) -> Option<JsVar> {
+        unsafe { (*self.curr_scope).get_var_copy(&uuid) }
+    }
+
+    pub fn store(&mut self, var: JsVar) -> bool {
+        unsafe { Rc::get_mut(&mut *self.curr_scope).unwrap().update_var(var) }
+    }
 }
 
-pub fn init<F>(callback: F) -> ScopeManager
+pub fn init_gc<F>(callback: F) -> ScopeManager
     where F: Fn() -> HashSet<Uuid> + 'static {
     ScopeManager::new(callback)
 }
 
-pub fn load(scope: &Scope, uuid: Uuid) -> Option<JsVar> {
-    scope.get_var_copy(&uuid)
-}
-
-pub fn store(scope: &mut Scope, var: JsVar) -> bool {
-    scope.update_var(var)
-}
