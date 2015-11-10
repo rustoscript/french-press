@@ -41,9 +41,18 @@ impl ScopeManager {
         }
     }
 
-    pub fn alloc(&mut self, var: JsVar) -> Uuid {
-        unsafe {
-            Rc::get_mut(&mut *self.curr_scope).unwrap().alloc(var)
+    pub fn pop_scope(&mut self) {
+        let parent = unsafe { (*self.curr_scope).parent.clone() };
+        if let Some(parent) = parent {
+            if let Some(mut scope) = parent.upgrade() {
+                // Pop old scope
+                let num_children = scope.children.len();
+                Rc::get_mut(&mut scope).unwrap().children.remove(num_children - 1);
+                // Set curr_scope to old scope's parent
+                self.curr_scope = &mut scope as *mut Rc<Scope>;
+            }
+        } else {
+            panic!("Tried to pop to parent scope, but parent did not exist!");
         }
     }
 }
