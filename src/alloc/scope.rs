@@ -110,12 +110,16 @@ impl Scope {
                 self.black_set.insert(uuid, var);
                 // Mark child references as grey
                 self.grey_children(child_ids);
+            } else if let Some(parent) = self.parent {
+                // TODO Should this start at the root, or at the current scope?
+                parent.mark_roots();
             }
         }
     }
 
+    /// Mark any grey object as black, and mark all white objs it refs as grey
     pub fn mark_phase(&mut self) {
-        // Mark any grey object as black, and mark all white objs it refs as grey
+        // TODO Considerations for parent/child scopes
         let mut new_grey_set = HashMap::new();
         for (uuid, var) in self.grey_set.drain() {
             let child_ids = Scope::get_var_children(&var);
