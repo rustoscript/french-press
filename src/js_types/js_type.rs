@@ -5,6 +5,8 @@ use std::cmp::Ordering;
 use std::hash::{Hash, Hasher};
 use uuid::Uuid;
 
+use alloc::Alloc;
+
 #[derive(Clone)]
 pub struct JsVar {
     pub binding: Option<String>,
@@ -52,11 +54,29 @@ pub enum JsPtrEnum {
 #[derive(Clone)]
 pub enum JsType {
     JsUndef,
-    JsNull,
     JsNum(f64),
     JsBool(bool),
-    JsPtr(JsPtrEnum),
+    JsPtr,
+    JsNull,
 }
+
+impl PartialEq for JsType {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (&JsType::JsUndef, &JsType::JsUndef) => true,
+            (&JsType::JsNum(x), &JsType::JsNum(y)) => x == y,
+            (&JsType::JsBool(b1), &JsType::JsBool(b2)) => b1 == b2,
+            (&JsType::JsNull, &JsType::JsNull) => true,
+            (_, _) => false,
+        }
+    }
+
+    fn ne(&self, other: &Self) -> bool {
+        !self.eq(other)
+    }
+}
+
+impl Eq for JsType {}
 
 #[derive(Clone)]
 pub enum JsKeyEnum {
