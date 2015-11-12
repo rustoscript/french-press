@@ -5,7 +5,6 @@ authors = ["David Mally <djmally@gmail.com>"]
 
 [dependencies]
 uuid = "0.1"
-typed-arena = "1.0.1"
 
 [profile.dev]
 opt-level = 0
