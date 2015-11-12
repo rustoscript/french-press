@@ -115,7 +115,7 @@ mod tests {
         let alloc_box = make_alloc_box();
         let mut test_scope = Scope::new(&alloc_box, dummy_get_roots);
         let test_var = JsVar::new(JsType::JsPtr);
-        let test_id = test_scope.alloc(test_var.uuid, JsPtrEnum::JsNull);
+        let test_id = test_scope.alloc(test_var.uuid, JsPtrEnum::JsSym(String::from("test")));
         assert_eq!(test_id, test_var.uuid);
     }
 
@@ -124,7 +124,7 @@ mod tests {
         let alloc_box = make_alloc_box();
         let mut test_scope = Scope::new(&alloc_box, dummy_get_roots);
         let test_var = JsVar::new(JsType::JsPtr);
-        let test_id = test_scope.alloc(test_var.uuid, JsPtrEnum::JsNull);
+        let test_id = test_scope.alloc(test_var.uuid, JsPtrEnum::JsSym(String::from("test")));
         let bad_uuid = Uuid::new_v4();
         assert!(test_scope.dealloc(&test_id));
         assert!(!test_scope.dealloc(&bad_uuid));
@@ -135,16 +135,11 @@ mod tests {
         let alloc_box = make_alloc_box();
         let mut test_scope = Scope::new(&alloc_box, dummy_get_roots);
         let test_var = JsVar::new(JsType::JsPtr);
-        let test_id = test_scope.alloc(test_var.uuid, JsPtrEnum::JsNull);
+        let test_id = test_scope.alloc(test_var.uuid, JsPtrEnum::JsSym(String::from("test")));
         let bad_uuid = Uuid::new_v4();
 
         let ptr_copy = test_scope.get_ptr_copy(&test_id);
         assert!(ptr_copy.is_some());
-
-        // FIXME it's kind of problematic that UUIDs are separated
-        // from ptr types
-        //let ptr = ptr_copy.unwrap();
-        //assert_eq!(ptr.uuid, test_id);
 
         let bad_copy = test_scope.get_ptr_copy(&bad_uuid);
         assert!(bad_copy.is_none());
@@ -155,7 +150,7 @@ mod tests {
         let alloc_box = make_alloc_box();
         let mut test_scope = Scope::new(&alloc_box, dummy_get_roots);
         let test_var = JsVar::new(JsType::JsPtr);
-        let test_id = test_scope.alloc(test_var.uuid, JsPtrEnum::JsNull);
+        let test_id = test_scope.alloc(test_var.uuid, JsPtrEnum::JsSym(String::from("test")));
         let mut update = test_scope.get_ptr_copy(&test_id).unwrap();
         update = JsPtrEnum::JsStr(JsStrStruct::new("test"));
         assert!(test_scope.update_ptr(&test_id, update));
