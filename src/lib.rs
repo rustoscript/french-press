@@ -60,7 +60,7 @@ impl ScopeManager {
         unsafe { Rc::get_mut(&mut *self.curr_scope).unwrap().alloc(var) }
     }
 
-    pub fn load(&self, uuid: Uuid) -> Result<JsVar, Err> {
+    pub fn load(&self, uuid: Uuid) -> Result<JsVar, String> {
         unsafe { (*self.curr_scope).get_var_copy(&uuid) }
         .ok_or("Lookup of uuid {} failed!", uuid)
     }
