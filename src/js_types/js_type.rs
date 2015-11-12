@@ -54,12 +54,14 @@ pub enum JsType {
     JsUndef,
     JsNull,
     JsNum(f64),
+    JsBool(bool),
     JsPtr(JsPtrEnum),
 }
 
 #[derive(Clone)]
 pub enum JsKeyEnum {
     JsNum(f64),
+    JsBool(bool),
     JsStr(JsStrStruct),
     JsSym(String),
 }
