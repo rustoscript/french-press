@@ -3,7 +3,6 @@
 #![feature(rc_would_unwrap)]
 
 extern crate uuid;
-extern crate typed_arena;
 mod js_types;
 mod alloc;
 
