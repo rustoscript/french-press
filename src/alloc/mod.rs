@@ -73,7 +73,7 @@ impl AllocBox {
                 self.black_set.get(uuid)))
     }
 
-    pub fn update_var(&mut self, uuid: Uuid, ptr: JsPtrEnum) -> bool {
+    pub fn update_var(&mut self, uuid: &Uuid, ptr: JsPtrEnum) -> bool {
         if let Entry::Occupied(mut view) = self.find_id_mut(&uuid) {
             let inner = view.get_mut();
             *inner.borrow_mut() = ptr;
