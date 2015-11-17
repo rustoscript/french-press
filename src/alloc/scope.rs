@@ -16,20 +16,20 @@ pub struct Scope {
 }
 
 impl Scope {
-    pub fn new<F>(alloc_box: Rc<RefCell<AllocBox>>, get_roots: F) -> Scope
+    pub fn new<F>(alloc_box: &Rc<RefCell<AllocBox>>, get_roots: F) -> Scope
         where F: Fn() -> HashSet<Uuid> + 'static {
         Scope {
             parent: None,
-            alloc_box: alloc_box,
+            alloc_box: alloc_box.clone(),
             get_roots: Box::new(get_roots),
         }
     }
 
-    pub fn as_child<F>(parent: Rc<Scope>, alloc_box: Rc<RefCell<AllocBox>>, get_roots: F) -> Scope
+    pub fn as_child<F>(parent: &Rc<Scope>, alloc_box: &Rc<RefCell<AllocBox>>, get_roots: F) -> Scope
         where F: Fn() -> HashSet<Uuid> + 'static {
         Scope {
-            parent: Some(parent),
-            alloc_box: alloc_box,
+            parent: Some(parent.clone()),
+            alloc_box: alloc_box.clone(),
             get_roots: Box::new(get_roots),
         }
     }
@@ -46,8 +46,12 @@ impl Scope {
         self.alloc_box.borrow_mut().dealloc(uuid)
     }
 
-    pub fn get_var_copy(&self, uuid: &Uuid) -> Option<JsPtrEnum> {
+    pub fn get_ptr_copy(&self, uuid: &Uuid) -> Option<JsPtrEnum> {
         self.alloc_box.borrow().find_id(uuid).map(|var| var.borrow().clone())
+    }
+
+    pub fn update_ptr(&mut self, uuid: &Uuid, ptr: JsPtrEnum) -> bool {
+        self.alloc_box.borrow_mut().update_var(uuid, ptr)
     }
 
 
