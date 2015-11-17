@@ -82,180 +82,117 @@ impl Scope {
 
 #[cfg(test)]
 mod tests {
-    /*use super::*;
+    use super::*;
+    use std::cell::RefCell;
     use std::collections::hash_set::HashSet;
     use std::rc::{Rc, Weak};
     use uuid::Uuid;
 
-    use alloc::Alloc;
+    use alloc::{Alloc, AllocBox};
     use js_types::js_type::{JsVar, JsType, JsPtrEnum, JsKey, JsKeyEnum};
-    use js_types::js_obj::{JsObjStruct};
+    use js_types::js_obj::JsObjStruct;
+    use js_types::js_str::JsStrStruct;
 
     fn dummy_get_roots() -> HashSet<Uuid> {
         HashSet::new()
+    }
+
+    fn make_alloc_box() -> Rc<RefCell<AllocBox>> {
+        Rc::new(RefCell::new(AllocBox::new()))
     }
 
     fn make_num(i: f64) -> JsVar {
         JsVar::new(JsType::JsNum(i))
     }
 
-    fn make_obj(kvs: Vec<(JsKey, Alloc<JsVar>)>) -> JsVar {
-        JsVar::new(JsType::JsPtr(JsPtrEnum::JsObj(JsObjStruct::new(None, "test", kvs))))
+    fn make_obj(alloc_box: Rc<RefCell<AllocBox>>, kvs: Vec<(JsKey, JsVar)>) -> JsVar {
+        let var = JsVar::new(JsType::JsPtr);
+        alloc_box.borrow_mut()
+            .alloc(var.uuid, JsPtrEnum::JsObj(JsObjStruct::new(None, "test", kvs)));
+        var
     }
 
     #[test]
     fn test_new_scope() {
-        let mut test_scope = Scope::new(dummy_get_roots);
+        let alloc_box = make_alloc_box();
+        let mut test_scope = Scope::new(&alloc_box, dummy_get_roots);
         assert!(test_scope.parent.is_none());
-        assert!(test_scope.black_set.is_empty());
-        assert!(test_scope.grey_set.is_empty());
-        assert!(test_scope.white_set.is_empty());
-        assert_eq!(test_scope.children.len(), 0);
     }
 
     #[test]
     fn test_as_child_scope() {
-        let parent_scope = Rc::new(Scope::new(dummy_get_roots));
-        let mut test_scope = Scope::as_child(Rc::downgrade(&parent_scope.clone()), dummy_get_roots);
-
+        let alloc_box = make_alloc_box();
+        let parent_scope = Rc::new(Scope::new(&alloc_box, dummy_get_roots));
+        let mut test_scope = Scope::as_child(&parent_scope, &alloc_box, dummy_get_roots);
         assert!(test_scope.parent.is_some());
-        assert!(test_scope.black_set.is_empty());
-        assert!(test_scope.grey_set.is_empty());
-        assert!(test_scope.white_set.is_empty());
-        assert_eq!(test_scope.children.len(), 0);
     }
 
     #[test]
     fn test_set_parent() {
-        let parent_scope = Rc::new(Scope::new(dummy_get_roots));
-        let mut test_scope = Scope::new(dummy_get_roots);
+        let alloc_box = make_alloc_box();
+        let parent_scope = Rc::new(Scope::new(&alloc_box, dummy_get_roots));
+        let mut test_scope = Scope::new(&alloc_box, dummy_get_roots);
         assert!(test_scope.parent.is_none());
         test_scope.set_parent(&parent_scope);
         assert!(test_scope.parent.is_some());
     }
 
     #[test]
-    fn test_add_child() {
-        let mut test_scope = Scope::new(dummy_get_roots);
-        let child_scope1 = Scope::new(dummy_get_roots);
-        let child_scope2 = Scope::new(dummy_get_roots);
-        assert_eq!(test_scope.children.len(), 0);
-        test_scope.add_child(child_scope1);
-        assert_eq!(test_scope.children.len(), 1);
-        test_scope.add_child(child_scope2);
-        assert_eq!(test_scope.children.len(), 2);
-    }
-
-    #[test]
     fn test_alloc() {
-        let mut test_scope = Scope::new(dummy_get_roots);
-        let test_var = make_num(1.0);
-        let test_uuid = test_var.uuid.clone();
-        let uuid = test_scope.alloc(test_var);
-        assert_eq!(test_uuid, uuid);
-        assert!(test_scope.white_set.contains_key(&uuid));
-        assert_eq!(test_scope.white_set.len(), 1);
-        assert_eq!(test_scope.grey_set.len(), 0);
-        assert_eq!(test_scope.black_set.len(), 0);
-        let test_var2 = make_num(2.0);
-        let uuid = test_scope.alloc(test_var2);
-        assert!(test_scope.white_set.contains_key(&uuid));
-        assert_eq!(test_scope.white_set.len(), 2);
-        assert_eq!(test_scope.grey_set.len(), 0);
-        assert_eq!(test_scope.black_set.len(), 0);
+        let alloc_box = make_alloc_box();
+        let mut test_scope = Scope::new(&alloc_box, dummy_get_roots);
+        let test_var = JsVar::new(JsType::JsPtr);
+        let test_id = test_scope.alloc(test_var.uuid, JsPtrEnum::JsNull);
+        assert_eq!(test_id, test_var.uuid);
     }
 
     #[test]
     fn test_dealloc() {
-        let mut test_scope = Scope::new(dummy_get_roots);
-        let test_var = make_num(1.0);
-        let uuid = test_scope.alloc(test_var);
+        let alloc_box = make_alloc_box();
+        let mut test_scope = Scope::new(&alloc_box, dummy_get_roots);
+        let test_var = JsVar::new(JsType::JsPtr);
+        let test_id = test_scope.alloc(test_var.uuid, JsPtrEnum::JsNull);
         let bad_uuid = Uuid::new_v4();
-        assert!(test_scope.dealloc(&uuid));
-        assert_eq!(test_scope.white_set.len(), 0);
-        assert_eq!(test_scope.grey_set.len(), 0);
-        assert_eq!(test_scope.black_set.len(), 0);
+        assert!(test_scope.dealloc(&test_id));
         assert!(!test_scope.dealloc(&bad_uuid));
     }
 
     #[test]
-    fn test_get_var_copy() {
-        let mut test_scope = Scope::new(dummy_get_roots);
-        let test_var = make_num(1.0);
-        let uuid = test_scope.alloc(test_var);
+    fn test_get_ptr_copy() {
+        let alloc_box = make_alloc_box();
+        let mut test_scope = Scope::new(&alloc_box, dummy_get_roots);
+        let test_var = JsVar::new(JsType::JsPtr);
+        let test_id = test_scope.alloc(test_var.uuid, JsPtrEnum::JsNull);
         let bad_uuid = Uuid::new_v4();
-        let var_copy = test_scope.get_var_copy(&uuid);
-        assert!(var_copy.is_some());
-        let var = var_copy.unwrap();
-        assert_eq!(var.uuid, uuid);
-        let bad_copy = test_scope.get_var_copy(&bad_uuid);
+
+        let ptr_copy = test_scope.get_ptr_copy(&test_id);
+        assert!(ptr_copy.is_some());
+
+        // FIXME it's kind of problematic that UUIDs are separated
+        // from ptr types
+        //let ptr = ptr_copy.unwrap();
+        //assert_eq!(ptr.uuid, test_id);
+
+        let bad_copy = test_scope.get_ptr_copy(&bad_uuid);
         assert!(bad_copy.is_none());
     }
 
     #[test]
-    fn test_update_var() {
-        let mut test_scope = Scope::new(dummy_get_roots);
-        let test_var = make_num(1.0);
-        let uuid = test_scope.alloc(test_var);
-        let mut update = test_scope.get_var_copy(&uuid).unwrap();
-        update = make_num(2.0);
-        update.uuid = uuid;
-        assert!(test_scope.update_var(update));
-        let update = test_scope.get_var_copy(&uuid).unwrap();
+    fn test_update_ptr() {
+        let alloc_box = make_alloc_box();
+        let mut test_scope = Scope::new(&alloc_box, dummy_get_roots);
+        let test_var = JsVar::new(JsType::JsPtr);
+        let test_id = test_scope.alloc(test_var.uuid, JsPtrEnum::JsNull);
+        let mut update = test_scope.get_ptr_copy(&test_id).unwrap();
+        update = JsPtrEnum::JsStr(JsStrStruct::new("test"));
+        assert!(test_scope.update_ptr(&test_id, update));
+
+        let update = test_scope.get_ptr_copy(&test_id).unwrap();
         match update {
-            JsVar{ t: JsType::JsNum(i), ..} => assert_eq!(i, 2.0),
+            JsPtrEnum::JsStr(JsStrStruct{text: ref s}) => assert_eq!(s, "test"),
             _ => ()
         }
-        test_scope.dealloc(&uuid);
-        assert!(!test_scope.update_var(update));
+        test_scope.dealloc(&test_id);
+        assert!(!test_scope.update_ptr(&test_id, update));
     }
-
-    #[test]
-    fn test_mark_roots() {
-        let test_uuid = Uuid::new_v4();
-        let mut test_var = make_num(1.0);
-        let mut test_var2 = make_num(2.0);
-        test_var.uuid = test_uuid;
-        let simple_get_roots = move || { let mut set = HashSet::new();
-                                    set.insert(test_uuid);
-                                    set };
-        let mut test_scope = Scope::new(simple_get_roots);
-        let test_uuid = test_scope.alloc(test_var);
-        let test_uuid2 = test_scope.alloc(test_var2);
-        test_scope.mark_roots();
-        assert_eq!(test_scope.black_set.len(), 1);
-        assert!(test_scope.black_set.get(&test_uuid).is_some());
-        assert!(test_scope.black_set.get(&test_uuid2).is_none());
-    }
-
-    #[test]
-    fn test_mark_phase() {
-        let test_uuid = Uuid::new_v4();
-        let simple_get_roots = move || { let mut set = HashSet::new();
-                                    set.insert(test_uuid);
-                                    set };
-        let mut test_scope = Scope::new(simple_get_roots);
-
-        let mut test_var2 = make_num(2.0);
-        let test_uuid2 = test_scope.alloc(test_var2);
-        let test_var2_alloc = test_scope.find_id(&test_uuid2).unwrap().clone();
-
-        let test_key = JsKey::new(JsKeyEnum::JsNum(1.0));
-        let mut test_var = make_obj(vec![(test_key, test_var2_alloc)]);
-        test_var.uuid = test_uuid;
-        let test_uuid = test_scope.alloc(test_var);
-
-        // Mark roots first...
-        test_scope.mark_roots();
-        assert!(test_scope.black_set.get(&test_uuid).is_some());
-        assert_eq!(test_scope.black_set.len(), 1);
-        assert_eq!(test_scope.grey_set.len(), 1);
-
-        // ...then mark everything else
-        test_scope.mark_phase();
-
-        assert_eq!(test_scope.grey_set.len(), 0);
-        assert!(test_scope.black_set.get(&test_uuid).is_some());
-        assert!(test_scope.black_set.get(&test_uuid2).is_some());
-    }*/
 }
