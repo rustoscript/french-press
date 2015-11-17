@@ -4,82 +4,52 @@ use std::collections::hash_set::HashSet;
 use std::rc::{Rc, Weak};
 use std::cmp;
 use std::mem;
-
-use js_types::js_type::{JsVar, JsType, JsPtrEnum};
 use uuid::Uuid;
 
-// Initial Arena size in bytes
-const INITIAL_SIZE: usize = 1024;
-// Minimum Arena capacity is at least 1 byte
-const MIN_CAP: usize = 1;
-
-pub type Alloc<T> = Rc<RefCell<T>>;
+use alloc::{Alloc, AllocBox};
+use js_types::js_type::{JsVar, JsType, JsPtrEnum};
 
 pub struct Scope {
-    pub parent: Option<Weak<Scope>>,
-    pub children: Vec<Rc<Scope>>,
-    black_set: HashMap<Uuid, Alloc<JsVar>>,
-    grey_set: HashMap<Uuid, Alloc<JsVar>>,
-    white_set: HashMap<Uuid, Alloc<JsVar>>,
+    pub parent: Option<Rc<Scope>>,
+    alloc_box: Rc<RefCell<AllocBox>>,
     get_roots: Box<Fn() -> HashSet<Uuid>>,
 }
 
 impl Scope {
-    pub fn new<F>(get_roots: F) -> Scope
+    pub fn new<F>(alloc_box: Rc<RefCell<AllocBox>>, get_roots: F) -> Scope
         where F: Fn() -> HashSet<Uuid> + 'static {
         Scope {
             parent: None,
-            children: Vec::new(),
-            black_set: HashMap::new(),
-            grey_set: HashMap::new(),
-            white_set: HashMap::new(),
+            alloc_box: alloc_box,
             get_roots: Box::new(get_roots),
         }
     }
 
-    pub fn as_child<F>(parent: Weak<Scope>, get_roots: F) -> Scope
+    pub fn as_child<F>(parent: Rc<Scope>, alloc_box: Rc<RefCell<AllocBox>>, get_roots: F) -> Scope
         where F: Fn() -> HashSet<Uuid> + 'static {
         Scope {
             parent: Some(parent),
-            children: Vec::new(),
-            black_set: HashMap::new(),
-            grey_set: HashMap::new(),
-            white_set: HashMap::new(),
+            alloc_box: alloc_box,
             get_roots: Box::new(get_roots),
         }
     }
 
     pub fn set_parent(&mut self, parent: &Rc<Scope>) {
-        self.parent = Some(Rc::downgrade(&parent.clone()));
+        self.parent = Some(parent.clone());
     }
 
-    pub fn add_child(&mut self, child: Scope) -> &mut Rc<Scope> {
-        self.children.push(Rc::new(child));
-        let num_children = self.children.len();
-        &mut self.children[num_children - 1]
-    }
-
-    pub fn alloc(&mut self, var: JsVar) -> Uuid {
-        let uuid = var.uuid;
-        self.white_set.insert(uuid, Rc::new(RefCell::new(var)));
-        uuid
+    pub fn alloc(&mut self, uuid: Uuid, ptr: JsPtrEnum) -> Uuid {
+        self.alloc_box.borrow_mut().alloc(uuid, ptr)
     }
 
     pub fn dealloc(&mut self, uuid: &Uuid) -> bool {
-        if let Some(_) = self.white_set.remove(uuid) { true } else { false }
+        self.alloc_box.borrow_mut().dealloc(uuid)
     }
 
-    pub fn get_var_copy(&self, uuid: &Uuid) -> Option<JsVar> {
-        self.find_id(uuid).map(|var| var.borrow().clone())
+    pub fn get_var_copy(&self, uuid: &Uuid) -> Option<JsPtrEnum> {
+        self.alloc_box.borrow().find_id(uuid).map(|var| var.borrow().clone())
     }
 
-    pub fn update_var(&mut self, var: JsVar) -> bool {
-        if let Entry::Occupied(mut view) = self.find_id_mut(&var.uuid) {
-            let inner = view.get_mut();
-            *inner.borrow_mut() = var;
-            true
-        } else { false }
-    }
 
     /// TODO Compute the roots of the current scope-- any variable that is
     /// directly referenced or declared within the scope. This might just be the
@@ -101,67 +71,7 @@ impl Scope {
     /// valid reference types, i.e. they're not numbers, etc.
     pub fn mark_roots(&mut self) {
         let marks = (self.get_roots)();
-        for mark in marks.iter() {
-            if let Some(var) = self.white_set.remove(mark) {
-                let uuid = var.borrow().uuid;
-                // Get all child references
-                let child_ids = Scope::get_var_children(&var);
-                // Mark current ref as black
-                self.black_set.insert(uuid, var);
-                // Mark child references as grey
-                self.grey_children(child_ids);
-            }
-        }
-    }
-
-    pub fn mark_phase(&mut self) {
-        // Mark any grey object as black, and mark all white objs it refs as grey
-        let mut new_grey_set = HashMap::new();
-        for (uuid, var) in self.grey_set.drain() {
-            let child_ids = Scope::get_var_children(&var);
-            self.black_set.insert(uuid, var);
-            for child_id in child_ids {
-                if let Some(var) = self.white_set.remove(&child_id) {
-                    new_grey_set.insert(child_id, var);
-                }
-            }
-        }
-        self.grey_set = new_grey_set;
-    }
-
-    pub fn sweep_phase(&mut self) {
-        self.white_set = HashMap::new();
-    }
-
-    pub fn find_id(&self, uuid: &Uuid) -> Option<&Alloc<JsVar>> {
-        self.white_set.get(uuid).or_else(||
-            self.grey_set.get(uuid).or_else(||
-                self.black_set.get(uuid)))
-    }
-
-    fn find_id_mut(&mut self, uuid: &Uuid) -> Entry<Uuid, Alloc<JsVar>> {
-        if let e @ Entry::Occupied(_) = self.white_set.entry(*uuid) {
-            e
-        } else if let e @ Entry::Occupied(_) = self.grey_set.entry(*uuid) {
-            e
-        } else { self.black_set.entry(*uuid) }
-    }
-
-    fn grey_children(&mut self, child_ids: HashSet<Uuid>) {
-        for child_id in child_ids.iter() {
-            if let Some(var) = self.white_set.remove(child_id) {
-                self.grey_set.insert(*child_id, var);
-            }
-        }
-    }
-
-    fn get_var_children(var: &Alloc<JsVar>) -> HashSet<Uuid> {
-        if let JsType::JsPtr(ref ptr) = (*var.borrow()).t {
-            match ptr {
-                &JsPtrEnum::JsObj(ref obj) => obj.get_children(),
-                _ => HashSet::new(),
-            }
-        } else { HashSet::new() }
+        self.alloc_box.borrow_mut().mark_roots(marks);
     }
 
 }

@@ -5,6 +5,8 @@ use std::cmp::Ordering;
 use std::hash::{Hash, Hasher};
 use uuid::Uuid;
 
+use alloc::Alloc;
+
 #[derive(Clone)]
 pub struct JsVar {
     pub binding: Option<String>,
@@ -44,6 +46,7 @@ impl Eq for JsVar {}
 
 #[derive(Clone)]
 pub enum JsPtrEnum {
+    JsNull,
     JsSym(String),
     JsStr(JsStrStruct),
     JsObj(JsObjStruct),
@@ -52,9 +55,8 @@ pub enum JsPtrEnum {
 #[derive(Clone)]
 pub enum JsType {
     JsUndef,
-    JsNull,
     JsNum(f64),
-    JsPtr(JsPtrEnum),
+    JsPtr,
 }
 
 #[derive(Clone)]

@@ -4,17 +4,17 @@ use std::string::String;
 use std::vec::Vec;
 use uuid::Uuid;
 use js_types::js_type::{JsType, JsVar, JsKey};
-use alloc::scope::Alloc;
+use alloc::Alloc;
 
 #[derive(Clone)]
 pub struct JsObjStruct {
     pub proto: JsProto,
     pub name: String,
-    pub dict: HashMap<JsKey, Alloc<JsVar>>,
+    pub dict: HashMap<JsKey, JsVar>,
 }
 
 impl JsObjStruct {
-    pub fn new(proto: JsProto, name: &str, kv_pairs: Vec<(JsKey, Alloc<JsVar>)>) -> JsObjStruct {
+    pub fn new(proto: JsProto, name: &str, kv_pairs: Vec<(JsKey, JsVar)>) -> JsObjStruct {
         JsObjStruct {
             proto: None,
             name: String::from(name),
@@ -22,12 +22,12 @@ impl JsObjStruct {
         }
     }
 
-    pub fn add_key(&mut self, k: JsKey, v: Alloc<JsVar>) {
+    pub fn add_key(&mut self, k: JsKey, v: JsVar) {
         self.dict.insert(k, v);
     }
 
     pub fn get_children(&self) -> HashSet<Uuid> {
-        self.dict.values().map(|v| v.borrow().uuid).collect()
+        self.dict.values().map(|v| v.uuid).collect()
     }
 }
 
