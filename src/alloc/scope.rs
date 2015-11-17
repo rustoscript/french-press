@@ -2,8 +2,6 @@ use std::cell::RefCell;
 use std::collections::hash_map::{Entry, HashMap};
 use std::collections::hash_set::HashSet;
 use std::rc::{Rc, Weak};
-use std::cmp;
-use std::mem;
 use uuid::Uuid;
 
 use alloc::{Alloc, AllocBox};
