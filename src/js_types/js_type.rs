@@ -46,7 +46,6 @@ impl Eq for JsVar {}
 
 #[derive(Clone)]
 pub enum JsPtrEnum {
-    JsNull,
     JsSym(String),
     JsStr(JsStrStruct),
     JsObj(JsObjStruct),
@@ -58,7 +57,26 @@ pub enum JsType {
     JsNum(f64),
     JsBool(bool),
     JsPtr,
+    JsNull,
 }
+
+impl PartialEq for JsType {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (&JsType::JsUndef, &JsType::JsUndef) => true,
+            (&JsType::JsNum(x), &JsType::JsNum(y)) => x == y,
+            (&JsType::JsBool(b1), &JsType::JsBool(b2)) => b1 == b2,
+            (&JsType::JsNull, &JsType::JsNull) => true,
+            (_, _) => false,
+        }
+    }
+
+    fn ne(&self, other: &Self) -> bool {
+        !self.eq(other)
+    }
+}
+
+impl Eq for JsType {}
 
 #[derive(Clone)]
 pub enum JsKeyEnum {
