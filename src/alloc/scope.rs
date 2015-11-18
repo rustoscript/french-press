@@ -51,31 +51,6 @@ impl Scope {
     pub fn update_ptr(&mut self, uuid: &Uuid, ptr: JsPtrEnum) -> bool {
         self.alloc_box.borrow_mut().update_var(uuid, ptr)
     }
-
-
-    /// TODO Compute the roots of the current scope-- any variable that is
-    /// directly referenced or declared within the scope. This might just be the
-    /// key set of the uuid map(?) Not necessarily, I think. What if you do
-    /// something like this:
-    /// var x = {}
-    /// var y = { 1: x }
-    /// y = x
-    /// y would be a root by the definition above, but is no longer reachable at
-    /// the end of the scope because it now aliases x. A better definition would
-    /// be "Any variable that is declared or referenced directly, but a direct
-    /// reference (variable usage) supercedes a declaration." The above example
-    /// demonstrates why this is necessary.
-    /// This should come from the interpreter, so I shouldn't actually have to
-    /// care about getting the root set myself.
-
-    /// Roots always get marked as Black, since they're always reachable from
-    /// the current scope. NB that this assumes all root references are actually
-    /// valid reference types, i.e. they're not numbers, etc.
-    pub fn mark_roots(&mut self) {
-        let marks = (self.get_roots)();
-        self.alloc_box.borrow_mut().mark_roots(marks);
-    }
-
 }
 
 #[cfg(test)]
