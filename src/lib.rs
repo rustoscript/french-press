@@ -55,6 +55,15 @@ impl ScopeManager {
     pub fn store(&mut self, uuid: &Uuid, ptr: JsPtrEnum) -> bool {
         Rc::get_mut(&mut self.curr_scope).unwrap().update_ptr(uuid, ptr)
     }
+
+    pub fn mark_vars(&mut self) {
+        self.alloc_box.mark_roots((self.curr_scope.get_roots)());
+        self.alloc_box.mark_vars();
+    }
+
+    pub fn sweep_vars(&mut self) {
+        self.alloc_box.sweep_vars();
+    }
 }
 
 pub fn init_gc<F>(callback: F) -> ScopeManager
