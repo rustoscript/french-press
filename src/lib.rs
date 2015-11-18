@@ -47,8 +47,9 @@ impl ScopeManager {
         Rc::get_mut(&mut self.curr_scope).unwrap().alloc(uuid, ptr)
     }
 
-    pub fn load(&self, uuid: &Uuid) -> Option<JsPtrEnum> {
+    pub fn load(&self, uuid: &Uuid) -> Result<JsPtrEnum, String> {
         self.curr_scope.get_ptr_copy(uuid)
+            .ok_or("Lookup of uuid {} failed!", uuid)
     }
 
     pub fn store(&mut self, uuid: &Uuid, ptr: JsPtrEnum) -> bool {
