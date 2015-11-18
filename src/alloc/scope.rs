@@ -10,7 +10,7 @@ use js_types::js_type::{JsVar, JsType, JsPtrEnum};
 pub struct Scope {
     pub parent: Option<Rc<Scope>>,
     alloc_box: Rc<RefCell<AllocBox>>,
-    get_roots: Box<Fn() -> HashSet<Uuid>>,
+    pub get_roots: Box<Fn() -> HashSet<Uuid>>,
 }
 
 impl Scope {
