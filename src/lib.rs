@@ -49,7 +49,7 @@ impl ScopeManager {
 
     pub fn load(&self, uuid: &Uuid) -> Result<JsPtrEnum, String> {
         self.curr_scope.get_ptr_copy(uuid)
-            .ok_or("Lookup of uuid {} failed!", uuid)
+            .ok_or(format!("Lookup of uuid {} failed!", uuid))
     }
 
     pub fn store(&mut self, uuid: &Uuid, ptr: JsPtrEnum) -> bool {
@@ -57,12 +57,12 @@ impl ScopeManager {
     }
 
     pub fn mark_vars(&mut self) {
-        self.alloc_box.mark_roots((self.curr_scope.get_roots)());
-        self.alloc_box.mark_vars();
+        self.alloc_box.borrow_mut().mark_roots((self.curr_scope.get_roots)());
+        self.alloc_box.borrow_mut().mark_vars();
     }
 
     pub fn sweep_vars(&mut self) {
-        self.alloc_box.sweep_vars();
+        self.alloc_box.borrow_mut().sweep_vars();
     }
 }
 
