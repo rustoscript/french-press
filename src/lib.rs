@@ -1,19 +1,20 @@
 #![feature(associated_consts)]
 #![feature(drain)]
-#![feature(rc_would_unwrap)]
 
 extern crate uuid;
+
 mod js_types;
 mod alloc;
 
 use std::cell::RefCell;
 use std::collections::hash_set::HashSet;
 use std::rc::Rc;
+
 use uuid::Uuid;
 
-use alloc::{Alloc, AllocBox};
+use alloc::AllocBox;
 use alloc::scope::Scope;
-use js_types::js_type::{JsVar, JsPtrEnum};
+use js_types::js_type::JsPtrEnum;
 
 pub struct ScopeManager {
     curr_scope: Rc<Scope>,

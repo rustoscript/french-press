@@ -1,11 +1,11 @@
-use std::string::String;
-use js_types::js_obj::JsObjStruct;
-use js_types::js_str::JsStrStruct;
-use std::cmp::Ordering;
 use std::hash::{Hash, Hasher};
+use std::string::String;
+
 use uuid::Uuid;
 
-use alloc::Alloc;
+use js_types::js_obj::JsObjStruct;
+use js_types::js_str::JsStrStruct;
+
 
 #[derive(Clone)]
 pub struct JsVar {

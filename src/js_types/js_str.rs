@@ -1,5 +1,4 @@
 use std::string::String;
-use std::vec::Vec;
 
 // `string`
 #[derive(Clone)]

@@ -2,9 +2,10 @@ use std::collections::hash_map::HashMap;
 use std::collections::hash_set::HashSet;
 use std::string::String;
 use std::vec::Vec;
+
 use uuid::Uuid;
-use js_types::js_type::{JsType, JsVar, JsKey};
-use alloc::Alloc;
+
+use js_types::js_type::{JsVar, JsKey};
 
 #[derive(Clone)]
 pub struct JsObjStruct {

@@ -1,15 +1,16 @@
 use std::cell::RefCell;
-use std::collections::hash_map::{Entry, HashMap};
 use std::collections::hash_set::HashSet;
-use std::rc::{Rc, Weak};
+use std::rc::Rc;
+
 use uuid::Uuid;
 
-use alloc::{Alloc, AllocBox};
-use js_types::js_type::{JsVar, JsType, JsPtrEnum};
+use alloc::AllocBox;
+use js_types::js_type::JsPtrEnum;
 
 pub struct Scope {
     pub parent: Option<Rc<Scope>>,
     alloc_box: Rc<RefCell<AllocBox>>,
+    // TODO add stack-alloc'd data
     pub get_roots: Box<Fn() -> HashSet<Uuid>>,
 }
 

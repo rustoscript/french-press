@@ -1,10 +1,11 @@
+use std::cell::RefCell;
 use std::collections::hash_map::{Entry, HashMap};
 use std::collections::hash_set::HashSet;
 use std::rc::Rc;
-use std::cell::RefCell;
+
 use uuid::Uuid;
 
-use js_types::js_type::{JsVar, JsType, JsPtrEnum};
+use js_types::js_type::JsPtrEnum;
 
 pub mod scope;
 
