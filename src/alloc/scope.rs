@@ -8,6 +8,9 @@ use uuid::Uuid;
 use alloc::AllocBox;
 use js_types::js_type::{JsPtrEnum, JsType, JsVar};
 
+// Tunable GC parameter. Probably should not be a constant, but good enough for now.
+const GC_THRESHOLD: usize = 64;
+
 pub struct Scope {
     pub parent: Option<Rc<Scope>>,
     alloc_box: Rc<RefCell<AllocBox>>,
@@ -97,6 +100,10 @@ impl Scope {
         uuid
     }
 
+    pub fn own(&mut self, var: JsVar) {
+        self.stack.insert(var.uuid, var);
+    }
+
     pub fn get_var_copy(&self, uuid: &Uuid) -> (Option<JsVar>, Option<JsPtrEnum>) {
         if let Some(var) = self.stack.get(uuid) {
             match var.t {
@@ -131,10 +138,19 @@ impl Scope {
 }
 
 impl Drop for Scope {
-    // TODO get the sig for this
     fn drop(&mut self) {
-        for (uuid, var) in self.stack.drain() {
-            // push to parent
+        if self.alloc_box.borrow().len() > GC_THRESHOLD {
+            self.alloc_box.borrow_mut().mark_roots((self.get_roots)());
+            self.alloc_box.borrow_mut().mark_ptrs();
+            self.alloc_box.borrow_mut().sweep_ptrs();
+        }
+        if let Some(ref mut parent) = self.parent {
+            for (_, var) in self.stack.drain() {
+                match var.t {
+                    JsType::JsPtr => Rc::get_mut(parent).unwrap().own(var),
+                    _ => (),
+                }
+            }
         }
     }
 }
