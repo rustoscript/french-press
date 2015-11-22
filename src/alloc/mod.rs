@@ -31,18 +31,21 @@ impl AllocBox {
     }
 
     pub fn alloc(&mut self, uuid: Uuid, ptr: JsPtrEnum) -> Uuid {
+        // TODO validate that `uuid` isn't already in the map
         self.white_set.insert(uuid, Rc::new(RefCell::new(ptr)));
         uuid
     }
 
-    pub fn dealloc(&mut self, uuid: &Uuid) -> bool {
-        if let Some(_) = self.white_set.remove(uuid) { true } else { false }
-    }
-
     pub fn mark_roots(&mut self, marks: HashSet<Uuid>) {
         for mark in marks {
-            // FIXME? Could a root be grey already?
             if let Some(ptr) = self.white_set.remove(&mark) {
+                // Get all child references
+                let child_ids = AllocBox::get_ptr_children(&ptr);
+                // Mark current ref as black
+                self.black_set.insert(mark, ptr);
+                // Mark child references as grey
+                self.grey_children(child_ids);
+            } else if let Some(ptr) = self.grey_set.remove(&mark) {
                 // Get all child references
                 let child_ids = AllocBox::get_ptr_children(&ptr);
                 // Mark current ref as black
