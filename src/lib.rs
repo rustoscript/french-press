@@ -14,7 +14,7 @@ use uuid::Uuid;
 
 use alloc::AllocBox;
 use alloc::scope::Scope;
-use js_types::js_type::JsPtrEnum;
+use js_types::js_type::{JsPtrEnum, JsVar};
 
 pub struct ScopeManager {
     curr_scope: Rc<Scope>,
@@ -43,26 +43,28 @@ impl ScopeManager {
         }
     }
 
-    pub fn alloc(&mut self, uuid: Uuid, ptr: JsPtrEnum) -> Uuid {
-        Rc::get_mut(&mut self.curr_scope).unwrap().alloc(uuid, ptr)
+    pub fn alloc(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Uuid {
+        Rc::get_mut(&mut self.curr_scope).unwrap().push(var, ptr)
     }
 
-    pub fn load(&self, uuid: &Uuid) -> Result<JsPtrEnum, String> {
-        self.curr_scope.get_ptr_copy(uuid)
-            .ok_or(format!("Lookup of uuid {} failed!", uuid))
+    pub fn load(&self, uuid: &Uuid) -> Result<(JsVar, Option<JsPtrEnum>), String> {
+        if let (Some(v), ptr) = self.curr_scope.get_var_copy(uuid) {
+            Ok((v, ptr))
+        } else { Err(format!("Lookup of uuid {} failed!", uuid)) }
     }
 
-    pub fn store(&mut self, uuid: &Uuid, ptr: JsPtrEnum) -> bool {
-        Rc::get_mut(&mut self.curr_scope).unwrap().update_ptr(uuid, ptr)
+    pub fn store(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> bool {
+        //Rc::get_mut(&mut self.curr_scope).unwrap().update_ptr(uuid, ptr)
+        Rc::get_mut(&mut self.curr_scope).unwrap().update_var(var, ptr)
     }
 
-    pub fn mark_vars(&mut self) {
+    fn mark_vars(&mut self) {
         self.alloc_box.borrow_mut().mark_roots((self.curr_scope.get_roots)());
-        self.alloc_box.borrow_mut().mark_vars();
+        self.alloc_box.borrow_mut().mark_ptrs();
     }
 
-    pub fn sweep_vars(&mut self) {
-        self.alloc_box.borrow_mut().sweep_vars();
+    fn sweep_ptrs(&mut self) {
+        self.alloc_box.borrow_mut().sweep_ptrs();
     }
 }
 
