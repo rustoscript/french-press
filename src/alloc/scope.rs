@@ -86,10 +86,6 @@ impl Scope {
         self.alloc_box.borrow_mut().alloc(uuid, ptr)
     }
 
-    fn dealloc(&mut self, uuid: &Uuid) -> bool {
-        self.alloc_box.borrow_mut().dealloc(uuid)
-    }
-
     pub fn push(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Uuid {
         let uuid = match &var.t {
             &JsType::JsPtr => self.alloc(var.uuid, ptr.unwrap()),
