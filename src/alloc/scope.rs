@@ -218,17 +218,6 @@ mod tests {
     }
 
     #[test]
-    fn test_dealloc() {
-        let alloc_box = make_alloc_box();
-        let mut test_scope = Scope::new(&alloc_box, dummy_get_roots);
-        let test_var = JsVar::new(JsType::JsPtr);
-        let test_id = test_scope.alloc(test_var.uuid, JsPtrEnum::JsSym(String::from("test")));
-        let bad_uuid = Uuid::new_v4();
-        assert!(test_scope.dealloc(&test_id));
-        assert!(!test_scope.dealloc(&bad_uuid));
-    }
-
-    #[test]
     fn test_get_var_copy() {
         let alloc_box = make_alloc_box();
         let mut test_scope = Scope::new(&alloc_box, dummy_get_roots);
@@ -260,8 +249,5 @@ mod tests {
             JsPtrEnum::JsStr(JsStrStruct{text: ref s}) => assert_eq!(s, "test"),
             _ => ()
         }
-        test_scope.dealloc(&test_id);
-        assert!(update.is_some());
-        assert!(!test_scope.update_var(update.unwrap(), update_ptr));
     }
 }

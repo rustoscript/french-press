@@ -118,6 +118,7 @@ impl AllocBox {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::hash_set::HashSet;
     use uuid::Uuid;
     use js_types::js_type::JsPtrEnum;
     use js_types::js_str::JsStrStruct;
@@ -157,7 +158,7 @@ mod tests {
         let id2 = ab.alloc(id2, make_str(""));
         let id3 = ab.alloc(id3, make_str(""));
 
-        let marks = HashSet::new();
+        let mut marks = HashSet::new();
         marks.insert(id1); marks.insert(id2);
         ab.mark_roots(marks);
 
