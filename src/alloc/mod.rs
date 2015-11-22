@@ -26,6 +26,10 @@ impl AllocBox {
         }
     }
 
+    pub fn len(&self) -> usize {
+        self.black_set.len() + self.grey_set.len() + self.white_set.len()
+    }
+
     pub fn alloc(&mut self, uuid: Uuid, ptr: JsPtrEnum) -> Uuid {
         self.white_set.insert(uuid, Rc::new(RefCell::new(ptr)));
         uuid
