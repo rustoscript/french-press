@@ -68,8 +68,6 @@ pub fn init_gc<F>(callback: F) -> ScopeManager
 mod tests {
     use super::*;
     use std::collections::hash_set::HashSet;
-    use std::ptr::null_mut;
-    use std::rc::Rc;
     use uuid::Uuid;
 
     fn dummy_callback() -> HashSet<Uuid> {
