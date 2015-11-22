@@ -36,7 +36,6 @@ impl ScopeManager {
 
     pub fn pop_scope(&mut self) {
         if let Some(parent) = self.curr_scope.parent.clone() {
-            // Set curr_scope to old scope's parent
             self.curr_scope = parent;
         } else {
             panic!("Tried to pop to parent scope, but parent did not exist!");
@@ -54,17 +53,7 @@ impl ScopeManager {
     }
 
     pub fn store(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> bool {
-        //Rc::get_mut(&mut self.curr_scope).unwrap().update_ptr(uuid, ptr)
         Rc::get_mut(&mut self.curr_scope).unwrap().update_var(var, ptr)
-    }
-
-    fn mark_vars(&mut self) {
-        self.alloc_box.borrow_mut().mark_roots((self.curr_scope.get_roots)());
-        self.alloc_box.borrow_mut().mark_ptrs();
-    }
-
-    fn sweep_ptrs(&mut self) {
-        self.alloc_box.borrow_mut().sweep_ptrs();
     }
 }
 
