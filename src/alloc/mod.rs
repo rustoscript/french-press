@@ -40,7 +40,7 @@ impl AllocBox {
             // FIXME? Could a root be grey already?
             if let Some(ptr) = self.white_set.remove(&mark) {
                 // Get all child references
-                let child_ids = AllocBox::get_var_children(&ptr);
+                let child_ids = AllocBox::get_ptr_children(&ptr);
                 // Mark current ref as black
                 self.black_set.insert(mark, ptr);
                 // Mark child references as grey
@@ -49,11 +49,11 @@ impl AllocBox {
         }
     }
 
-    pub fn mark_vars(&mut self) {
+    pub fn mark_ptrs(&mut self) {
         // Mark any grey object as black, and mark all white objs it refs as grey
         let mut new_grey_set = HashMap::new();
         for (uuid, var) in self.grey_set.drain() {
-            let child_ids = AllocBox::get_var_children(&var);
+            let child_ids = AllocBox::get_ptr_children(&var);
             self.black_set.insert(uuid, var);
             for child_id in child_ids {
                 if let Some(var) = self.white_set.remove(&child_id) {
@@ -64,17 +64,20 @@ impl AllocBox {
         self.grey_set = new_grey_set;
     }
 
-    pub fn sweep_vars(&mut self) {
-        self.white_set = HashMap::new();
+    pub fn sweep_ptrs(&mut self) {
+        // Delete all white pointers and reset the GC state.
+        self.white_set = self.black_set.clone();
+        self.grey_set = HashMap::new();
+        self.black_set = HashMap::new();
     }
 
     pub fn find_id(&self, uuid: &Uuid) -> Option<&Alloc<JsPtrEnum>> {
-        self.white_set.get(uuid).or_else(||
-            self.grey_set.get(uuid).or_else(||
+        self.white_set.get(uuid).or(
+            self.grey_set.get(uuid).or(
                 self.black_set.get(uuid)))
     }
 
-    pub fn update_var(&mut self, uuid: &Uuid, ptr: JsPtrEnum) -> bool {
+    pub fn update_ptr(&mut self, uuid: &Uuid, ptr: JsPtrEnum) -> bool {
         if let Entry::Occupied(mut view) = self.find_id_mut(&uuid) {
             let inner = view.get_mut();
             *inner.borrow_mut() = ptr;
@@ -90,7 +93,7 @@ impl AllocBox {
         }
     }
 
-    fn get_var_children(ptr: &Alloc<JsPtrEnum>) -> HashSet<Uuid> {
+    fn get_ptr_children(ptr: &Alloc<JsPtrEnum>) -> HashSet<Uuid> {
         if let JsPtrEnum::JsObj(ref obj) = *ptr.borrow() {
             obj.get_children()
         } else { HashSet::new() }
