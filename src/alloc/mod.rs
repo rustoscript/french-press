@@ -114,3 +114,53 @@ impl AllocBox {
         } else { self.black_set.entry(*uuid) }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use uuid::Uuid;
+    use js_types::js_type::JsPtrEnum;
+    use js_types::js_str::JsStrStruct;
+
+    fn make_str(s: &str) -> JsPtrEnum {
+        JsPtrEnum::JsStr(JsStrStruct::new(s))
+    }
+
+    #[test]
+    fn test_len() {
+        let mut ab = AllocBox::new();
+        assert_eq!(ab.len(), 0);
+        ab.alloc(Uuid::new_v4(), make_str(""));
+        assert_eq!(ab.len(), 1);
+    }
+
+    fn test_alloc() {
+        let mut ab = AllocBox::new();
+        let id1 = Uuid::new_v4();
+        let id2 = Uuid::new_v4();
+        let id3 = Uuid::new_v4();
+        let _id1 = ab.alloc(id1.clone(), make_str(""));
+        let _id2 = ab.alloc(id2.clone(), make_str(""));
+        let _id3 = ab.alloc(id3.clone(), make_str(""));
+
+        assert_eq!(id1, _id1);
+        assert_eq!(id2, _id2);
+        assert_eq!(id3, _id3);
+    }
+
+    fn test_mark_roots() {
+        let mut ab = AllocBox::new();
+        let id1 = Uuid::new_v4();
+        let id2 = Uuid::new_v4();
+        let id3 = Uuid::new_v4();
+        let id1 = ab.alloc(id1, make_str(""));
+        let id2 = ab.alloc(id2, make_str(""));
+        let id3 = ab.alloc(id3, make_str(""));
+
+        let marks = HashSet::new();
+        marks.insert(id1); marks.insert(id2);
+        ab.mark_roots(marks);
+
+
+    }
+}
