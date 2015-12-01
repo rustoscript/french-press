@@ -57,7 +57,7 @@ pub enum JsType {
     JsNum(f64),
     JsBool(bool),
     JsPtr,
-    JsNull,
+    JsNull, // null is not a ptr since it doesn't actually require allocation
 }
 
 impl PartialEq for JsType {
