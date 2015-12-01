@@ -31,7 +31,6 @@ impl AllocBox {
     }
 
     pub fn alloc(&mut self, uuid: Uuid, ptr: JsPtrEnum) -> Uuid {
-        // TODO validate that `uuid` isn't already in the map
         if let None = self.white_set.insert(uuid, Rc::new(RefCell::new(ptr))) {
             uuid
         } else {

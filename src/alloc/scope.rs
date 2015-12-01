@@ -121,9 +121,10 @@ impl Scope {
     // ever used when it is `Some`? Default argument?
     pub fn update_var(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> bool {
         match var.t {
-            JsType::JsPtr => self.alloc_box.borrow_mut().update_ptr(&var.uuid, ptr.unwrap()),
+            JsType::JsPtr => self.alloc_box.borrow_mut()
+                                           .update_ptr(&var.uuid,
+                                                       ptr.expect("Pointer was None in Scope::update_var!")),
             _ => {
-                // TODO might be simpler to do this with `insert`, but I can't remember what it returns
                 if let Entry::Occupied(mut view) = self.stack.entry(var.uuid) {
                     *view.get_mut() = var;
                     true
