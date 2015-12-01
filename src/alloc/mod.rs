@@ -32,8 +32,14 @@ impl AllocBox {
 
     pub fn alloc(&mut self, uuid: Uuid, ptr: JsPtrEnum) -> Uuid {
         // TODO validate that `uuid` isn't already in the map
-        self.white_set.insert(uuid, Rc::new(RefCell::new(ptr)));
-        uuid
+        if let None = self.white_set.insert(uuid, Rc::new(RefCell::new(ptr))) {
+            uuid
+        } else {
+            // If a UUID already exists and we try to allocate it, this should
+            // be an unrecoverable error. In practice, this shouldn't happen
+            // unless the UUID generator creates a collision.
+            panic!("Allocation of UUID {} failed! UUID was already present in map!", uuid);
+        }
     }
 
     pub fn mark_roots(&mut self, marks: HashSet<Uuid>) {
