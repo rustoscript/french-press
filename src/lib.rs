@@ -8,6 +8,7 @@ mod alloc;
 
 use std::cell::RefCell;
 use std::collections::hash_set::HashSet;
+use std::mem;
 use std::rc::Rc;
 
 use uuid::Uuid;
@@ -17,7 +18,7 @@ use alloc::scope::Scope;
 use js_types::js_type::{JsPtrEnum, JsVar};
 
 pub struct ScopeManager {
-    curr_scope: Rc<Scope>,
+    curr_scope: Scope,
     alloc_box: Rc<RefCell<AllocBox>>
 }
 
@@ -25,25 +26,24 @@ impl ScopeManager {
     pub fn new<F>(alloc_box: Rc<RefCell<AllocBox>>, callback: F) -> ScopeManager
         where F: Fn() -> HashSet<Uuid> + 'static {
         ScopeManager {
-            curr_scope: Rc::new(Scope::new(&alloc_box, callback)),
+            curr_scope: Scope::new(&alloc_box, callback),
             alloc_box: alloc_box,
         }
     }
 
     pub fn push_scope<F>(&mut self, callback: F) where F: Fn() -> HashSet<Uuid> + 'static {
-        self.curr_scope = Rc::new(Scope::as_child(&self.curr_scope, &self.alloc_box, callback));
+        let parent = mem::replace(&mut self.curr_scope, Scope::new(&self.alloc_box, callback));
+        self.curr_scope.set_parent(parent);
     }
 
     pub fn pop_scope(&mut self) {
-        if let Some(parent) = self.curr_scope.parent.clone() {
-            self.curr_scope = parent;
-        } else {
-            panic!("Tried to pop to parent scope, but parent did not exist!");
-        }
+        let parent = mem::replace(&mut self.curr_scope.parent, None);
+        mem::replace(&mut self.curr_scope,
+                     *parent.expect("Tried to pop to parent scope, but parent did not exist!"));
     }
 
     pub fn alloc(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Uuid {
-        Rc::get_mut(&mut self.curr_scope).unwrap().push(var, ptr)
+        self.curr_scope.push(var, ptr)
     }
 
     pub fn load(&self, uuid: &Uuid) -> Result<(JsVar, Option<JsPtrEnum>), String> {
@@ -53,7 +53,7 @@ impl ScopeManager {
     }
 
     pub fn store(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> bool {
-        Rc::get_mut(&mut self.curr_scope).unwrap().update_var(var, ptr)
+        self.curr_scope.update_var(var, ptr)
     }
 }
 
