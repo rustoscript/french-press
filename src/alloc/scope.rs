@@ -14,45 +14,6 @@ const GC_THRESHOLD: usize = 64;
 pub struct Scope {
     pub parent: Option<Rc<Scope>>,
     alloc_box: Rc<RefCell<AllocBox>>,
-    // TODO how should we save stack variables that are live-out from this scope
-    // frame? Push them up to our parent? There's also the problem of this scope
-    // needing access to its parent's variables that are on the stack, but right
-    // now the way that'd work is by traversing the scope tree upwards until you
-    // find what you're looking for, which is not the best solution. Also, how
-    // granular is a scope? Is an `if` block a new scope, or are new scopes only
-    // introduced by function calls (things that would actually introduce a new
-    // stack frame)?
-    //
-    // Perhaps a better way to think about it is like this: every scope owns some
-    // "stack allocator" object which contains *everything* allocated on the stack
-    // up until that point, including things allocated by the parent scope. When
-    // a new scope gets pushed, ownership of this object gets transferred to the
-    // new scope, which then returns ownership when it exits, deleting the set of
-    // things it allocated. This could even just be a list of arenas (where `list`
-    // is an ambiguous term; it might be an actual stack or a hash map or something),
-    // such that a scope can just drop its arena when it exits. Is that okay? What
-    // problems could that cause? Lookup is a bit harder, I suppose, since you'd
-    // have to search all arenas in the worst case. Maybe look into simonsapin's
-    // ArenaTree implementation? There's also still the problem of live-out references,
-    // as well as deleting things that get GC'd by making them `undefined`. Arenas
-    // might be too coarse-grained to solve either of those problems.
-    //
-    // How can we handle live-out references? They're taken care of under the
-    // hood in alloc_box, i.e. they don't get deleted. From the frontend, though,
-    // all stack allocations will get deleted from the current scope unless they
-    // get saved somewhere due to being live-out. POD values can be deleted safely,
-    // since they contain no references. Non-POD must be moved into ownership by
-    // the parent scope until they are GC'd, at which point the GC should tell
-    // this scope that those references are now `undef`. How do you reconsile
-    // the fact that a dead-out reference might not be considered as such until
-    // after the scope exits? Obviously, you can consider everything live-out
-    // unless the GC tells you it's not, but these pointers could in theory be
-    // used by a different scope, even if they die. I guess that's not really a
-    // problem, though, since usage makes you not dead anymore.
-    //
-    // So there we go. Delete all POD values when the scope exits, and pass all
-    // references to the parent to await GC (unless this scope invokes the GC,
-    // in which case they get marked as `undef` and die due to being POD.
     stack: HashMap<Uuid, JsVar>,
     pub get_roots: Box<Fn() -> HashSet<Uuid>>,
 }
