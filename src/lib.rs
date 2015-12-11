@@ -1,9 +1,11 @@
 #![feature(associated_consts)]
 
 extern crate uuid;
+extern crate jsrs_common;
 
 mod js_types;
 mod alloc;
+mod utils;
 
 use std::cell::RefCell;
 use std::collections::hash_set::HashSet;
@@ -74,43 +76,33 @@ mod tests {
     use std::collections::hash_set::HashSet;
     use std::cell::RefCell;
     use std::rc::Rc;
+
     use uuid::Uuid;
 
     use alloc::AllocBox;
     use js_types::js_type::{JsType, JsVar};
-
-    fn dummy_callback() -> HashSet<Uuid> {
-        HashSet::new()
-    }
-
-    fn make_alloc_box() -> Rc<RefCell<AllocBox>> {
-        Rc::new(RefCell::new(AllocBox::new()))
-    }
-
-    fn make_num(i: f64) -> JsVar {
-        JsVar::new(JsType::JsNum(i))
-    }
+    use utils;
 
     #[test]
     fn test_alloc() {
-        let alloc_box = make_alloc_box();
-        let mut mgr = ScopeManager::new(alloc_box, dummy_callback);
-        mgr.alloc(make_num(1.), None);
-        mgr.push_scope(dummy_callback);
-        mgr.alloc(make_num(2.), None);
+        let alloc_box = utils::make_alloc_box();
+        let mut mgr = ScopeManager::new(alloc_box, utils::dummy_callback);
+        mgr.alloc(utils::make_num(1.), None);
+        mgr.push_scope(utils::dummy_callback);
+        mgr.alloc(utils::make_num(2.), None);
         assert_eq!(mgr.alloc_box.borrow().len(), 0);
     }
 
     #[test]
     fn test_store() {
-        let alloc_box = make_alloc_box();
-        let mut mgr = ScopeManager::new(alloc_box, dummy_callback);
-        mgr.push_scope(dummy_callback);
-        mgr.alloc(make_num(1.), None);
-        let test_id = mgr.alloc(make_num(2.), None);
-        mgr.alloc(make_num(3.), None);
+        let alloc_box = utils::make_alloc_box();
+        let mut mgr = ScopeManager::new(alloc_box, utils::dummy_callback);
+        mgr.push_scope(utils::dummy_callback);
+        mgr.alloc(utils::make_num(1.), None);
+        let test_id = mgr.alloc(utils::make_num(2.), None);
+        mgr.alloc(utils::make_num(3.), None);
 
-        let mut test_num = make_num(4.);
+        let mut test_num = utils::make_num(4.);
         test_num.uuid = test_id;
         assert!(mgr.store(test_num, None));
     }

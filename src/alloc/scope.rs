@@ -117,50 +117,35 @@ mod tests {
     use std::cell::RefCell;
     use std::collections::hash_set::HashSet;
     use std::rc::{Rc, Weak};
+
     use uuid::Uuid;
 
     use alloc::{Alloc, AllocBox};
     use js_types::js_type::{JsVar, JsType, JsPtrEnum, JsKey, JsKeyEnum};
     use js_types::js_obj::JsObjStruct;
     use js_types::js_str::JsStrStruct;
-
-    fn dummy_get_roots() -> HashSet<Uuid> {
-        HashSet::new()
-    }
-
-    fn make_alloc_box() -> Rc<RefCell<AllocBox>> {
-        Rc::new(RefCell::new(AllocBox::new()))
-    }
-
-    fn make_num(i: f64) -> JsVar {
-        JsVar::new(JsType::JsNum(i))
-    }
-
-    fn make_obj(kvs: Vec<(JsKey, JsVar)>) -> (JsVar, JsPtrEnum) {
-        (JsVar::new(JsType::JsPtr),
-         JsPtrEnum::JsObj(JsObjStruct::new(None, "test", kvs)))
-    }
+    use utils;
 
     #[test]
     fn test_new_scope() {
-        let alloc_box = make_alloc_box();
-        let mut test_scope = Scope::new(&alloc_box, dummy_get_roots);
+        let alloc_box = utils::make_alloc_box();
+        let mut test_scope = Scope::new(&alloc_box, utils::dummy_callback);
         assert!(test_scope.parent.is_null());
     }
 
     #[test]
     fn test_as_child_scope() {
-        let alloc_box = make_alloc_box();
-        let mut parent_scope = Scope::new(&alloc_box, dummy_get_roots);
-        let mut test_scope = Scope::as_child(&mut parent_scope, &alloc_box, dummy_get_roots);
+        let alloc_box = utils::make_alloc_box();
+        let mut parent_scope = Scope::new(&alloc_box, utils::dummy_callback);
+        let mut test_scope = Scope::as_child(&mut parent_scope, &alloc_box, utils::dummy_callback);
         assert!(!test_scope.parent.is_null());
     }
 
     #[test]
     fn test_set_parent() {
-        let alloc_box = make_alloc_box();
-        let mut parent_scope = Scope::new(&alloc_box, dummy_get_roots);
-        let mut test_scope = Scope::new(&alloc_box, dummy_get_roots);
+        let alloc_box = utils::make_alloc_box();
+        let mut parent_scope = Scope::new(&alloc_box, utils::dummy_callback);
+        let mut test_scope = Scope::new(&alloc_box, utils::dummy_callback);
         assert!(test_scope.parent.is_null());
         test_scope.set_parent(&mut parent_scope);
         assert!(!test_scope.parent.is_null());
@@ -168,8 +153,8 @@ mod tests {
 
     #[test]
     fn test_alloc() {
-        let alloc_box = make_alloc_box();
-        let mut test_scope = Scope::new(&alloc_box, dummy_get_roots);
+        let alloc_box = utils::make_alloc_box();
+        let mut test_scope = Scope::new(&alloc_box, utils::dummy_callback);
         let test_var = JsVar::new(JsType::JsPtr);
         let test_id = test_scope.alloc(test_var.uuid, JsPtrEnum::JsSym(String::from("test")));
         assert_eq!(test_id, test_var.uuid);
@@ -177,8 +162,8 @@ mod tests {
 
     #[test]
     fn test_get_var_copy() {
-        let alloc_box = make_alloc_box();
-        let mut test_scope = Scope::new(&alloc_box, dummy_get_roots);
+        let alloc_box = utils::make_alloc_box();
+        let mut test_scope = Scope::new(&alloc_box, utils::dummy_callback);
         let test_var = JsVar::new(JsType::JsPtr);
         let test_id = test_scope.push(test_var, Some(JsPtrEnum::JsSym(String::from("test"))));
         let bad_uuid = Uuid::new_v4();
@@ -194,8 +179,8 @@ mod tests {
 
     #[test]
     fn test_update_var() {
-        let alloc_box = make_alloc_box();
-        let mut test_scope = Scope::new(&alloc_box, dummy_get_roots);
+        let alloc_box = utils::make_alloc_box();
+        let mut test_scope = Scope::new(&alloc_box, utils::dummy_callback);
         let test_var = JsVar::new(JsType::JsPtr);
         let test_id = test_scope.push(test_var, Some(JsPtrEnum::JsSym(String::from("test"))));
         let (update, mut update_ptr) = test_scope.get_var_copy(&test_id);
@@ -211,16 +196,16 @@ mod tests {
 
     #[test]
     fn test_transfer_stack() {
-        let alloc_box = make_alloc_box();
-        let mut parent_scope = Scope::new(&alloc_box, dummy_get_roots);
+        let alloc_box = utils::make_alloc_box();
+        let mut parent_scope = Scope::new(&alloc_box, utils::dummy_callback);
         {
-            let mut test_scope = Scope::as_child(&mut parent_scope, &alloc_box, dummy_get_roots);
-            test_scope.push(make_num(0.), None);
-            test_scope.push(make_num(1.), None);
-            test_scope.push(make_num(2.), None);
+            let mut test_scope = Scope::as_child(&mut parent_scope, &alloc_box, utils::dummy_callback);
+            test_scope.push(utils::make_num(0.), None);
+            test_scope.push(utils::make_num(1.), None);
+            test_scope.push(utils::make_num(2.), None);
             let kvs = vec![(JsKey::new(JsKeyEnum::JsBool(true)),
-                            make_num(1.))];
-            let (var, ptr) = make_obj(kvs);
+                            utils::make_num(1.))];
+            let (var, ptr) = utils::make_obj(kvs);
             test_scope.push(var, Some(ptr));
             test_scope.transfer_stack()
         }
