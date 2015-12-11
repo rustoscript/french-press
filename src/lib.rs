@@ -3,8 +3,9 @@
 extern crate uuid;
 extern crate jsrs_common;
 
-mod js_types;
 mod alloc;
+mod ast;
+mod js_types;
 mod utils;
 
 use std::cell::RefCell;
