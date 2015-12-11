@@ -6,6 +6,9 @@ authors = ["David Mally <djmally@gmail.com>"]
 [dependencies]
 uuid = "0.1"
 
+[dependencies.jsrs-common]
+git = "https://github.com/rustoscript/js.rs-common.git"
+
 [profile.dev]
 opt-level = 0
 debug = true
