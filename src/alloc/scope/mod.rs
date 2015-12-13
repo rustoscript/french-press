@@ -1,6 +1,7 @@
 use std::cell::RefCell;
 use std::collections::hash_map::{Entry, HashMap};
 use std::collections::hash_set::HashSet;
+use std::ptr::null_mut;
 use std::rc::Rc;
 
 use uuid::Uuid;
@@ -12,7 +13,7 @@ use js_types::js_type::{JsPtrEnum, JsType, JsVar};
 const GC_THRESHOLD: usize = 64;
 
 pub struct Scope {
-    pub parent: Option<Rc<Scope>>,
+    pub parent: *mut Scope,
     alloc_box: Rc<RefCell<AllocBox>>,
     stack: HashMap<Uuid, JsVar>,
     pub get_roots: Box<Fn() -> HashSet<Uuid>>,
@@ -22,25 +23,25 @@ impl Scope {
     pub fn new<F>(alloc_box: &Rc<RefCell<AllocBox>>, get_roots: F) -> Scope
         where F: Fn() -> HashSet<Uuid> + 'static {
         Scope {
-            parent: None,
+            parent: null_mut(),
             alloc_box: alloc_box.clone(),
             stack: HashMap::new(),
             get_roots: Box::new(get_roots),
         }
     }
 
-    pub fn as_child<F>(parent: &Rc<Scope>, alloc_box: &Rc<RefCell<AllocBox>>, get_roots: F) -> Scope
+    pub fn as_child<F>(parent: &mut Scope, alloc_box: &Rc<RefCell<AllocBox>>, get_roots: F) -> Scope
         where F: Fn() -> HashSet<Uuid> + 'static {
         Scope {
-            parent: Some(parent.clone()),
+            parent: parent,
             alloc_box: alloc_box.clone(),
             stack: HashMap::new(),
             get_roots: Box::new(get_roots),
         }
     }
 
-    pub fn set_parent(&mut self, parent: &Rc<Scope>) {
-        self.parent = Some(parent.clone());
+    pub fn set_parent(&mut self, parent: &mut Scope) {
+        self.parent = parent;
     }
 
     fn alloc(&mut self, uuid: Uuid, ptr: JsPtrEnum) -> Uuid {
@@ -49,8 +50,8 @@ impl Scope {
 
     pub fn push(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Uuid {
         let uuid = match &var.t {
-            &JsType::JsPtr => self.alloc(var.uuid, ptr.unwrap()),
-                //.expect("ERR: Attempted allocation of heap pointer, but pointer contents were invalid!"));
+            &JsType::JsPtr => self.alloc(var.uuid,
+                                         ptr.expect("ERR: Attempted allocation of heap pointer, but pointer contents were invalid!")),
             _ => var.uuid,
         };
         self.stack.insert(var.uuid, var);
@@ -93,21 +94,18 @@ impl Scope {
             },
         }
     }
-}
 
-impl Drop for Scope {
-    fn drop(&mut self) {
+    // Ideally, this should just be an impl for `Drop`, but that's been giving me issues...
+    pub fn transfer_stack(&mut self) {
         if self.alloc_box.borrow().len() > GC_THRESHOLD {
             self.alloc_box.borrow_mut().mark_roots((self.get_roots)());
             self.alloc_box.borrow_mut().mark_ptrs();
             self.alloc_box.borrow_mut().sweep_ptrs();
         }
-        if let Some(ref mut parent) = self.parent {
-            for (_, var) in self.stack.drain() {
-                match var.t {
-                    JsType::JsPtr => Rc::get_mut(parent).unwrap().own(var),
-                    _ => (),
-                }
+        for (_, var) in self.stack.drain() {
+            match var.t {
+                JsType::JsPtr => unsafe { (*self.parent).own(var) },
+                _ => (),
             }
         }
     }
@@ -119,61 +117,44 @@ mod tests {
     use std::cell::RefCell;
     use std::collections::hash_set::HashSet;
     use std::rc::{Rc, Weak};
+
     use uuid::Uuid;
 
     use alloc::{Alloc, AllocBox};
     use js_types::js_type::{JsVar, JsType, JsPtrEnum, JsKey, JsKeyEnum};
     use js_types::js_obj::JsObjStruct;
     use js_types::js_str::JsStrStruct;
-
-    fn dummy_get_roots() -> HashSet<Uuid> {
-        HashSet::new()
-    }
-
-    fn make_alloc_box() -> Rc<RefCell<AllocBox>> {
-        Rc::new(RefCell::new(AllocBox::new()))
-    }
-
-    fn make_num(i: f64) -> JsVar {
-        JsVar::new(JsType::JsNum(i))
-    }
-
-    fn make_obj(alloc_box: Rc<RefCell<AllocBox>>, kvs: Vec<(JsKey, JsVar)>) -> JsVar {
-        let var = JsVar::new(JsType::JsPtr);
-        alloc_box.borrow_mut()
-            .alloc(var.uuid, JsPtrEnum::JsObj(JsObjStruct::new(None, "test", kvs)));
-        var
-    }
+    use utils;
 
     #[test]
     fn test_new_scope() {
-        let alloc_box = make_alloc_box();
-        let mut test_scope = Scope::new(&alloc_box, dummy_get_roots);
-        assert!(test_scope.parent.is_none());
+        let alloc_box = utils::make_alloc_box();
+        let mut test_scope = Scope::new(&alloc_box, utils::dummy_callback);
+        assert!(test_scope.parent.is_null());
     }
 
     #[test]
     fn test_as_child_scope() {
-        let alloc_box = make_alloc_box();
-        let parent_scope = Rc::new(Scope::new(&alloc_box, dummy_get_roots));
-        let mut test_scope = Scope::as_child(&parent_scope, &alloc_box, dummy_get_roots);
-        assert!(test_scope.parent.is_some());
+        let alloc_box = utils::make_alloc_box();
+        let mut parent_scope = Scope::new(&alloc_box, utils::dummy_callback);
+        let mut test_scope = Scope::as_child(&mut parent_scope, &alloc_box, utils::dummy_callback);
+        assert!(!test_scope.parent.is_null());
     }
 
     #[test]
     fn test_set_parent() {
-        let alloc_box = make_alloc_box();
-        let parent_scope = Rc::new(Scope::new(&alloc_box, dummy_get_roots));
-        let mut test_scope = Scope::new(&alloc_box, dummy_get_roots);
-        assert!(test_scope.parent.is_none());
-        test_scope.set_parent(&parent_scope);
-        assert!(test_scope.parent.is_some());
+        let alloc_box = utils::make_alloc_box();
+        let mut parent_scope = Scope::new(&alloc_box, utils::dummy_callback);
+        let mut test_scope = Scope::new(&alloc_box, utils::dummy_callback);
+        assert!(test_scope.parent.is_null());
+        test_scope.set_parent(&mut parent_scope);
+        assert!(!test_scope.parent.is_null());
     }
 
     #[test]
     fn test_alloc() {
-        let alloc_box = make_alloc_box();
-        let mut test_scope = Scope::new(&alloc_box, dummy_get_roots);
+        let alloc_box = utils::make_alloc_box();
+        let mut test_scope = Scope::new(&alloc_box, utils::dummy_callback);
         let test_var = JsVar::new(JsType::JsPtr);
         let test_id = test_scope.alloc(test_var.uuid, JsPtrEnum::JsSym(String::from("test")));
         assert_eq!(test_id, test_var.uuid);
@@ -181,8 +162,8 @@ mod tests {
 
     #[test]
     fn test_get_var_copy() {
-        let alloc_box = make_alloc_box();
-        let mut test_scope = Scope::new(&alloc_box, dummy_get_roots);
+        let alloc_box = utils::make_alloc_box();
+        let mut test_scope = Scope::new(&alloc_box, utils::dummy_callback);
         let test_var = JsVar::new(JsType::JsPtr);
         let test_id = test_scope.push(test_var, Some(JsPtrEnum::JsSym(String::from("test"))));
         let bad_uuid = Uuid::new_v4();
@@ -198,8 +179,8 @@ mod tests {
 
     #[test]
     fn test_update_var() {
-        let alloc_box = make_alloc_box();
-        let mut test_scope = Scope::new(&alloc_box, dummy_get_roots);
+        let alloc_box = utils::make_alloc_box();
+        let mut test_scope = Scope::new(&alloc_box, utils::dummy_callback);
         let test_var = JsVar::new(JsType::JsPtr);
         let test_id = test_scope.push(test_var, Some(JsPtrEnum::JsSym(String::from("test"))));
         let (update, mut update_ptr) = test_scope.get_var_copy(&test_id);
@@ -211,5 +192,23 @@ mod tests {
             JsPtrEnum::JsStr(JsStrStruct{text: ref s}) => assert_eq!(s, "test"),
             _ => ()
         }
+    }
+
+    #[test]
+    fn test_transfer_stack() {
+        let alloc_box = utils::make_alloc_box();
+        let mut parent_scope = Scope::new(&alloc_box, utils::dummy_callback);
+        {
+            let mut test_scope = Scope::as_child(&mut parent_scope, &alloc_box, utils::dummy_callback);
+            test_scope.push(utils::make_num(0.), None);
+            test_scope.push(utils::make_num(1.), None);
+            test_scope.push(utils::make_num(2.), None);
+            let kvs = vec![(JsKey::new(JsKeyEnum::JsBool(true)),
+                            utils::make_num(1.))];
+            let (var, ptr) = utils::make_obj(kvs);
+            test_scope.push(var, Some(ptr));
+            test_scope.transfer_stack()
+        }
+        assert_eq!(parent_scope.stack.len(), 1);
     }
 }

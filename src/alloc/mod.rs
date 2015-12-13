@@ -124,19 +124,18 @@ impl AllocBox {
 mod tests {
     use super::*;
     use std::collections::hash_set::HashSet;
+
     use uuid::Uuid;
+
     use js_types::js_type::JsPtrEnum;
     use js_types::js_str::JsStrStruct;
-
-    fn make_str(s: &str) -> JsPtrEnum {
-        JsPtrEnum::JsStr(JsStrStruct::new(s))
-    }
+    use utils;
 
     #[test]
     fn test_len() {
         let mut ab = AllocBox::new();
         assert_eq!(ab.len(), 0);
-        ab.alloc(Uuid::new_v4(), make_str(""));
+        ab.alloc(Uuid::new_v4(), utils::make_str(""));
         assert_eq!(ab.len(), 1);
     }
 
@@ -145,9 +144,9 @@ mod tests {
         let id1 = Uuid::new_v4();
         let id2 = Uuid::new_v4();
         let id3 = Uuid::new_v4();
-        let _id1 = ab.alloc(id1.clone(), make_str(""));
-        let _id2 = ab.alloc(id2.clone(), make_str(""));
-        let _id3 = ab.alloc(id3.clone(), make_str(""));
+        let _id1 = ab.alloc(id1.clone(), utils::make_str(""));
+        let _id2 = ab.alloc(id2.clone(), utils::make_str(""));
+        let _id3 = ab.alloc(id3.clone(), utils::make_str(""));
 
         assert_eq!(id1, _id1);
         assert_eq!(id2, _id2);
@@ -159,9 +158,9 @@ mod tests {
         let id1 = Uuid::new_v4();
         let id2 = Uuid::new_v4();
         let id3 = Uuid::new_v4();
-        let id1 = ab.alloc(id1, make_str(""));
-        let id2 = ab.alloc(id2, make_str(""));
-        let id3 = ab.alloc(id3, make_str(""));
+        let id1 = ab.alloc(id1, utils::make_str(""));
+        let id2 = ab.alloc(id2, utils::make_str(""));
+        let id3 = ab.alloc(id3, utils::make_str(""));
 
         let mut marks = HashSet::new();
         marks.insert(id1); marks.insert(id2);
