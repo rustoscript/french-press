@@ -1,6 +1,7 @@
 use std::cell::RefCell;
 use std::collections::hash_map::{Entry, HashMap};
 use std::collections::hash_set::HashSet;
+use std::mem;
 use std::ptr::null_mut;
 use std::rc::Rc;
 
@@ -13,7 +14,7 @@ use js_types::js_type::{JsPtrEnum, JsType, JsVar};
 const GC_THRESHOLD: usize = 64;
 
 pub struct Scope {
-    pub parent: *mut Scope,
+    pub parent: Option<Box<Scope>>,
     alloc_box: Rc<RefCell<AllocBox>>,
     stack: HashMap<Uuid, JsVar>,
     pub get_roots: Box<Fn() -> HashSet<Uuid>>,
@@ -23,25 +24,25 @@ impl Scope {
     pub fn new<F>(alloc_box: &Rc<RefCell<AllocBox>>, get_roots: F) -> Scope
         where F: Fn() -> HashSet<Uuid> + 'static {
         Scope {
-            parent: null_mut(),
+            parent: None,
             alloc_box: alloc_box.clone(),
             stack: HashMap::new(),
             get_roots: Box::new(get_roots),
         }
     }
 
-    pub fn as_child<F>(parent: &mut Scope, alloc_box: &Rc<RefCell<AllocBox>>, get_roots: F) -> Scope
+    pub fn as_child<F>(parent: Scope, alloc_box: &Rc<RefCell<AllocBox>>, get_roots: F) -> Scope
         where F: Fn() -> HashSet<Uuid> + 'static {
         Scope {
-            parent: parent,
+            parent: Some(Box::new(parent)),
             alloc_box: alloc_box.clone(),
             stack: HashMap::new(),
             get_roots: Box::new(get_roots),
         }
     }
 
-    pub fn set_parent(&mut self, parent: &mut Scope) {
-        self.parent = parent;
+    pub fn set_parent(&mut self, parent: Scope) {
+        self.parent = Some(Box::new(parent));
     }
 
     fn alloc(&mut self, uuid: Uuid, ptr: JsPtrEnum) -> Uuid {
@@ -95,21 +96,24 @@ impl Scope {
         }
     }
 
-    // Ideally, this should just be an impl for `Drop`, but that's been giving me issues...
-    pub fn transfer_stack(&mut self) {
+    pub fn transfer_stack(&mut self) -> Option<Box<Scope>> {
         if self.alloc_box.borrow().len() > GC_THRESHOLD {
             self.alloc_box.borrow_mut().mark_roots((self.get_roots)());
             self.alloc_box.borrow_mut().mark_ptrs();
             self.alloc_box.borrow_mut().sweep_ptrs();
         }
-        for (_, var) in self.stack.drain() {
-            match var.t {
-                JsType::JsPtr => unsafe { (*self.parent).own(var) },
-                _ => (),
+        if let Some(ref mut parent) = self.parent {
+            for (_, var) in self.stack.drain() {
+                match var.t {
+                    JsType::JsPtr => parent.own(var),
+                    _ => (),
+                }
             }
         }
+        mem::replace(&mut self.parent, None)
     }
 }
+
 
 #[cfg(test)]
 mod tests {
@@ -130,25 +134,25 @@ mod tests {
     fn test_new_scope() {
         let alloc_box = utils::make_alloc_box();
         let mut test_scope = Scope::new(&alloc_box, utils::dummy_callback);
-        assert!(test_scope.parent.is_null());
+        assert!(test_scope.parent.is_none());
     }
 
     #[test]
     fn test_as_child_scope() {
         let alloc_box = utils::make_alloc_box();
-        let mut parent_scope = Scope::new(&alloc_box, utils::dummy_callback);
-        let mut test_scope = Scope::as_child(&mut parent_scope, &alloc_box, utils::dummy_callback);
-        assert!(!test_scope.parent.is_null());
+        let parent_scope = Scope::new(&alloc_box, utils::dummy_callback);
+        let mut test_scope = Scope::as_child(parent_scope, &alloc_box, utils::dummy_callback);
+        assert!(test_scope.parent.is_some());
     }
 
     #[test]
     fn test_set_parent() {
         let alloc_box = utils::make_alloc_box();
-        let mut parent_scope = Scope::new(&alloc_box, utils::dummy_callback);
+        let parent_scope = Scope::new(&alloc_box, utils::dummy_callback);
         let mut test_scope = Scope::new(&alloc_box, utils::dummy_callback);
-        assert!(test_scope.parent.is_null());
-        test_scope.set_parent(&mut parent_scope);
-        assert!(!test_scope.parent.is_null());
+        assert!(test_scope.parent.is_none());
+        test_scope.set_parent(parent_scope);
+        assert!(test_scope.parent.is_some());
     }
 
     #[test]
@@ -199,7 +203,7 @@ mod tests {
         let alloc_box = utils::make_alloc_box();
         let mut parent_scope = Scope::new(&alloc_box, utils::dummy_callback);
         {
-            let mut test_scope = Scope::as_child(&mut parent_scope, &alloc_box, utils::dummy_callback);
+            let mut test_scope = Scope::as_child(parent_scope, &alloc_box, utils::dummy_callback);
             test_scope.push(utils::make_num(0.), None);
             test_scope.push(utils::make_num(1.), None);
             test_scope.push(utils::make_num(2.), None);
@@ -207,7 +211,7 @@ mod tests {
                             utils::make_num(1.))];
             let (var, ptr) = utils::make_obj(kvs);
             test_scope.push(var, Some(ptr));
-            test_scope.transfer_stack()
+            parent_scope = *test_scope.transfer_stack().unwrap();
         }
         assert_eq!(parent_scope.stack.len(), 1);
     }

@@ -34,19 +34,14 @@ impl ScopeManager {
     }
 
     pub fn push_scope<F>(&mut self, callback: F) where F: Fn() -> HashSet<Uuid> + 'static {
-        self.curr_scope = Scope::as_child(&mut self.curr_scope, &self.alloc_box, callback);
+        let parent = mem::replace(&mut self.curr_scope, Scope::new(&self.alloc_box, callback));
+        self.curr_scope.set_parent(parent);
     }
 
     pub fn pop_scope(&mut self) {
-        if !(self.curr_scope).parent.is_null() {
-            unsafe {
-                //self.curr_scope.transfer_stack();
-                let ref mut parent = *(self.curr_scope.parent);
-                mem::swap(&mut self.curr_scope, parent);
-            }
-        } else {
-            panic!("Tried to pop to parent scope, but parent did not exist!");
-        }
+        let parent = self.curr_scope.transfer_stack();
+        mem::replace(&mut self.curr_scope,
+                     *parent.expect("Tried to pop to parent scope, but parent did not exist!"));
     }
 
     pub fn alloc(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Uuid {
@@ -106,5 +101,15 @@ mod tests {
         let mut test_num = utils::make_num(4.);
         test_num.uuid = test_id;
         assert!(mgr.store(test_num, None));
+    }
+
+    #[test]
+    fn test_pop_scope() {
+        let alloc_box = utils::make_alloc_box();
+        let mut mgr = ScopeManager::new(alloc_box, utils::dummy_callback);
+        mgr.push_scope(utils::dummy_callback);
+        assert!(mgr.curr_scope.parent.is_some());
+        mgr.pop_scope();
+        assert!(mgr.curr_scope.parent.is_none());
     }
 }
