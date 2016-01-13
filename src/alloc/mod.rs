@@ -125,19 +125,18 @@ impl AllocBox {
 mod tests {
     use super::*;
     use std::collections::hash_set::HashSet;
+
     use uuid::Uuid;
+
     use js_types::js_type::JsPtrEnum;
     use js_types::js_str::JsStrStruct;
-
-    fn make_str(s: &str) -> JsPtrEnum {
-        JsPtrEnum::JsStr(JsStrStruct::new(s))
-    }
+    use utils;
 
     #[test]
     fn test_len() {
         let mut ab = AllocBox::new();
         assert_eq!(ab.len(), 0);
-        ab.alloc(Uuid::new_v4(), make_str(""));
+        ab.alloc(Uuid::new_v4(), utils::make_str(""));
         assert_eq!(ab.len(), 1);
     }
 

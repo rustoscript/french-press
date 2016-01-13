@@ -1,14 +1,17 @@
 #![feature(associated_consts)]
-#![feature(drain)]
 
 extern crate uuid;
+extern crate jsrs_common;
 
-mod alloc;
+pub mod alloc;
+mod ast;
 mod gc_error;
-mod js_types;
+pub mod js_types;
+mod utils;
 
 use std::cell::RefCell;
 use std::collections::hash_set::HashSet;
+use std::mem;
 use std::rc::Rc;
 
 use uuid::Uuid;
@@ -20,7 +23,7 @@ use js_types::js_type::{JsPtrEnum, JsVar};
 
 
 pub struct ScopeManager {
-    curr_scope: Rc<Scope>,
+    curr_scope: Scope,
     alloc_box: Rc<RefCell<AllocBox>>
 }
 
@@ -28,13 +31,14 @@ impl ScopeManager {
     pub fn new<F>(alloc_box: Rc<RefCell<AllocBox>>, callback: F) -> ScopeManager
         where F: Fn() -> HashSet<Uuid> + 'static {
         ScopeManager {
-            curr_scope: Rc::new(Scope::new(&alloc_box, callback)),
+            curr_scope: Scope::new(&alloc_box, callback),
             alloc_box: alloc_box,
         }
     }
 
     pub fn push_scope<F>(&mut self, callback: F) where F: Fn() -> HashSet<Uuid> + 'static {
-        self.curr_scope = Rc::new(Scope::as_child(&self.curr_scope, &self.alloc_box, callback));
+        let parent = mem::replace(&mut self.curr_scope, Scope::new(&self.alloc_box, callback));
+        self.curr_scope.set_parent(parent);
     }
 
     pub fn pop_scope(&mut self) -> Result<(), GcError> {
@@ -75,10 +79,46 @@ pub fn init_gc<F>(callback: F) -> ScopeManager
 mod tests {
     use super::*;
     use std::collections::hash_set::HashSet;
+    use std::cell::RefCell;
+    use std::rc::Rc;
+
     use uuid::Uuid;
 
-    fn dummy_callback() -> HashSet<Uuid> {
-        HashSet::new()
+    use alloc::AllocBox;
+    use js_types::js_type::{JsType, JsVar};
+    use utils;
+
+    #[test]
+    fn test_alloc() {
+        let alloc_box = utils::make_alloc_box();
+        let mut mgr = ScopeManager::new(alloc_box, utils::dummy_callback);
+        mgr.alloc(utils::make_num(1.), None);
+        mgr.push_scope(utils::dummy_callback);
+        mgr.alloc(utils::make_num(2.), None);
+        assert_eq!(mgr.alloc_box.borrow().len(), 0);
     }
-    // TODO
+
+    #[test]
+    fn test_store() {
+        let alloc_box = utils::make_alloc_box();
+        let mut mgr = ScopeManager::new(alloc_box, utils::dummy_callback);
+        mgr.push_scope(utils::dummy_callback);
+        mgr.alloc(utils::make_num(1.), None);
+        let test_id = mgr.alloc(utils::make_num(2.), None);
+        mgr.alloc(utils::make_num(3.), None);
+
+        let mut test_num = utils::make_num(4.);
+        test_num.uuid = test_id;
+        assert!(mgr.store(test_num, None));
+    }
+
+    #[test]
+    fn test_pop_scope() {
+        let alloc_box = utils::make_alloc_box();
+        let mut mgr = ScopeManager::new(alloc_box, utils::dummy_callback);
+        mgr.push_scope(utils::dummy_callback);
+        assert!(mgr.curr_scope.parent.is_some());
+        mgr.pop_scope();
+        assert!(mgr.curr_scope.parent.is_none());
+    }
 }

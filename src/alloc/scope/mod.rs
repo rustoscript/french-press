@@ -1,6 +1,8 @@
 use std::cell::RefCell;
 use std::collections::hash_map::{Entry, HashMap};
 use std::collections::hash_set::HashSet;
+use std::mem;
+use std::ptr::null_mut;
 use std::rc::Rc;
 
 use uuid::Uuid;
@@ -13,47 +15,8 @@ use js_types::js_type::{JsPtrEnum, JsType, JsVar};
 const GC_THRESHOLD: usize = 64;
 
 pub struct Scope {
-    pub parent: Option<Rc<Scope>>,
+    pub parent: Option<Box<Scope>>,
     alloc_box: Rc<RefCell<AllocBox>>,
-    // TODO how should we save stack variables that are live-out from this scope
-    // frame? Push them up to our parent? There's also the problem of this scope
-    // needing access to its parent's variables that are on the stack, but right
-    // now the way that'd work is by traversing the scope tree upwards until you
-    // find what you're looking for, which is not the best solution. Also, how
-    // granular is a scope? Is an `if` block a new scope, or are new scopes only
-    // introduced by function calls (things that would actually introduce a new
-    // stack frame)?
-    //
-    // Perhaps a better way to think about it is like this: every scope owns some
-    // "stack allocator" object which contains *everything* allocated on the stack
-    // up until that point, including things allocated by the parent scope. When
-    // a new scope gets pushed, ownership of this object gets transferred to the
-    // new scope, which then returns ownership when it exits, deleting the set of
-    // things it allocated. This could even just be a list of arenas (where `list`
-    // is an ambiguous term; it might be an actual stack or a hash map or something),
-    // such that a scope can just drop its arena when it exits. Is that okay? What
-    // problems could that cause? Lookup is a bit harder, I suppose, since you'd
-    // have to search all arenas in the worst case. Maybe look into simonsapin's
-    // ArenaTree implementation? There's also still the problem of live-out references,
-    // as well as deleting things that get GC'd by making them `undefined`. Arenas
-    // might be too coarse-grained to solve either of those problems.
-    //
-    // How can we handle live-out references? They're taken care of under the
-    // hood in alloc_box, i.e. they don't get deleted. From the frontend, though,
-    // all stack allocations will get deleted from the current scope unless they
-    // get saved somewhere due to being live-out. POD values can be deleted safely,
-    // since they contain no references. Non-POD must be moved into ownership by
-    // the parent scope until they are GC'd, at which point the GC should tell
-    // this scope that those references are now `undef`. How do you reconsile
-    // the fact that a dead-out reference might not be considered as such until
-    // after the scope exits? Obviously, you can consider everything live-out
-    // unless the GC tells you it's not, but these pointers could in theory be
-    // used by a different scope, even if they die. I guess that's not really a
-    // problem, though, since usage makes you not dead anymore.
-    //
-    // So there we go. Delete all POD values when the scope exits, and pass all
-    // references to the parent to await GC (unless this scope invokes the GC,
-    // in which case they get marked as `undef` and die due to being POD.
     stack: HashMap<Uuid, JsVar>,
     pub get_roots: Box<Fn() -> HashSet<Uuid>>,
 }
@@ -69,18 +32,18 @@ impl Scope {
         }
     }
 
-    pub fn as_child<F>(parent: &Rc<Scope>, alloc_box: &Rc<RefCell<AllocBox>>, get_roots: F) -> Scope
+    pub fn as_child<F>(parent: Scope, alloc_box: &Rc<RefCell<AllocBox>>, get_roots: F) -> Scope
         where F: Fn() -> HashSet<Uuid> + 'static {
         Scope {
-            parent: Some(parent.clone()),
+            parent: Some(Box::new(parent)),
             alloc_box: alloc_box.clone(),
             stack: HashMap::new(),
             get_roots: Box::new(get_roots),
         }
     }
 
-    pub fn set_parent(&mut self, parent: &Rc<Scope>) {
-        self.parent = Some(parent.clone());
+    pub fn set_parent(&mut self, parent: Scope) {
+        self.parent = Some(Box::new(parent));
     }
 
     fn alloc(&mut self, uuid: Uuid, ptr: JsPtrEnum) -> Result<Uuid, GcError> {
@@ -137,10 +100,8 @@ impl Scope {
             },
         }
     }
-}
 
-impl Drop for Scope {
-    fn drop(&mut self) {
+    pub fn transfer_stack(&mut self) -> Option<Box<Scope>> {
         if self.alloc_box.borrow().len() > GC_THRESHOLD {
             self.alloc_box.borrow_mut().mark_roots((self.get_roots)());
             self.alloc_box.borrow_mut().mark_ptrs();
@@ -149,13 +110,15 @@ impl Drop for Scope {
         if let Some(ref mut parent) = self.parent {
             for (_, var) in self.stack.drain() {
                 match var.t {
-                    JsType::JsPtr => Rc::get_mut(parent).unwrap().own(var),
+                    JsType::JsPtr => parent.own(var),
                     _ => (),
                 }
             }
         }
+        mem::replace(&mut self.parent, None)
     }
 }
+
 
 #[cfg(test)]
 mod tests {
@@ -163,61 +126,44 @@ mod tests {
     use std::cell::RefCell;
     use std::collections::hash_set::HashSet;
     use std::rc::{Rc, Weak};
+
     use uuid::Uuid;
 
     use alloc::{Alloc, AllocBox};
     use js_types::js_type::{JsVar, JsType, JsPtrEnum, JsKey, JsKeyEnum};
     use js_types::js_obj::JsObjStruct;
     use js_types::js_str::JsStrStruct;
-
-    fn dummy_get_roots() -> HashSet<Uuid> {
-        HashSet::new()
-    }
-
-    fn make_alloc_box() -> Rc<RefCell<AllocBox>> {
-        Rc::new(RefCell::new(AllocBox::new()))
-    }
-
-    fn make_num(i: f64) -> JsVar {
-        JsVar::new(JsType::JsNum(i))
-    }
-
-    fn make_obj(alloc_box: Rc<RefCell<AllocBox>>, kvs: Vec<(JsKey, JsVar)>) -> JsVar {
-        let var = JsVar::new(JsType::JsPtr);
-        alloc_box.borrow_mut()
-            .alloc(var.uuid, JsPtrEnum::JsObj(JsObjStruct::new(None, "test", kvs)));
-        var
-    }
+    use utils;
 
     #[test]
     fn test_new_scope() {
-        let alloc_box = make_alloc_box();
-        let mut test_scope = Scope::new(&alloc_box, dummy_get_roots);
+        let alloc_box = utils::make_alloc_box();
+        let mut test_scope = Scope::new(&alloc_box, utils::dummy_callback);
         assert!(test_scope.parent.is_none());
     }
 
     #[test]
     fn test_as_child_scope() {
-        let alloc_box = make_alloc_box();
-        let parent_scope = Rc::new(Scope::new(&alloc_box, dummy_get_roots));
-        let mut test_scope = Scope::as_child(&parent_scope, &alloc_box, dummy_get_roots);
+        let alloc_box = utils::make_alloc_box();
+        let parent_scope = Scope::new(&alloc_box, utils::dummy_callback);
+        let mut test_scope = Scope::as_child(parent_scope, &alloc_box, utils::dummy_callback);
         assert!(test_scope.parent.is_some());
     }
 
     #[test]
     fn test_set_parent() {
-        let alloc_box = make_alloc_box();
-        let parent_scope = Rc::new(Scope::new(&alloc_box, dummy_get_roots));
-        let mut test_scope = Scope::new(&alloc_box, dummy_get_roots);
+        let alloc_box = utils::make_alloc_box();
+        let parent_scope = Scope::new(&alloc_box, utils::dummy_callback);
+        let mut test_scope = Scope::new(&alloc_box, utils::dummy_callback);
         assert!(test_scope.parent.is_none());
-        test_scope.set_parent(&parent_scope);
+        test_scope.set_parent(parent_scope);
         assert!(test_scope.parent.is_some());
     }
 
     #[test]
     fn test_alloc() {
-        let alloc_box = make_alloc_box();
-        let mut test_scope = Scope::new(&alloc_box, dummy_get_roots);
+        let alloc_box = utils::make_alloc_box();
+        let mut test_scope = Scope::new(&alloc_box, utils::dummy_callback);
         let test_var = JsVar::new(JsType::JsPtr);
         let test_id = test_scope.alloc(test_var.uuid, JsPtrEnum::JsSym(String::from("test"))).unwrap();
         assert_eq!(test_id, test_var.uuid);
@@ -225,8 +171,8 @@ mod tests {
 
     #[test]
     fn test_get_var_copy() {
-        let alloc_box = make_alloc_box();
-        let mut test_scope = Scope::new(&alloc_box, dummy_get_roots);
+        let alloc_box = utils::make_alloc_box();
+        let mut test_scope = Scope::new(&alloc_box, utils::dummy_callback);
         let test_var = JsVar::new(JsType::JsPtr);
         let test_id = test_scope.push(test_var, Some(JsPtrEnum::JsSym(String::from("test")))).unwrap();
         let bad_uuid = Uuid::new_v4();
@@ -242,8 +188,8 @@ mod tests {
 
     #[test]
     fn test_update_var() {
-        let alloc_box = make_alloc_box();
-        let mut test_scope = Scope::new(&alloc_box, dummy_get_roots);
+        let alloc_box = utils::make_alloc_box();
+        let mut test_scope = Scope::new(&alloc_box, utils::dummy_callback);
         let test_var = JsVar::new(JsType::JsPtr);
         let test_id = test_scope.push(test_var, Some(JsPtrEnum::JsSym(String::from("test")))).unwrap();
         let (update, mut update_ptr) = test_scope.get_var_copy(&test_id);
@@ -255,5 +201,23 @@ mod tests {
             JsPtrEnum::JsStr(JsStrStruct{text: ref s}) => assert_eq!(s, "test"),
             _ => ()
         }
+    }
+
+    #[test]
+    fn test_transfer_stack() {
+        let alloc_box = utils::make_alloc_box();
+        let mut parent_scope = Scope::new(&alloc_box, utils::dummy_callback);
+        {
+            let mut test_scope = Scope::as_child(parent_scope, &alloc_box, utils::dummy_callback);
+            test_scope.push(utils::make_num(0.), None);
+            test_scope.push(utils::make_num(1.), None);
+            test_scope.push(utils::make_num(2.), None);
+            let kvs = vec![(JsKey::new(JsKeyEnum::JsBool(true)),
+                            utils::make_num(1.))];
+            let (var, ptr) = utils::make_obj(kvs);
+            test_scope.push(var, Some(ptr));
+            parent_scope = *test_scope.transfer_stack().unwrap();
+        }
+        assert_eq!(parent_scope.stack.len(), 1);
     }
 }
