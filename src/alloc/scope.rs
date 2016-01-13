@@ -6,6 +6,7 @@ use std::rc::Rc;
 use uuid::Uuid;
 
 use alloc::AllocBox;
+use gc_error::GcError;
 use js_types::js_type::{JsPtrEnum, JsType, JsVar};
 
 // Tunable GC parameter. Probably should not be a constant, but good enough for now.
@@ -82,15 +83,19 @@ impl Scope {
         self.parent = Some(parent.clone());
     }
 
-    fn alloc(&mut self, uuid: Uuid, ptr: JsPtrEnum) -> Uuid {
+    fn alloc(&mut self, uuid: Uuid, ptr: JsPtrEnum) -> Result<Uuid, GcError> {
         self.alloc_box.borrow_mut().alloc(uuid, ptr)
     }
 
-    pub fn push(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Uuid {
+    pub fn push(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<Uuid, GcError> {
         let uuid = match &var.t {
-            &JsType::JsPtr => self.alloc(var.uuid, ptr.unwrap()),
-                //.expect("ERR: Attempted allocation of heap pointer, but pointer contents were invalid!"));
-            _ => var.uuid,
+            &JsType::JsPtr =>
+                if let Some(ptr) = ptr {
+                    self.alloc(var.uuid, ptr)
+                } else {
+                    Err(GcError::PtrError)
+                },
+            _ => Ok(var.uuid),
         };
         self.stack.insert(var.uuid, var);
         uuid
@@ -214,7 +219,7 @@ mod tests {
         let alloc_box = make_alloc_box();
         let mut test_scope = Scope::new(&alloc_box, dummy_get_roots);
         let test_var = JsVar::new(JsType::JsPtr);
-        let test_id = test_scope.alloc(test_var.uuid, JsPtrEnum::JsSym(String::from("test")));
+        let test_id = test_scope.alloc(test_var.uuid, JsPtrEnum::JsSym(String::from("test"))).unwrap();
         assert_eq!(test_id, test_var.uuid);
     }
 
@@ -223,7 +228,7 @@ mod tests {
         let alloc_box = make_alloc_box();
         let mut test_scope = Scope::new(&alloc_box, dummy_get_roots);
         let test_var = JsVar::new(JsType::JsPtr);
-        let test_id = test_scope.push(test_var, Some(JsPtrEnum::JsSym(String::from("test"))));
+        let test_id = test_scope.push(test_var, Some(JsPtrEnum::JsSym(String::from("test")))).unwrap();
         let bad_uuid = Uuid::new_v4();
 
         let (var_copy, ptr_copy) = test_scope.get_var_copy(&test_id);
@@ -240,7 +245,7 @@ mod tests {
         let alloc_box = make_alloc_box();
         let mut test_scope = Scope::new(&alloc_box, dummy_get_roots);
         let test_var = JsVar::new(JsType::JsPtr);
-        let test_id = test_scope.push(test_var, Some(JsPtrEnum::JsSym(String::from("test"))));
+        let test_id = test_scope.push(test_var, Some(JsPtrEnum::JsSym(String::from("test")))).unwrap();
         let (update, mut update_ptr) = test_scope.get_var_copy(&test_id);
         update_ptr = Some(JsPtrEnum::JsStr(JsStrStruct::new("test")));
         assert!(test_scope.update_var(update.unwrap(), update_ptr));

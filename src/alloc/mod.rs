@@ -5,6 +5,7 @@ use std::rc::Rc;
 
 use uuid::Uuid;
 
+use gc_error::GcError;
 use js_types::js_type::JsPtrEnum;
 
 pub mod scope;
@@ -30,14 +31,14 @@ impl AllocBox {
         self.black_set.len() + self.grey_set.len() + self.white_set.len()
     }
 
-    pub fn alloc(&mut self, uuid: Uuid, ptr: JsPtrEnum) -> Uuid {
+    pub fn alloc(&mut self, uuid: Uuid, ptr: JsPtrEnum) -> Result<Uuid, GcError> {
         if let None = self.white_set.insert(uuid, Rc::new(RefCell::new(ptr))) {
-            uuid
+            Ok(uuid)
         } else {
             // If a UUID already exists and we try to allocate it, this should
             // be an unrecoverable error. In practice, this shouldn't happen
             // unless the UUID generator creates a collision.
-            panic!("Allocation of UUID {} failed! UUID was already present in map!", uuid);
+            Err(GcError::AllocError(uuid))
         }
     }
 
@@ -145,9 +146,9 @@ mod tests {
         let id1 = Uuid::new_v4();
         let id2 = Uuid::new_v4();
         let id3 = Uuid::new_v4();
-        let _id1 = ab.alloc(id1.clone(), make_str(""));
-        let _id2 = ab.alloc(id2.clone(), make_str(""));
-        let _id3 = ab.alloc(id3.clone(), make_str(""));
+        let _id1 = ab.alloc(id1.clone(), make_str("")).unwrap();
+        let _id2 = ab.alloc(id2.clone(), make_str("")).unwrap();
+        let _id3 = ab.alloc(id3.clone(), make_str("")).unwrap();
 
         assert_eq!(id1, _id1);
         assert_eq!(id2, _id2);
@@ -159,9 +160,9 @@ mod tests {
         let id1 = Uuid::new_v4();
         let id2 = Uuid::new_v4();
         let id3 = Uuid::new_v4();
-        let id1 = ab.alloc(id1, make_str(""));
-        let id2 = ab.alloc(id2, make_str(""));
-        let id3 = ab.alloc(id3, make_str(""));
+        let id1 = ab.alloc(id1, make_str("")).unwrap();
+        let id2 = ab.alloc(id2, make_str("")).unwrap();
+        let id3 = ab.alloc(id3, make_str("")).unwrap();
 
         let mut marks = HashSet::new();
         marks.insert(id1); marks.insert(id2);
