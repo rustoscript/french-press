@@ -42,8 +42,9 @@ impl ScopeManager {
     }
 
     pub fn pop_scope(&mut self) -> Result<(), GcError> {
-        if let Some(parent) = self.curr_scope.parent.clone() {
-            self.curr_scope = parent;
+        let parent = self.curr_scope.transfer_stack();
+        if let Some(parent) = parent {
+            mem::replace(&mut self.curr_scope, *parent);
             Ok(())
         } else {
             Err(GcError::ScopeError)
@@ -51,7 +52,7 @@ impl ScopeManager {
     }
 
     pub fn alloc(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<Uuid, GcError> {
-        Rc::get_mut(&mut self.curr_scope).unwrap().push(var, ptr)
+        self.curr_scope.push(var, ptr)
     }
 
     pub fn load(&self, uuid: &Uuid) -> Result<(JsVar, Option<JsPtrEnum>), GcError> {
@@ -62,9 +63,7 @@ impl ScopeManager {
 
     pub fn store(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> bool {
         // TODO error handling here
-        Rc::get_mut(&mut self.curr_scope)
-            .expect("Tried to mutate current scope but was unable!")
-            .update_var(var, ptr)
+        self.curr_scope.update_var(var, ptr)
     }
 }
 
@@ -104,7 +103,7 @@ mod tests {
         let mut mgr = ScopeManager::new(alloc_box, utils::dummy_callback);
         mgr.push_scope(utils::dummy_callback);
         mgr.alloc(utils::make_num(1.), None);
-        let test_id = mgr.alloc(utils::make_num(2.), None);
+        let test_id = mgr.alloc(utils::make_num(2.), None).unwrap();
         mgr.alloc(utils::make_num(3.), None);
 
         let mut test_num = utils::make_num(4.);

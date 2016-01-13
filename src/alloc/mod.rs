@@ -145,9 +145,9 @@ mod tests {
         let id1 = Uuid::new_v4();
         let id2 = Uuid::new_v4();
         let id3 = Uuid::new_v4();
-        let _id1 = ab.alloc(id1.clone(), make_str("")).unwrap();
-        let _id2 = ab.alloc(id2.clone(), make_str("")).unwrap();
-        let _id3 = ab.alloc(id3.clone(), make_str("")).unwrap();
+        let _id1 = ab.alloc(id1.clone(), utils::make_str("")).unwrap();
+        let _id2 = ab.alloc(id2.clone(), utils::make_str("")).unwrap();
+        let _id3 = ab.alloc(id3.clone(), utils::make_str("")).unwrap();
 
         assert_eq!(id1, _id1);
         assert_eq!(id2, _id2);
@@ -159,9 +159,9 @@ mod tests {
         let id1 = Uuid::new_v4();
         let id2 = Uuid::new_v4();
         let id3 = Uuid::new_v4();
-        let id1 = ab.alloc(id1, make_str("")).unwrap();
-        let id2 = ab.alloc(id2, make_str("")).unwrap();
-        let id3 = ab.alloc(id3, make_str("")).unwrap();
+        let id1 = ab.alloc(id1, utils::make_str("")).unwrap();
+        let id2 = ab.alloc(id2, utils::make_str("")).unwrap();
+        let id3 = ab.alloc(id3, utils::make_str("")).unwrap();
 
         let mut marks = HashSet::new();
         marks.insert(id1); marks.insert(id2);
