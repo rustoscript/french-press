@@ -7,7 +7,7 @@ use uuid::Uuid;
 
 use js_types::js_type::{JsVar, JsKey};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct JsObjStruct {
     pub proto: JsProto,
     pub name: String,
