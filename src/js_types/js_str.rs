@@ -1,7 +1,7 @@
 use std::string::String;
 
 // `string`
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct JsStrStruct {
     pub text: String,
 }

@@ -7,7 +7,7 @@ use js_types::js_obj::JsObjStruct;
 use js_types::js_str::JsStrStruct;
 
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct JsVar {
     pub binding: Option<String>,
     pub uuid: Uuid,
@@ -44,14 +44,14 @@ impl PartialEq for JsVar {
 
 impl Eq for JsVar {}
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum JsPtrEnum {
     JsSym(String),
     JsStr(JsStrStruct),
     JsObj(JsObjStruct),
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum JsType {
     JsUndef,
     JsNum(f64),
@@ -78,7 +78,7 @@ impl PartialEq for JsType {
 
 impl Eq for JsType {}
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum JsKeyEnum {
     JsNum(f64),
     JsBool(bool),
@@ -86,7 +86,7 @@ pub enum JsKeyEnum {
     JsSym(String),
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct JsKey {
     pub uuid: Uuid,
     pub k: JsKeyEnum,
