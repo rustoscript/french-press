@@ -90,12 +90,14 @@ impl AllocBox {
                 self.black_set.get(uuid)))
     }
 
-    pub fn update_ptr(&mut self, uuid: &Uuid, ptr: JsPtrEnum) -> bool {
+    pub fn update_ptr(&mut self, uuid: &Uuid, ptr: JsPtrEnum) -> Result<Uuid, GcError> {
         if let Entry::Occupied(mut view) = self.find_id_mut(&uuid) {
             let inner = view.get_mut();
             *inner.borrow_mut() = ptr;
-            true
-        } else { false }
+            Ok(uuid.clone())
+        } else {
+            Err(GcError::StoreError)
+        }
     }
 
     fn grey_children(&mut self, child_ids: HashSet<Uuid>) {

@@ -87,16 +87,22 @@ impl Scope {
 
     // TODO is there a better way to encode ptr than as an option that is only
     // ever used when it is `Some`? Default argument?
-    pub fn update_var(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> bool {
+    pub fn update_var(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<Uuid, GcError> {
         match var.t {
-            JsType::JsPtr => self.alloc_box.borrow_mut()
-                                           .update_ptr(&var.uuid,
-                                                       ptr.expect("Pointer was None in Scope::update_var!")),
+            JsType::JsPtr =>
+                if let Some(ptr) = ptr {
+                    self.alloc_box.borrow_mut().update_ptr(&var.uuid, ptr)
+                } else {
+                    Err(GcError::PtrError)
+                },
             _ => {
                 if let Entry::Occupied(mut view) = self.stack.entry(var.uuid) {
+                    let ok = Ok(var.uuid.clone());
                     *view.get_mut() = var;
-                    true
-                } else { false }
+                    ok
+                } else {
+                    Err(GcError::StoreError)
+                }
             },
         }
     }

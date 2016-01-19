@@ -61,8 +61,7 @@ impl ScopeManager {
         } else { Err(GcError::LoadError(*uuid)) }
     }
 
-    pub fn store(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> bool {
-        // TODO error handling here
+    pub fn store(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<Uuid, GcError> {
         self.curr_scope.update_var(var, ptr)
     }
 }
