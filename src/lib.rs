@@ -76,23 +76,16 @@ pub fn init_gc<F>(callback: F) -> ScopeManager
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::collections::hash_set::HashSet;
-    use std::cell::RefCell;
-    use std::rc::Rc;
 
-    use uuid::Uuid;
-
-    use alloc::AllocBox;
-    use js_types::js_type::{JsType, JsVar};
     use utils;
 
     #[test]
     fn test_alloc() {
         let alloc_box = utils::make_alloc_box();
         let mut mgr = ScopeManager::new(alloc_box, utils::dummy_callback);
-        mgr.alloc(utils::make_num(1.), None);
+        mgr.alloc(utils::make_num(1.), None).unwrap();
         mgr.push_scope(utils::dummy_callback);
-        mgr.alloc(utils::make_num(2.), None);
+        mgr.alloc(utils::make_num(2.), None).unwrap();
         assert_eq!(mgr.alloc_box.borrow().len(), 0);
     }
 
@@ -101,13 +94,13 @@ mod tests {
         let alloc_box = utils::make_alloc_box();
         let mut mgr = ScopeManager::new(alloc_box, utils::dummy_callback);
         mgr.push_scope(utils::dummy_callback);
-        mgr.alloc(utils::make_num(1.), None);
+        mgr.alloc(utils::make_num(1.), None).unwrap();
         let test_id = mgr.alloc(utils::make_num(2.), None).unwrap();
-        mgr.alloc(utils::make_num(3.), None);
+        mgr.alloc(utils::make_num(3.), None).unwrap();
 
         let mut test_num = utils::make_num(4.);
         test_num.uuid = test_id;
-        assert!(mgr.store(test_num, None));
+        assert!(mgr.store(test_num, None).is_ok());
     }
 
     #[test]
@@ -116,7 +109,7 @@ mod tests {
         let mut mgr = ScopeManager::new(alloc_box, utils::dummy_callback);
         mgr.push_scope(utils::dummy_callback);
         assert!(mgr.curr_scope.parent.is_some());
-        mgr.pop_scope();
+        mgr.pop_scope().unwrap();
         assert!(mgr.curr_scope.parent.is_none());
     }
 }

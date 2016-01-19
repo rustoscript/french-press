@@ -1,3 +1,4 @@
+#![cfg(test)]
 use std::cell::RefCell;
 use std::collections::hash_set::HashSet;
 use std::rc::Rc;

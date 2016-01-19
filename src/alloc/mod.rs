@@ -130,18 +130,17 @@ mod tests {
 
     use uuid::Uuid;
 
-    use js_types::js_type::JsPtrEnum;
-    use js_types::js_str::JsStrStruct;
     use utils;
 
     #[test]
     fn test_len() {
         let mut ab = AllocBox::new();
         assert_eq!(ab.len(), 0);
-        ab.alloc(Uuid::new_v4(), utils::make_str(""));
+        ab.alloc(Uuid::new_v4(), utils::make_str("")).unwrap();
         assert_eq!(ab.len(), 1);
     }
 
+    #[test]
     fn test_alloc() {
         let mut ab = AllocBox::new();
         let id1 = Uuid::new_v4();
@@ -156,19 +155,16 @@ mod tests {
         assert_eq!(id3, _id3);
     }
 
+    #[test]
     fn test_mark_roots() {
         let mut ab = AllocBox::new();
         let id1 = Uuid::new_v4();
         let id2 = Uuid::new_v4();
-        let id3 = Uuid::new_v4();
         let id1 = ab.alloc(id1, utils::make_str("")).unwrap();
         let id2 = ab.alloc(id2, utils::make_str("")).unwrap();
-        let id3 = ab.alloc(id3, utils::make_str("")).unwrap();
 
         let mut marks = HashSet::new();
         marks.insert(id1); marks.insert(id2);
         ab.mark_roots(marks);
-
-
     }
 }

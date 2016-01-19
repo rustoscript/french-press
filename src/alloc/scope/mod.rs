@@ -2,7 +2,6 @@ use std::cell::RefCell;
 use std::collections::hash_map::{Entry, HashMap};
 use std::collections::hash_set::HashSet;
 use std::mem;
-use std::ptr::null_mut;
 use std::rc::Rc;
 
 use uuid::Uuid;
@@ -129,22 +128,17 @@ impl Scope {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::cell::RefCell;
-    use std::collections::hash_set::HashSet;
-    use std::rc::{Rc, Weak};
 
     use uuid::Uuid;
 
-    use alloc::{Alloc, AllocBox};
     use js_types::js_type::{JsVar, JsType, JsPtrEnum, JsKey, JsKeyEnum};
-    use js_types::js_obj::JsObjStruct;
     use js_types::js_str::JsStrStruct;
     use utils;
 
     #[test]
     fn test_new_scope() {
         let alloc_box = utils::make_alloc_box();
-        let mut test_scope = Scope::new(&alloc_box, utils::dummy_callback);
+        let test_scope = Scope::new(&alloc_box, utils::dummy_callback);
         assert!(test_scope.parent.is_none());
     }
 
@@ -152,7 +146,7 @@ mod tests {
     fn test_as_child_scope() {
         let alloc_box = utils::make_alloc_box();
         let parent_scope = Scope::new(&alloc_box, utils::dummy_callback);
-        let mut test_scope = Scope::as_child(parent_scope, &alloc_box, utils::dummy_callback);
+        let test_scope = Scope::as_child(parent_scope, &alloc_box, utils::dummy_callback);
         assert!(test_scope.parent.is_some());
     }
 
@@ -198,11 +192,11 @@ mod tests {
         let mut test_scope = Scope::new(&alloc_box, utils::dummy_callback);
         let test_var = JsVar::new(JsType::JsPtr);
         let test_id = test_scope.push(test_var, Some(JsPtrEnum::JsSym(String::from("test")))).unwrap();
-        let (update, mut update_ptr) = test_scope.get_var_copy(&test_id);
-        update_ptr = Some(JsPtrEnum::JsStr(JsStrStruct::new("test")));
-        assert!(test_scope.update_var(update.unwrap(), update_ptr));
+        let (update, _) = test_scope.get_var_copy(&test_id);
+        let update_ptr = Some(JsPtrEnum::JsStr(JsStrStruct::new("test")));
+        assert!(test_scope.update_var(update.unwrap(), update_ptr).is_ok());
 
-        let (update, update_ptr) = test_scope.get_var_copy(&test_id);
+        let (_, update_ptr) = test_scope.get_var_copy(&test_id);
         match update_ptr.clone().unwrap() {
             JsPtrEnum::JsStr(JsStrStruct{text: ref s}) => assert_eq!(s, "test"),
             _ => ()
@@ -215,13 +209,13 @@ mod tests {
         let mut parent_scope = Scope::new(&alloc_box, utils::dummy_callback);
         {
             let mut test_scope = Scope::as_child(parent_scope, &alloc_box, utils::dummy_callback);
-            test_scope.push(utils::make_num(0.), None);
-            test_scope.push(utils::make_num(1.), None);
-            test_scope.push(utils::make_num(2.), None);
+            test_scope.push(utils::make_num(0.), None).unwrap();
+            test_scope.push(utils::make_num(1.), None).unwrap();
+            test_scope.push(utils::make_num(2.), None).unwrap();
             let kvs = vec![(JsKey::new(JsKeyEnum::JsBool(true)),
                             utils::make_num(1.))];
             let (var, ptr) = utils::make_obj(kvs);
-            test_scope.push(var, Some(ptr));
+            test_scope.push(var, Some(ptr)).unwrap();
             parent_scope = *test_scope.transfer_stack().unwrap();
         }
         assert_eq!(parent_scope.stack.len(), 1);
