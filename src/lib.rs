@@ -77,7 +77,20 @@ pub fn init_gc<F>(callback: F) -> ScopeManager
 mod tests {
     use super::*;
 
+    use uuid;
+
     use utils;
+    use js_types::js_type::JsType;
+
+    #[test]
+    fn test_pop_scope() {
+        let alloc_box = utils::make_alloc_box();
+        let mut mgr = ScopeManager::new(alloc_box, utils::dummy_callback);
+        mgr.push_scope(utils::dummy_callback);
+        assert!(mgr.curr_scope.parent.is_some());
+        mgr.pop_scope().unwrap();
+        assert!(mgr.curr_scope.parent.is_none());
+    }
 
     #[test]
     fn test_alloc() {
@@ -87,6 +100,22 @@ mod tests {
         mgr.push_scope(utils::dummy_callback);
         mgr.alloc(utils::make_num(2.), None).unwrap();
         assert_eq!(mgr.alloc_box.borrow().len(), 0);
+    }
+
+    #[test]
+    fn test_load() {
+        let alloc_box = utils::make_alloc_box();
+        let mut mgr = ScopeManager::new(alloc_box, utils::dummy_callback);
+        let id1 = mgr.alloc(utils::make_num(1.), None).unwrap();
+        let load = mgr.load(&id1);
+        assert!(load.is_ok());
+        let load = load.unwrap();
+        match load.0.t {
+            JsType::JsNum(n) => assert_eq!(n, 1.),
+            _ => panic!("load result was not equal to value allocated!"),
+        }
+        assert!(load.1.is_none());
+        assert!(mgr.load(&uuid::Uuid::nil()).is_err());
     }
 
     #[test]
@@ -103,13 +132,4 @@ mod tests {
         assert!(mgr.store(test_num, None).is_ok());
     }
 
-    #[test]
-    fn test_pop_scope() {
-        let alloc_box = utils::make_alloc_box();
-        let mut mgr = ScopeManager::new(alloc_box, utils::dummy_callback);
-        mgr.push_scope(utils::dummy_callback);
-        assert!(mgr.curr_scope.parent.is_some());
-        mgr.pop_scope().unwrap();
-        assert!(mgr.curr_scope.parent.is_none());
-    }
 }
