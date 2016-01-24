@@ -4,13 +4,11 @@ extern crate uuid;
 extern crate jsrs_common;
 
 pub mod alloc;
-mod ast;
 mod gc_error;
 pub mod js_types;
 mod test_utils;
 
 use std::cell::RefCell;
-use std::collections::hash_set::HashSet;
 use std::mem;
 use std::rc::Rc;
 
@@ -21,20 +19,19 @@ use js_types::js_type::{JsPtrEnum, JsVar, Binding};
 
 pub struct ScopeManager {
     curr_scope: Scope,
-    alloc_box: Rc<RefCell<AllocBox>>
+    alloc_box: Rc<RefCell<AllocBox>>,
 }
 
 impl ScopeManager {
-    pub fn new<F>(alloc_box: Rc<RefCell<AllocBox>>, callback: F) -> ScopeManager
-        where F: Fn() -> HashSet<Binding> + 'static {
+    fn new(alloc_box: Rc<RefCell<AllocBox>>) -> ScopeManager {
         ScopeManager {
-            curr_scope: Scope::new(&alloc_box, callback),
+            curr_scope: Scope::new(&alloc_box),
             alloc_box: alloc_box,
         }
     }
 
-    pub fn push_scope<F>(&mut self, callback: F) where F: Fn() -> HashSet<Binding> + 'static {
-        let parent = mem::replace(&mut self.curr_scope, Scope::new(&self.alloc_box, callback));
+    pub fn push_scope(&mut self) {
+        let parent = mem::replace(&mut self.curr_scope, Scope::new(&self.alloc_box));
         self.curr_scope.set_parent(parent);
     }
 
@@ -63,10 +60,9 @@ impl ScopeManager {
     }
 }
 
-pub fn init_gc<F>(callback: F) -> ScopeManager
-    where F: Fn() -> HashSet<Binding> + 'static {
+pub fn init_gc() -> ScopeManager {
     let alloc_box = Rc::new(RefCell::new(AllocBox::new()));
-    ScopeManager::new(alloc_box, callback)
+    ScopeManager::new(alloc_box)
 }
 
 
@@ -80,8 +76,8 @@ mod tests {
     #[test]
     fn test_pop_scope() {
         let alloc_box = test_utils::make_alloc_box();
-        let mut mgr = ScopeManager::new(alloc_box, test_utils::dummy_callback);
-        mgr.push_scope(test_utils::dummy_callback);
+        let mut mgr = ScopeManager::new(alloc_box);
+        mgr.push_scope();
         assert!(mgr.curr_scope.parent.is_some());
         mgr.pop_scope().unwrap();
         assert!(mgr.curr_scope.parent.is_none());
@@ -90,9 +86,9 @@ mod tests {
     #[test]
     fn test_alloc() {
         let alloc_box = test_utils::make_alloc_box();
-        let mut mgr = ScopeManager::new(alloc_box, test_utils::dummy_callback);
+        let mut mgr = ScopeManager::new(alloc_box);
         mgr.alloc(test_utils::make_num(1.), None).unwrap();
-        mgr.push_scope(test_utils::dummy_callback);
+        mgr.push_scope();
         mgr.alloc(test_utils::make_num(2.), None).unwrap();
         assert_eq!(mgr.alloc_box.borrow().len(), 0);
     }
@@ -100,7 +96,7 @@ mod tests {
     #[test]
     fn test_load() {
         let alloc_box = test_utils::make_alloc_box();
-        let mut mgr = ScopeManager::new(alloc_box, test_utils::dummy_callback);
+        let mut mgr = ScopeManager::new(alloc_box);
         let x = test_utils::make_num(1.);
         let x_bnd = x.binding.clone();
         mgr.alloc(x, None).unwrap();
@@ -118,8 +114,8 @@ mod tests {
     #[test]
     fn test_store() {
         let alloc_box = test_utils::make_alloc_box();
-        let mut mgr = ScopeManager::new(alloc_box, test_utils::dummy_callback);
-        mgr.push_scope(test_utils::dummy_callback);
+        let mut mgr = ScopeManager::new(alloc_box,);
+        mgr.push_scope();
         let x = test_utils::make_num(1.);
         let x_bnd = x.binding.clone();
         mgr.alloc(x, None).unwrap();
