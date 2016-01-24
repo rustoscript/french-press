@@ -84,6 +84,14 @@ impl Scope {
         } else { (None, None) }
     }
 
+    pub fn get_var_binding(&self, uuid: &Uuid) -> Option<String> {
+        if let Some(var) = self.stack.get(uuid) {
+            var.binding.clone()
+        } else {
+            None
+        }
+    }
+
     // TODO is there a better way to encode ptr than as an option that is only
     // ever used when it is `Some`? Default argument?
     pub fn update_var(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<Uuid, GcError> {
