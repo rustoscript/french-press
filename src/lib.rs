@@ -14,8 +14,6 @@ use std::collections::hash_set::HashSet;
 use std::mem;
 use std::rc::Rc;
 
-use uuid::Uuid;
-
 use alloc::AllocBox;
 use alloc::scope::Scope;
 use gc_error::GcError;
@@ -28,14 +26,14 @@ pub struct ScopeManager {
 
 impl ScopeManager {
     pub fn new<F>(alloc_box: Rc<RefCell<AllocBox>>, callback: F) -> ScopeManager
-        where F: Fn() -> HashSet<Uuid> + 'static {
+        where F: Fn() -> HashSet<Binding> + 'static {
         ScopeManager {
             curr_scope: Scope::new(&alloc_box, callback),
             alloc_box: alloc_box,
         }
     }
 
-    pub fn push_scope<F>(&mut self, callback: F) where F: Fn() -> HashSet<Uuid> + 'static {
+    pub fn push_scope<F>(&mut self, callback: F) where F: Fn() -> HashSet<Binding> + 'static {
         let parent = mem::replace(&mut self.curr_scope, Scope::new(&self.alloc_box, callback));
         self.curr_scope.set_parent(parent);
     }
@@ -60,17 +58,13 @@ impl ScopeManager {
         } else { Err(GcError::LoadError(bnd.clone())) }
     }
 
-    pub fn get_var_binding(&self, uuid: &Uuid) -> Option<String> {
-        self.curr_scope.get_var_binding(uuid)
-    }
-
     pub fn store(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<(), GcError> {
         self.curr_scope.update_var(var, ptr)
     }
 }
 
 pub fn init_gc<F>(callback: F) -> ScopeManager
-    where F: Fn() -> HashSet<Uuid> + 'static {
+    where F: Fn() -> HashSet<Binding> + 'static {
     let alloc_box = Rc::new(RefCell::new(AllocBox::new()));
     ScopeManager::new(alloc_box, callback)
 }

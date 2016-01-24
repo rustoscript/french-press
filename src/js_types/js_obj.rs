@@ -3,9 +3,7 @@ use std::collections::hash_set::HashSet;
 use std::string::String;
 use std::vec::Vec;
 
-use uuid::Uuid;
-
-use js_types::js_type::{JsVar, JsKey};
+use js_types::js_type::{Binding, JsVar, JsKey};
 
 #[derive(Clone, Debug)]
 pub struct JsObjStruct {
@@ -27,8 +25,8 @@ impl JsObjStruct {
         self.dict.insert(k, v);
     }
 
-    pub fn get_children(&self) -> HashSet<Uuid> {
-        self.dict.values().map(|v| v.uuid).collect()
+    pub fn get_children(&self) -> HashSet<Binding> {
+        self.dict.values().map(|v| v.binding.clone()).collect()
     }
 }
 

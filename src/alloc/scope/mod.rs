@@ -4,8 +4,6 @@ use std::collections::hash_set::HashSet;
 use std::mem;
 use std::rc::Rc;
 
-use uuid::Uuid;
-
 use alloc::AllocBox;
 use gc_error::GcError;
 use js_types::js_type::{JsPtrEnum, JsType, JsVar, Binding};
@@ -13,57 +11,31 @@ use js_types::js_type::{JsPtrEnum, JsType, JsVar, Binding};
 // Tunable GC parameter. Probably should not be a constant, but good enough for now.
 const GC_THRESHOLD: usize = 64;
 
-struct BindingMap {
-    bindings: HashMap<Binding, Uuid>,
-    vars: HashMap<Uuid, JsVar>,
-}
-
-impl BindingMap {
-    fn new() -> BindingMap {
-        BindingMap {
-            bindings: HashMap::new(),
-            vars: HashMap::new(),
-        }
-    }
-
-    fn insert(&mut self, var: JsVar) {
-        self.bindings.insert(var.binding.clone(), var.uuid);
-        self.vars.insert(var.uuid.clone(), var);
-    }
-
-    fn get_binding(&self, bnd: &Binding) -> (Option<&JsVar>, Option<&Uuid>) {
-        if let Some(uuid) = self.bindings.get(bnd) {
-            (self.vars.get(uuid), Some(uuid))
-        } else {
-            (None, None)
-        }
-    }
-}
 
 pub struct Scope {
     pub parent: Option<Box<Scope>>,
     alloc_box: Rc<RefCell<AllocBox>>,
-    stack: BindingMap,
-    pub get_roots: Box<Fn() -> HashSet<Uuid>>,
+    stack: HashMap<Binding, JsVar>,
+    pub get_roots: Box<Fn() -> HashSet<Binding>>,
 }
 
 impl Scope {
     pub fn new<F>(alloc_box: &Rc<RefCell<AllocBox>>, get_roots: F) -> Scope
-        where F: Fn() -> HashSet<Uuid> + 'static {
+        where F: Fn() -> HashSet<Binding> + 'static {
         Scope {
             parent: None,
             alloc_box: alloc_box.clone(),
-            stack: BindingMap::new(),
+            stack: HashMap::new(),
             get_roots: Box::new(get_roots),
         }
     }
 
     pub fn as_child<F>(parent: Scope, alloc_box: &Rc<RefCell<AllocBox>>, get_roots: F) -> Scope
-        where F: Fn() -> HashSet<Uuid> + 'static {
+        where F: Fn() -> HashSet<Binding> + 'static {
         Scope {
             parent: Some(Box::new(parent)),
             alloc_box: alloc_box.clone(),
-            stack: BindingMap::new(),
+            stack: HashMap::new(),
             get_roots: Box::new(get_roots),
         }
     }
@@ -72,33 +44,33 @@ impl Scope {
         self.parent = Some(Box::new(parent));
     }
 
-    fn alloc(&mut self, uuid: Uuid, ptr: JsPtrEnum) -> Result<(), GcError> {
-        self.alloc_box.borrow_mut().alloc(uuid, ptr)
+    fn alloc(&mut self, binding: Binding, ptr: JsPtrEnum) -> Result<(), GcError> {
+        self.alloc_box.borrow_mut().alloc(binding, ptr)
     }
 
     pub fn push(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<(), GcError> {
         let res = match &var.t {
             &JsType::JsPtr =>
                 if let Some(ptr) = ptr {
-                    self.alloc(var.uuid, ptr)
+                    self.alloc(var.binding.clone(), ptr)
                 } else {
                     return Err(GcError::PtrError);
                 },
             _ => Ok(()),
         };
-        self.stack.insert(var);
+        self.stack.insert(var.binding.clone(), var);
         res
     }
 
     pub fn own(&mut self, var: JsVar) {
-        self.stack.insert(var);
+        self.stack.insert(var.binding.clone(), var);
     }
 
     pub fn get_var_copy(&self, bnd: &Binding) -> (Option<JsVar>, Option<JsPtrEnum>) {
-        if let (Some(var), Some(uuid)) = self.stack.get_binding(bnd) {
+        if let Some(var) = self.stack.get(bnd) {
             match var.t {
                 JsType::JsPtr => {
-                    if let Some(alloc) = self.alloc_box.borrow().find_id(uuid) {
+                    if let Some(alloc) = self.alloc_box.borrow().find_id(bnd) {
                         (Some(var.clone()), Some(alloc.borrow().clone()))
                     } else {
                         // This case should be impossible unless you have an
@@ -111,26 +83,16 @@ impl Scope {
         } else { (None, None) }
     }
 
-    pub fn get_var_binding(&self, uuid: &Uuid) -> Binding {
-        if let Some(var) = self.stack.vars.get(uuid) {
-            var.binding.clone()
-        } else {
-            None
-        }
-    }
-
-    // TODO is there a better way to encode ptr than as an option that is only
-    // ever used when it is `Some`? Default argument?
     pub fn update_var(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<(), GcError> {
         match var.t {
             JsType::JsPtr =>
                 if let Some(ptr) = ptr {
-                    self.alloc_box.borrow_mut().update_ptr(&var.uuid, ptr)
+                    self.alloc_box.borrow_mut().update_ptr(&var.binding, ptr)
                 } else {
                     Err(GcError::PtrError)
                 },
             _ => {
-                if let Entry::Occupied(mut view) = self.stack.vars.entry(var.uuid) {
+                if let Entry::Occupied(mut view) = self.stack.entry(var.binding.clone()) {
                     *view.get_mut() = var;
                     Ok(())
                 } else {
@@ -147,8 +109,9 @@ impl Scope {
             self.alloc_box.borrow_mut().sweep_ptrs();
         }
         if let Some(ref mut parent) = self.parent {
-            for (_, var) in self.stack.vars.drain() {
+            for (_, var) in self.stack.drain() {
                 match var.t {
+                    // TODO binding mangling here
                     JsType::JsPtr => parent.own(var),
                     _ => (),
                 }

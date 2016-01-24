@@ -1,3 +1,4 @@
+use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::string::String;
 
@@ -6,28 +7,46 @@ use uuid::Uuid;
 use js_types::js_obj::JsObjStruct;
 use js_types::js_str::JsStrStruct;
 
-pub type Binding = Option<String>;
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+pub struct Binding(String);
 
 #[derive(Clone, Debug)]
 pub struct JsVar {
     pub binding: Binding,
-    pub uuid: Uuid,
     pub t: JsType,
+}
+
+impl Binding {
+    pub fn new(s: &str) -> Binding {
+        Binding(s.to_string())
+    }
+
+    pub fn mangle(s: &str) -> Binding {
+        Binding(String::from("%___") +  s +  "___" + &Uuid::new_v4().to_simple_string())
+    }
+
+    pub fn anon() -> Binding {
+        Binding::mangle(">anon_js_var<")
+    }
+}
+
+impl fmt::Display for Binding {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self)
+    }
 }
 
 impl JsVar {
     pub fn new(t: JsType) -> JsVar {
         JsVar {
-            binding: None,
-            uuid: Uuid::new_v4(),
+            binding: Binding::anon(),
             t: t,
         }
     }
 
     pub fn bind(binding: &str, t: JsType) -> JsVar {
         JsVar {
-            binding: Some(String::from(binding)),
-            uuid: Uuid::new_v4(),
+            binding: Binding::new(binding),
             t: t,
         }
     }
@@ -35,7 +54,7 @@ impl JsVar {
 
 impl PartialEq for JsVar {
     fn eq(&self, other: &Self) -> bool {
-        self.uuid == other.uuid
+        self.binding == other.binding
     }
 
     fn ne(&self, other: &Self) -> bool {
@@ -89,14 +108,14 @@ pub enum JsKeyEnum {
 
 #[derive(Clone, Debug)]
 pub struct JsKey {
-    pub uuid: Uuid,
+    pub binding: Binding,
     pub k: JsKeyEnum,
 }
 
 impl JsKey {
     pub fn new(k: JsKeyEnum) -> JsKey {
         JsKey {
-            uuid: Uuid::new_v4(),
+            binding: Binding::anon(),
             k: k,
         }
     }
@@ -104,7 +123,7 @@ impl JsKey {
 
 impl PartialEq for JsKey {
     fn eq(&self, other: &Self) -> bool {
-        self.uuid == other.uuid
+        self.binding == other.binding
     }
 
     fn ne(&self, other: &Self) -> bool {
@@ -116,12 +135,12 @@ impl Eq for JsKey {}
 
 impl Hash for JsKey {
     fn hash<H>(&self, state: &mut H) where H: Hasher {
-        self.uuid.hash(state);
+        self.binding.hash(state);
     }
 
     fn hash_slice<H>(data: &[Self], state: &mut H) where H: Hasher {
         for ref d in data {
-            d.uuid.hash(state);
+            d.binding.hash(state);
         }
     }
 }
@@ -129,3 +148,4 @@ impl Hash for JsKey {
 
 // `array`
 pub type JsArr = Vec<JsType>;
+

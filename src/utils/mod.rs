@@ -3,14 +3,12 @@ use std::cell::RefCell;
 use std::collections::hash_set::HashSet;
 use std::rc::Rc;
 
-use uuid::Uuid;
-
 use alloc::AllocBox;
 use js_types::js_obj::JsObjStruct;
 use js_types::js_str::JsStrStruct;
-use js_types::js_type::{JsKey, JsPtrEnum, JsType, JsVar};
+use js_types::js_type::{Binding, JsKey, JsPtrEnum, JsType, JsVar};
 
-pub fn dummy_callback() -> HashSet<Uuid> {
+pub fn dummy_callback() -> HashSet<Binding> {
     HashSet::new()
 }
 

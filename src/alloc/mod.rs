@@ -3,19 +3,17 @@ use std::collections::hash_map::{Entry, HashMap};
 use std::collections::hash_set::HashSet;
 use std::rc::Rc;
 
-use uuid::Uuid;
-
 use gc_error::GcError;
-use js_types::js_type::JsPtrEnum;
+use js_types::js_type::{Binding, JsPtrEnum};
 
 pub mod scope;
 
 pub type Alloc<T> = Rc<RefCell<T>>;
 
 pub struct AllocBox {
-    black_set: HashMap<Uuid, Alloc<JsPtrEnum>>,
-    grey_set: HashMap<Uuid, Alloc<JsPtrEnum>>,
-    white_set: HashMap<Uuid, Alloc<JsPtrEnum>>,
+    black_set: HashMap<Binding, Alloc<JsPtrEnum>>,
+    grey_set: HashMap<Binding, Alloc<JsPtrEnum>>,
+    white_set: HashMap<Binding, Alloc<JsPtrEnum>>,
 }
 
 impl AllocBox {
@@ -31,18 +29,17 @@ impl AllocBox {
         self.black_set.len() + self.grey_set.len() + self.white_set.len()
     }
 
-    pub fn alloc(&mut self, uuid: Uuid, ptr: JsPtrEnum) -> Result<(), GcError> {
-        if let None = self.white_set.insert(uuid, Rc::new(RefCell::new(ptr))) {
+    pub fn alloc(&mut self, binding: Binding, ptr: JsPtrEnum) -> Result<(), GcError> {
+        if let None = self.white_set.insert(binding.clone(), Rc::new(RefCell::new(ptr))) {
             Ok(())
         } else {
-            // If a UUID already exists and we try to allocate it, this should
-            // be an unrecoverable error. In practice, this shouldn't happen
-            // unless the UUID generator creates a collision.
-            Err(GcError::AllocError(uuid))
+            // If a binding already exists and we try to allocate it, this should
+            // be an unrecoverable error.
+            Err(GcError::AllocError(binding))
         }
     }
 
-    pub fn mark_roots(&mut self, marks: HashSet<Uuid>) {
+    pub fn mark_roots(&mut self, marks: HashSet<Binding>) {
         for mark in marks {
             if let Some(ptr) = self.white_set.remove(&mark) {
                 // Get all child references
@@ -65,9 +62,9 @@ impl AllocBox {
     pub fn mark_ptrs(&mut self) {
         // Mark any grey object as black, and mark all white objs it refs as grey
         let mut new_grey_set = HashMap::new();
-        for (uuid, var) in self.grey_set.drain() {
+        for (bnd, var) in self.grey_set.drain() {
             let child_ids = AllocBox::get_ptr_children(&var);
-            self.black_set.insert(uuid, var);
+            self.black_set.insert(bnd, var);
             for child_id in child_ids {
                 if let Some(var) = self.white_set.remove(&child_id) {
                     new_grey_set.insert(child_id, var);
@@ -84,14 +81,14 @@ impl AllocBox {
         self.black_set = HashMap::new();
     }
 
-    pub fn find_id(&self, uuid: &Uuid) -> Option<&Alloc<JsPtrEnum>> {
-        self.white_set.get(uuid).or(
-            self.grey_set.get(uuid).or(
-                self.black_set.get(uuid)))
+    pub fn find_id(&self, bnd: &Binding) -> Option<&Alloc<JsPtrEnum>> {
+        self.white_set.get(bnd).or(
+            self.grey_set.get(bnd).or(
+                self.black_set.get(bnd)))
     }
 
-    pub fn update_ptr(&mut self, uuid: &Uuid, ptr: JsPtrEnum) -> Result<(), GcError> {
-        if let Entry::Occupied(mut view) = self.find_id_mut(&uuid) {
+    pub fn update_ptr(&mut self, binding: &Binding, ptr: JsPtrEnum) -> Result<(), GcError> {
+        if let Entry::Occupied(mut view) = self.find_id_mut(binding) {
             let inner = view.get_mut();
             *inner.borrow_mut() = ptr;
             Ok(())
@@ -100,26 +97,26 @@ impl AllocBox {
         }
     }
 
-    fn grey_children(&mut self, child_ids: HashSet<Uuid>) {
-        for child_id in child_ids.iter() {
-            if let Some(var) = self.white_set.remove(child_id) {
-                self.grey_set.insert(*child_id, var);
+    fn grey_children(&mut self, child_ids: HashSet<Binding>) {
+        for child_id in child_ids {
+            if let Some(var) = self.white_set.remove(&child_id) {
+                self.grey_set.insert(child_id, var);
             }
         }
     }
 
-    fn get_ptr_children(ptr: &Alloc<JsPtrEnum>) -> HashSet<Uuid> {
+    fn get_ptr_children(ptr: &Alloc<JsPtrEnum>) -> HashSet<Binding> {
         if let JsPtrEnum::JsObj(ref obj) = *ptr.borrow() {
             obj.get_children()
         } else { HashSet::new() }
     }
 
-    fn find_id_mut(&mut self, uuid: &Uuid) -> Entry<Uuid, Alloc<JsPtrEnum>> {
-        if let e @ Entry::Occupied(_) = self.white_set.entry(*uuid) {
+    fn find_id_mut(&mut self, bnd: &Binding) -> Entry<Binding, Alloc<JsPtrEnum>> {
+        if let e @ Entry::Occupied(_) = self.white_set.entry(bnd.clone()) {
             e
-        } else if let e @ Entry::Occupied(_) = self.grey_set.entry(*uuid) {
+        } else if let e @ Entry::Occupied(_) = self.grey_set.entry(bnd.clone()) {
             e
-        } else { self.black_set.entry(*uuid) }
+        } else { self.black_set.entry(bnd.clone()) }
     }
 }
 
