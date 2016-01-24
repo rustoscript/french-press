@@ -62,7 +62,7 @@ impl ScopeManager {
     }
 
     pub fn get_var_binding(&self, uuid: &Uuid) -> Option<String> {
-        self.curr_scope.get_var_binding()
+        self.curr_scope.get_var_binding(uuid)
     }
 
     pub fn store(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<Uuid, GcError> {
