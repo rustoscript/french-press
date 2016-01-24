@@ -39,20 +39,20 @@ impl AllocBox {
         }
     }
 
-    pub fn mark_roots(&mut self, marks: HashSet<Binding>) {
+    pub fn mark_roots(&mut self, marks: &HashSet<Binding>) {
         for mark in marks {
-            if let Some(ptr) = self.white_set.remove(&mark) {
+            if let Some(ptr) = self.white_set.remove(mark) {
                 // Get all child references
                 let child_ids = AllocBox::get_ptr_children(&ptr);
                 // Mark current ref as black
-                self.black_set.insert(mark, ptr);
+                self.black_set.insert(mark.clone(), ptr);
                 // Mark child references as grey
                 self.grey_children(child_ids);
             } else if let Some(ptr) = self.grey_set.remove(&mark) {
                 // Get all child references
                 let child_ids = AllocBox::get_ptr_children(&ptr);
                 // Mark current ref as black
-                self.black_set.insert(mark, ptr);
+                self.black_set.insert(mark.clone(), ptr);
                 // Mark child references as grey
                 self.grey_children(child_ids);
             }
@@ -158,7 +158,7 @@ mod tests {
 
         let mut marks = HashSet::new();
         marks.insert(x_bnd.clone()); marks.insert(y_bnd.clone());
-        ab.mark_roots(marks);
+        ab.mark_roots(&marks);
         assert!(ab.black_set.contains_key(&x_bnd));
         assert!(ab.black_set.contains_key(&y_bnd));
     }
