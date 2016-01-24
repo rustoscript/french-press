@@ -111,8 +111,15 @@ impl Scope {
         if let Some(ref mut parent) = self.parent {
             for (_, var) in self.stack.drain() {
                 match var.t {
-                    // TODO binding mangling here
-                    JsType::JsPtr => parent.own(var),
+                    JsType::JsPtr => {
+                        // Mangle each binding before giving it to the parent
+                        // scope. This avoids binding collisions, and helps
+                        // identify to a human observer which bindings are
+                        // not from the current scope.
+                        let mut mangled_var = var.clone();
+                        mangled_var.binding = Binding::mangle(var.binding);
+                        parent.own(mangled_var);
+                    }
                     _ => (),
                 }
             }

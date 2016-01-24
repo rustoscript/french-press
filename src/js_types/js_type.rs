@@ -10,23 +10,18 @@ use js_types::js_str::JsStrStruct;
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct Binding(String);
 
-#[derive(Clone, Debug)]
-pub struct JsVar {
-    pub binding: Binding,
-    pub t: JsType,
-}
-
 impl Binding {
     pub fn new(s: &str) -> Binding {
         Binding(s.to_string())
     }
 
-    pub fn mangle(s: &str) -> Binding {
-        Binding(String::from("%___") +  s +  "___" + &Uuid::new_v4().to_simple_string())
+    pub fn mangle(b: Binding) -> Binding {
+        let Binding(s) = b;
+        Binding(String::from("%___") +  &s +  "___%" + &Uuid::new_v4().to_simple_string())
     }
 
     pub fn anon() -> Binding {
-        Binding::mangle(">anon_js_var<")
+        Binding::mangle(Binding::new(">anon_js_var<"))
     }
 }
 
@@ -34,6 +29,12 @@ impl fmt::Display for Binding {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self)
     }
+}
+
+#[derive(Clone, Debug)]
+pub struct JsVar {
+    pub binding: Binding,
+    pub t: JsType,
 }
 
 impl JsVar {
