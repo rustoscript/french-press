@@ -31,9 +31,9 @@ impl AllocBox {
         self.black_set.len() + self.grey_set.len() + self.white_set.len()
     }
 
-    pub fn alloc(&mut self, uuid: Uuid, ptr: JsPtrEnum) -> Result<Uuid, GcError> {
+    pub fn alloc(&mut self, uuid: Uuid, ptr: JsPtrEnum) -> Result<(), GcError> {
         if let None = self.white_set.insert(uuid, Rc::new(RefCell::new(ptr))) {
-            Ok(uuid)
+            Ok(())
         } else {
             // If a UUID already exists and we try to allocate it, this should
             // be an unrecoverable error. In practice, this shouldn't happen
@@ -90,11 +90,11 @@ impl AllocBox {
                 self.black_set.get(uuid)))
     }
 
-    pub fn update_ptr(&mut self, uuid: &Uuid, ptr: JsPtrEnum) -> Result<Uuid, GcError> {
+    pub fn update_ptr(&mut self, uuid: &Uuid, ptr: JsPtrEnum) -> Result<(), GcError> {
         if let Entry::Occupied(mut view) = self.find_id_mut(&uuid) {
             let inner = view.get_mut();
             *inner.borrow_mut() = ptr;
-            Ok(uuid.clone())
+            Ok(())
         } else {
             Err(GcError::StoreError)
         }

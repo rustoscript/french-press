@@ -6,10 +6,11 @@ use uuid::Uuid;
 use js_types::js_obj::JsObjStruct;
 use js_types::js_str::JsStrStruct;
 
+pub type Binding = Option<String>;
 
 #[derive(Clone, Debug)]
 pub struct JsVar {
-    pub binding: Option<String>,
+    pub binding: Binding,
     pub uuid: Uuid,
     pub t: JsType,
 }

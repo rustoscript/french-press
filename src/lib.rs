@@ -19,8 +19,7 @@ use uuid::Uuid;
 use alloc::AllocBox;
 use alloc::scope::Scope;
 use gc_error::GcError;
-use js_types::js_type::{JsPtrEnum, JsVar};
-
+use js_types::js_type::{JsPtrEnum, JsVar, Binding};
 
 pub struct ScopeManager {
     curr_scope: Scope,
@@ -51,21 +50,21 @@ impl ScopeManager {
         }
     }
 
-    pub fn alloc(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<Uuid, GcError> {
+    pub fn alloc(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<(), GcError> {
         self.curr_scope.push(var, ptr)
     }
 
-    pub fn load(&self, uuid: &Uuid) -> Result<(JsVar, Option<JsPtrEnum>), GcError> {
-        if let (Some(v), ptr) = self.curr_scope.get_var_copy(uuid) {
+    pub fn load(&self, bnd: &Binding) -> Result<(JsVar, Option<JsPtrEnum>), GcError> {
+        if let (Some(v), ptr) = self.curr_scope.get_var_copy(bnd) {
             Ok((v, ptr))
-        } else { Err(GcError::LoadError(*uuid)) }
+        } else { Err(GcError::LoadError(bnd.clone())) }
     }
 
     pub fn get_var_binding(&self, uuid: &Uuid) -> Option<String> {
         self.curr_scope.get_var_binding(uuid)
     }
 
-    pub fn store(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<Uuid, GcError> {
+    pub fn store(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<(), GcError> {
         self.curr_scope.update_var(var, ptr)
     }
 }
