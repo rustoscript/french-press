@@ -11,8 +11,8 @@ use js_types::js_str::JsStrStruct;
 pub struct Binding(String);
 
 impl Binding {
-    pub fn new(s: &str) -> Binding {
-        Binding(s.to_string())
+    pub fn new(s: String) -> Binding {
+        Binding(s)
     }
 
     pub fn mangle(b: Binding) -> Binding {
@@ -21,7 +21,7 @@ impl Binding {
     }
 
     pub fn anon() -> Binding {
-        Binding::mangle(Binding::new(">anon_js_var<"))
+        Binding::mangle(Binding::new(">anon_js_var<".to_string()))
     }
 }
 
@@ -45,7 +45,7 @@ impl JsVar {
         }
     }
 
-    pub fn bind(binding: &str, t: JsType) -> JsVar {
+    pub fn bind(binding: String, t: JsType) -> JsVar {
         JsVar {
             binding: Binding::new(binding),
             t: t,
