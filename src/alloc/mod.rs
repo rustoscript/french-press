@@ -126,21 +126,21 @@ mod tests {
     use std::collections::hash_set::HashSet;
 
     use js_types::js_type::Binding;
-    use utils;
+    use test_utils;
 
     #[test]
     fn test_len() {
         let mut ab = AllocBox::new();
         assert_eq!(ab.len(), 0);
-        assert!(ab.alloc(Binding::anon(), utils::make_str("").1).is_ok());
+        assert!(ab.alloc(Binding::anon(), test_utils::make_str("").1).is_ok());
         assert_eq!(ab.len(), 1);
     }
 
     #[test]
     fn test_alloc() {
         let mut ab = AllocBox::new();
-        let (_, x_ptr, x_bnd) = utils::make_str("x");
-        let (_, y_ptr, y_bnd) = utils::make_str("y");
+        let (_, x_ptr, x_bnd) = test_utils::make_str("x");
+        let (_, y_ptr, y_bnd) = test_utils::make_str("y");
         let x_bnd_2 = x_bnd.clone();
         assert!(ab.alloc(x_bnd, x_ptr.clone()).is_ok());
         assert!(ab.alloc(y_bnd, y_ptr).is_ok());
@@ -150,8 +150,8 @@ mod tests {
     #[test]
     fn test_mark_roots() {
         let mut ab = AllocBox::new();
-        let (x, x_ptr, x_bnd) = utils::make_str("x");
-        let (y, y_ptr, y_bnd) = utils::make_str("y");
+        let (x, x_ptr, x_bnd) = test_utils::make_str("x");
+        let (y, y_ptr, y_bnd) = test_utils::make_str("y");
 
         ab.alloc(x.binding, x_ptr).unwrap();
         ab.alloc(y.binding, y_ptr).unwrap();

@@ -7,7 +7,7 @@ pub mod alloc;
 mod ast;
 mod gc_error;
 pub mod js_types;
-mod utils;
+mod test_utils;
 
 use std::cell::RefCell;
 use std::collections::hash_set::HashSet;
@@ -74,14 +74,14 @@ pub fn init_gc<F>(callback: F) -> ScopeManager
 mod tests {
     use super::*;
 
-    use utils;
+    use test_utils;
     use js_types::js_type::{Binding, JsType};
 
     #[test]
     fn test_pop_scope() {
-        let alloc_box = utils::make_alloc_box();
-        let mut mgr = ScopeManager::new(alloc_box, utils::dummy_callback);
-        mgr.push_scope(utils::dummy_callback);
+        let alloc_box = test_utils::make_alloc_box();
+        let mut mgr = ScopeManager::new(alloc_box, test_utils::dummy_callback);
+        mgr.push_scope(test_utils::dummy_callback);
         assert!(mgr.curr_scope.parent.is_some());
         mgr.pop_scope().unwrap();
         assert!(mgr.curr_scope.parent.is_none());
@@ -89,19 +89,19 @@ mod tests {
 
     #[test]
     fn test_alloc() {
-        let alloc_box = utils::make_alloc_box();
-        let mut mgr = ScopeManager::new(alloc_box, utils::dummy_callback);
-        mgr.alloc(utils::make_num(1.), None).unwrap();
-        mgr.push_scope(utils::dummy_callback);
-        mgr.alloc(utils::make_num(2.), None).unwrap();
+        let alloc_box = test_utils::make_alloc_box();
+        let mut mgr = ScopeManager::new(alloc_box, test_utils::dummy_callback);
+        mgr.alloc(test_utils::make_num(1.), None).unwrap();
+        mgr.push_scope(test_utils::dummy_callback);
+        mgr.alloc(test_utils::make_num(2.), None).unwrap();
         assert_eq!(mgr.alloc_box.borrow().len(), 0);
     }
 
     #[test]
     fn test_load() {
-        let alloc_box = utils::make_alloc_box();
-        let mut mgr = ScopeManager::new(alloc_box, utils::dummy_callback);
-        let x = utils::make_num(1.);
+        let alloc_box = test_utils::make_alloc_box();
+        let mut mgr = ScopeManager::new(alloc_box, test_utils::dummy_callback);
+        let x = test_utils::make_num(1.);
         let x_bnd = x.binding.clone();
         mgr.alloc(x, None).unwrap();
         let load = mgr.load(&x_bnd);
@@ -117,14 +117,14 @@ mod tests {
 
     #[test]
     fn test_store() {
-        let alloc_box = utils::make_alloc_box();
-        let mut mgr = ScopeManager::new(alloc_box, utils::dummy_callback);
-        mgr.push_scope(utils::dummy_callback);
-        let x = utils::make_num(1.);
+        let alloc_box = test_utils::make_alloc_box();
+        let mut mgr = ScopeManager::new(alloc_box, test_utils::dummy_callback);
+        mgr.push_scope(test_utils::dummy_callback);
+        let x = test_utils::make_num(1.);
         let x_bnd = x.binding.clone();
         mgr.alloc(x, None).unwrap();
 
-        let mut test_num = utils::make_num(2.);
+        let mut test_num = test_utils::make_num(2.);
         test_num.binding = x_bnd;
         assert!(mgr.store(test_num, None).is_ok());
     }

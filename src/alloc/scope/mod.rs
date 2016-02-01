@@ -135,28 +135,28 @@ mod tests {
 
     use js_types::js_type::{Binding, JsPtrEnum, JsKey, JsKeyEnum};
     use js_types::js_str::JsStrStruct;
-    use utils;
+    use test_utils;
 
     #[test]
     fn test_new_scope() {
-        let alloc_box = utils::make_alloc_box();
-        let test_scope = Scope::new(&alloc_box, utils::dummy_callback);
+        let alloc_box = test_utils::make_alloc_box();
+        let test_scope = Scope::new(&alloc_box, test_utils::dummy_callback);
         assert!(test_scope.parent.is_none());
     }
 
     #[test]
     fn test_as_child_scope() {
-        let alloc_box = utils::make_alloc_box();
-        let parent_scope = Scope::new(&alloc_box, utils::dummy_callback);
-        let test_scope = Scope::as_child(parent_scope, &alloc_box, utils::dummy_callback);
+        let alloc_box = test_utils::make_alloc_box();
+        let parent_scope = Scope::new(&alloc_box, test_utils::dummy_callback);
+        let test_scope = Scope::as_child(parent_scope, &alloc_box, test_utils::dummy_callback);
         assert!(test_scope.parent.is_some());
     }
 
     #[test]
     fn test_set_parent() {
-        let alloc_box = utils::make_alloc_box();
-        let parent_scope = Scope::new(&alloc_box, utils::dummy_callback);
-        let mut test_scope = Scope::new(&alloc_box, utils::dummy_callback);
+        let alloc_box = test_utils::make_alloc_box();
+        let parent_scope = Scope::new(&alloc_box, test_utils::dummy_callback);
+        let mut test_scope = Scope::new(&alloc_box, test_utils::dummy_callback);
         assert!(test_scope.parent.is_none());
         test_scope.set_parent(parent_scope);
         assert!(test_scope.parent.is_some());
@@ -164,17 +164,17 @@ mod tests {
 
     #[test]
     fn test_alloc() {
-        let alloc_box = utils::make_alloc_box();
-        let mut test_scope = Scope::new(&alloc_box, utils::dummy_callback);
-        let (x, x_ptr, _) = utils::make_str("x");
+        let alloc_box = test_utils::make_alloc_box();
+        let mut test_scope = Scope::new(&alloc_box, test_utils::dummy_callback);
+        let (x, x_ptr, _) = test_utils::make_str("x");
         assert!(test_scope.alloc(x.binding, x_ptr).is_ok());
     }
 
     #[test]
     fn test_get_var_copy() {
-        let alloc_box = utils::make_alloc_box();
-        let mut test_scope = Scope::new(&alloc_box, utils::dummy_callback);
-        let (x, x_ptr, x_bnd) = utils::make_str("x");
+        let alloc_box = test_utils::make_alloc_box();
+        let mut test_scope = Scope::new(&alloc_box, test_utils::dummy_callback);
+        let (x, x_ptr, x_bnd) = test_utils::make_str("x");
         test_scope.push(x, Some(x_ptr)).unwrap();
         let bad_bnd = Binding::anon();
 
@@ -189,9 +189,9 @@ mod tests {
 
     #[test]
     fn test_update_var() {
-        let alloc_box = utils::make_alloc_box();
-        let mut test_scope = Scope::new(&alloc_box, utils::dummy_callback);
-        let (x, x_ptr, x_bnd) = utils::make_str("x");
+        let alloc_box = test_utils::make_alloc_box();
+        let mut test_scope = Scope::new(&alloc_box, test_utils::dummy_callback);
+        let (x, x_ptr, x_bnd) = test_utils::make_str("x");
         assert!(test_scope.push(x, Some(x_ptr)).is_ok());
         let (update, _) = test_scope.get_var_copy(&x_bnd);
         let update_ptr = Some(JsPtrEnum::JsStr(JsStrStruct::new("test")));
@@ -207,16 +207,16 @@ mod tests {
 
     #[test]
     fn test_transfer_stack() {
-        let alloc_box = utils::make_alloc_box();
-        let mut parent_scope = Scope::new(&alloc_box, utils::dummy_callback);
+        let alloc_box = test_utils::make_alloc_box();
+        let mut parent_scope = Scope::new(&alloc_box, test_utils::dummy_callback);
         {
-            let mut test_scope = Scope::as_child(parent_scope, &alloc_box, utils::dummy_callback);
-            test_scope.push(utils::make_num(0.), None).unwrap();
-            test_scope.push(utils::make_num(1.), None).unwrap();
-            test_scope.push(utils::make_num(2.), None).unwrap();
+            let mut test_scope = Scope::as_child(parent_scope, &alloc_box, test_utils::dummy_callback);
+            test_scope.push(test_utils::make_num(0.), None).unwrap();
+            test_scope.push(test_utils::make_num(1.), None).unwrap();
+            test_scope.push(test_utils::make_num(2.), None).unwrap();
             let kvs = vec![(JsKey::new(JsKeyEnum::JsBool(true)),
-                            utils::make_num(1.))];
-            let (var, ptr) = utils::make_obj(kvs);
+                            test_utils::make_num(1.))];
+            let (var, ptr) = test_utils::make_obj(kvs);
             test_scope.push(var, Some(ptr)).unwrap();
             parent_scope = *test_scope.transfer_stack().unwrap();
         }
