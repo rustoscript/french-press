@@ -1,5 +1,6 @@
 use std::error::Error;
 use std::fmt;
+use std::result;
 
 use js_types::js_type::Binding;
 
@@ -11,6 +12,8 @@ pub enum GcError {
     ScopeError,
     StoreError,
 }
+
+pub type Result<T> = result::Result<T, GcError>;
 
 impl fmt::Display for GcError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

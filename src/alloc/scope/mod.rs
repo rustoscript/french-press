@@ -5,7 +5,7 @@ use std::mem;
 use std::rc::Rc;
 
 use alloc::AllocBox;
-use gc_error::GcError;
+use gc_error::{GcError, Result};
 use js_types::js_type::{JsPtrEnum, JsType, JsVar, Binding};
 
 // Tunable GC parameter. Probably should not be a constant, but good enough for now.
@@ -44,11 +44,11 @@ impl Scope {
         self.parent = Some(Box::new(parent));
     }
 
-    fn alloc(&mut self, binding: Binding, ptr: JsPtrEnum) -> Result<(), GcError> {
+    fn alloc(&mut self, binding: Binding, ptr: JsPtrEnum) -> Result<()> {
         self.alloc_box.borrow_mut().alloc(binding, ptr)
     }
 
-    pub fn push(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<(), GcError> {
+    pub fn push(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
         let res = match &var.t {
             &JsType::JsPtr =>
                 if let Some(ptr) = ptr {
@@ -83,7 +83,7 @@ impl Scope {
         } else { (None, None) }
     }
 
-    pub fn update_var(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<(), GcError> {
+    pub fn update_var(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
         match var.t {
             JsType::JsPtr =>
                 if let Some(ptr) = ptr {

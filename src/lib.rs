@@ -16,7 +16,7 @@ use std::rc::Rc;
 
 use alloc::AllocBox;
 use alloc::scope::Scope;
-use gc_error::GcError;
+use gc_error::{GcError, Result};
 use js_types::js_type::{JsPtrEnum, JsVar, Binding};
 
 pub struct ScopeManager {
@@ -38,7 +38,7 @@ impl ScopeManager {
         self.curr_scope.set_parent(parent);
     }
 
-    pub fn pop_scope(&mut self) -> Result<(), GcError> {
+    pub fn pop_scope(&mut self) -> Result<()> {
         let parent = self.curr_scope.transfer_stack();
         if let Some(parent) = parent {
             mem::replace(&mut self.curr_scope, *parent);
@@ -48,17 +48,17 @@ impl ScopeManager {
         }
     }
 
-    pub fn alloc(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<(), GcError> {
+    pub fn alloc(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
         self.curr_scope.push(var, ptr)
     }
 
-    pub fn load(&self, bnd: &Binding) -> Result<(JsVar, Option<JsPtrEnum>), GcError> {
+    pub fn load(&self, bnd: &Binding) -> Result<(JsVar, Option<JsPtrEnum>)> {
         if let (Some(v), ptr) = self.curr_scope.get_var_copy(bnd) {
             Ok((v, ptr))
         } else { Err(GcError::LoadError(bnd.clone())) }
     }
 
-    pub fn store(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<(), GcError> {
+    pub fn store(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
         self.curr_scope.update_var(var, ptr)
     }
 }

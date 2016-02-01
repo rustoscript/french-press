@@ -3,7 +3,7 @@ use std::collections::hash_map::{Entry, HashMap};
 use std::collections::hash_set::HashSet;
 use std::rc::Rc;
 
-use gc_error::GcError;
+use gc_error::{GcError, Result};
 use js_types::js_type::{Binding, JsPtrEnum};
 
 pub mod scope;
@@ -29,7 +29,7 @@ impl AllocBox {
         self.black_set.len() + self.grey_set.len() + self.white_set.len()
     }
 
-    pub fn alloc(&mut self, binding: Binding, ptr: JsPtrEnum) -> Result<(), GcError> {
+    pub fn alloc(&mut self, binding: Binding, ptr: JsPtrEnum) -> Result<()> {
         if let None = self.white_set.insert(binding.clone(), Rc::new(RefCell::new(ptr))) {
             Ok(())
         } else {
@@ -87,7 +87,7 @@ impl AllocBox {
                 self.black_set.get(bnd)))
     }
 
-    pub fn update_ptr(&mut self, binding: &Binding, ptr: JsPtrEnum) -> Result<(), GcError> {
+    pub fn update_ptr(&mut self, binding: &Binding, ptr: JsPtrEnum) -> Result<()> {
         if let Entry::Occupied(mut view) = self.find_id_mut(binding) {
             let inner = view.get_mut();
             *inner.borrow_mut() = ptr;
