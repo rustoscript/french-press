@@ -125,43 +125,41 @@ mod tests {
     use super::*;
     use std::collections::hash_set::HashSet;
 
-    use uuid::Uuid;
-
+    use js_types::js_type::Binding;
     use utils;
 
     #[test]
     fn test_len() {
         let mut ab = AllocBox::new();
         assert_eq!(ab.len(), 0);
-        ab.alloc(Uuid::new_v4(), utils::make_str("")).unwrap();
+        assert!(ab.alloc(Binding::anon(), utils::make_str("").1).is_ok());
         assert_eq!(ab.len(), 1);
     }
 
     #[test]
     fn test_alloc() {
         let mut ab = AllocBox::new();
-        let id1 = Uuid::new_v4();
-        let id2 = Uuid::new_v4();
-        let id3 = Uuid::new_v4();
-        let _id1 = ab.alloc(id1.clone(), utils::make_str("")).unwrap();
-        let _id2 = ab.alloc(id2.clone(), utils::make_str("")).unwrap();
-        let _id3 = ab.alloc(id3.clone(), utils::make_str("")).unwrap();
-
-        assert_eq!(id1, _id1);
-        assert_eq!(id2, _id2);
-        assert_eq!(id3, _id3);
+        let (_, x_ptr, x_bnd) = utils::make_str("x");
+        let (_, y_ptr, y_bnd) = utils::make_str("y");
+        let x_bnd_2 = x_bnd.clone();
+        assert!(ab.alloc(x_bnd, x_ptr.clone()).is_ok());
+        assert!(ab.alloc(y_bnd, y_ptr).is_ok());
+        assert!(ab.alloc(x_bnd_2, x_ptr).is_err());
     }
 
     #[test]
     fn test_mark_roots() {
         let mut ab = AllocBox::new();
-        let id1 = Uuid::new_v4();
-        let id2 = Uuid::new_v4();
-        let id1 = ab.alloc(id1, utils::make_str("")).unwrap();
-        let id2 = ab.alloc(id2, utils::make_str("")).unwrap();
+        let (x, x_ptr, x_bnd) = utils::make_str("x");
+        let (y, y_ptr, y_bnd) = utils::make_str("y");
+
+        ab.alloc(x.binding, x_ptr).unwrap();
+        ab.alloc(y.binding, y_ptr).unwrap();
 
         let mut marks = HashSet::new();
-        marks.insert(id1); marks.insert(id2);
+        marks.insert(x_bnd.clone()); marks.insert(y_bnd.clone());
         ab.mark_roots(marks);
+        assert!(ab.black_set.contains_key(&x_bnd));
+        assert!(ab.black_set.contains_key(&y_bnd));
     }
 }

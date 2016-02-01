@@ -133,9 +133,7 @@ impl Scope {
 mod tests {
     use super::*;
 
-    use uuid::Uuid;
-
-    use js_types::js_type::{JsVar, JsType, JsPtrEnum, JsKey, JsKeyEnum};
+    use js_types::js_type::{Binding, JsPtrEnum, JsKey, JsKeyEnum};
     use js_types::js_str::JsStrStruct;
     use utils;
 
@@ -168,24 +166,23 @@ mod tests {
     fn test_alloc() {
         let alloc_box = utils::make_alloc_box();
         let mut test_scope = Scope::new(&alloc_box, utils::dummy_callback);
-        let test_var = JsVar::new(JsType::JsPtr);
-        let test_id = test_scope.alloc(test_var.uuid, JsPtrEnum::JsSym(String::from("test"))).unwrap();
-        assert_eq!(test_id, test_var.uuid);
+        let (x, x_ptr, _) = utils::make_str("x");
+        assert!(test_scope.alloc(x.binding, x_ptr).is_ok());
     }
 
     #[test]
     fn test_get_var_copy() {
         let alloc_box = utils::make_alloc_box();
         let mut test_scope = Scope::new(&alloc_box, utils::dummy_callback);
-        let test_var = JsVar::new(JsType::JsPtr);
-        let test_id = test_scope.push(test_var, Some(JsPtrEnum::JsSym(String::from("test")))).unwrap();
-        let bad_uuid = Uuid::new_v4();
+        let (x, x_ptr, x_bnd) = utils::make_str("x");
+        test_scope.push(x, Some(x_ptr)).unwrap();
+        let bad_bnd = Binding::anon();
 
-        let (var_copy, ptr_copy) = test_scope.get_var_copy(&test_id);
+        let (var_copy, ptr_copy) = test_scope.get_var_copy(&x_bnd);
         assert!(var_copy.is_some());
         assert!(ptr_copy.is_some());
 
-        let (bad_copy, ptr_copy) = test_scope.get_var_copy(&bad_uuid);
+        let (bad_copy, ptr_copy) = test_scope.get_var_copy(&bad_bnd);
         assert!(bad_copy.is_none());
         assert!(ptr_copy.is_none());
     }
@@ -194,17 +191,18 @@ mod tests {
     fn test_update_var() {
         let alloc_box = utils::make_alloc_box();
         let mut test_scope = Scope::new(&alloc_box, utils::dummy_callback);
-        let test_var = JsVar::new(JsType::JsPtr);
-        let test_id = test_scope.push(test_var, Some(JsPtrEnum::JsSym(String::from("test")))).unwrap();
-        let (update, _) = test_scope.get_var_copy(&test_id);
+        let (x, x_ptr, x_bnd) = utils::make_str("x");
+        assert!(test_scope.push(x, Some(x_ptr)).is_ok());
+        let (update, _) = test_scope.get_var_copy(&x_bnd);
         let update_ptr = Some(JsPtrEnum::JsStr(JsStrStruct::new("test")));
         assert!(test_scope.update_var(update.unwrap(), update_ptr).is_ok());
 
-        let (_, update_ptr) = test_scope.get_var_copy(&test_id);
-        match update_ptr.clone().unwrap() {
+        let (update, update_ptr) = test_scope.get_var_copy(&x_bnd);
+        match update_ptr.unwrap() {
             JsPtrEnum::JsStr(JsStrStruct{text: ref s}) => assert_eq!(s, "test"),
-            _ => ()
+            _ => panic!("Updated var was not equal to expected!")
         }
+        assert_eq!(update.unwrap().binding, x_bnd);
     }
 
     #[test]

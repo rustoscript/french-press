@@ -12,8 +12,10 @@ pub fn dummy_callback() -> HashSet<Binding> {
     HashSet::new()
 }
 
-pub fn make_str(s: &str) -> JsPtrEnum {
-    JsPtrEnum::JsStr(JsStrStruct::new(s))
+pub fn make_str(s: &str) -> (JsVar, JsPtrEnum, Binding) {
+    let var = JsVar::new(JsType::JsPtr);
+    let bnd = var.binding.clone();
+    (var, JsPtrEnum::JsStr(JsStrStruct::new(s)), bnd)
 }
 
 pub fn make_num(i: f64) -> JsVar {

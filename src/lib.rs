@@ -74,10 +74,8 @@ pub fn init_gc<F>(callback: F) -> ScopeManager
 mod tests {
     use super::*;
 
-    use uuid;
-
     use utils;
-    use js_types::js_type::JsType;
+    use js_types::js_type::{Binding, JsType};
 
     #[test]
     fn test_pop_scope() {
@@ -103,8 +101,10 @@ mod tests {
     fn test_load() {
         let alloc_box = utils::make_alloc_box();
         let mut mgr = ScopeManager::new(alloc_box, utils::dummy_callback);
-        let id1 = mgr.alloc(utils::make_num(1.), None).unwrap();
-        let load = mgr.load(&id1);
+        let x = utils::make_num(1.);
+        let x_bnd = x.binding.clone();
+        mgr.alloc(x, None).unwrap();
+        let load = mgr.load(&x_bnd);
         assert!(load.is_ok());
         let load = load.unwrap();
         match load.0.t {
@@ -112,7 +112,7 @@ mod tests {
             _ => panic!("load result was not equal to value allocated!"),
         }
         assert!(load.1.is_none());
-        assert!(mgr.load(&uuid::Uuid::nil()).is_err());
+        assert!(mgr.load(&Binding::anon()).is_err());
     }
 
     #[test]
@@ -120,12 +120,12 @@ mod tests {
         let alloc_box = utils::make_alloc_box();
         let mut mgr = ScopeManager::new(alloc_box, utils::dummy_callback);
         mgr.push_scope(utils::dummy_callback);
-        mgr.alloc(utils::make_num(1.), None).unwrap();
-        let test_id = mgr.alloc(utils::make_num(2.), None).unwrap();
-        mgr.alloc(utils::make_num(3.), None).unwrap();
+        let x = utils::make_num(1.);
+        let x_bnd = x.binding.clone();
+        mgr.alloc(x, None).unwrap();
 
-        let mut test_num = utils::make_num(4.);
-        test_num.uuid = test_id;
+        let mut test_num = utils::make_num(2.);
+        test_num.binding = x_bnd;
         assert!(mgr.store(test_num, None).is_ok());
     }
 
