@@ -12,47 +12,55 @@ use js_types::js_type::{JsPtrEnum, JsType, JsVar, Binding};
 const GC_THRESHOLD: usize = 64;
 
 
+/// A logical scope in the AST. Represents any scoped block of Javascript code.
+/// roots: A set of all root references into the heap
+/// parent: An optional parent scope, e.g. the caller of this function scope,
+///         or the function that owns an `if` statement
+/// heap: A shared reference to the heap allocator.
+/// stack: The stack of the current scope, containing all variables allocated
+///        by this scope.
 pub struct Scope {
     roots: HashSet<Binding>,
     pub parent: Option<Box<Scope>>,
-    alloc_box: Rc<RefCell<AllocBox>>,
+    heap: Rc<RefCell<AllocBox>>,
     stack: HashMap<Binding, JsVar>,
 }
 
 impl Scope {
-    pub fn new(alloc_box: &Rc<RefCell<AllocBox>>) -> Scope {
+    /// Create a new, parentless scope node.
+    pub fn new(heap: &Rc<RefCell<AllocBox>>) -> Scope {
         Scope {
             roots: HashSet::new(),
             parent: None,
-            alloc_box: alloc_box.clone(),
+            heap: heap.clone(),
             stack: HashMap::new(),
         }
     }
 
-    pub fn as_child(parent: Scope, alloc_box: &Rc<RefCell<AllocBox>>) -> Scope {
+    /// Create a scope as a child of another scope. Clones all of bindings of
+    /// root references from the parent.
+    pub fn as_child(parent: Scope, heap: &Rc<RefCell<AllocBox>>) -> Scope {
         Scope {
             roots: parent.roots.clone(),
             parent: Some(Box::new(parent)),
-            alloc_box: alloc_box.clone(),
+            heap: heap.clone(),
             stack: HashMap::new(),
         }
     }
 
+    /// Sets the parent of a scope, and clones and unions its root bindings.
     pub fn set_parent(&mut self, parent: Scope) {
         self.parent = Some(Box::new(parent));
     }
 
-    fn alloc(&mut self, binding: Binding, ptr: JsPtrEnum) -> Result<()> {
-        self.alloc_box.borrow_mut().alloc(binding, ptr)
-    }
-
+    /// Push a new JsVar onto the stack, and maybe allocate a pointer in the heap.
     pub fn push(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
         let res = match &var.t {
             &JsType::JsPtr =>
                 if let Some(ptr) = ptr {
                     // Creating a new pointer creates a new root
                     self.roots.insert(var.binding.clone());
-                    self.alloc(var.binding.clone(), ptr)
+                    self.heap.borrow_mut().alloc(var.binding.clone(), ptr)
                 } else {
                     return Err(GcError::PtrError);
                 },
@@ -62,15 +70,17 @@ impl Scope {
         res
     }
 
+    /// Take ownership of a variable (usually from another scope).
     pub fn own(&mut self, var: JsVar) {
         self.stack.insert(var.binding.clone(), var);
     }
 
+    /// Return an optional copy of a variable and an optional pointer into the heap.
     pub fn get_var_copy(&self, bnd: &Binding) -> (Option<JsVar>, Option<JsPtrEnum>) {
         if let Some(var) = self.stack.get(bnd) {
             match var.t {
                 JsType::JsPtr => {
-                    if let Some(alloc) = self.alloc_box.borrow().find_id(bnd) {
+                    if let Some(alloc) = self.heap.borrow().find_id(bnd) {
                         (Some(var.clone()), Some(alloc.borrow().clone()))
                     } else {
                         // This case should be impossible unless you have an
@@ -86,13 +96,14 @@ impl Scope {
         } else { (None, None) }
     }
 
+    /// Try to update a variable that's been allocated.
     pub fn update_var(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
         match var.t {
             JsType::JsPtr =>
                 if let Some(ptr) = ptr {
                     // A new root was potentially created
                     self.roots.insert(var.binding.clone());
-                    self.alloc_box.borrow_mut().update_ptr(&var.binding, ptr)
+                    self.heap.borrow_mut().update_ptr(&var.binding, ptr)
                 } else {
                     Err(GcError::PtrError)
                 },
@@ -101,19 +112,26 @@ impl Scope {
                     // A root was potentially removed
                     self.roots.remove(&var.binding);
                     *view.get_mut() = var;
-                    Ok(())
-                } else {
-                    Err(GcError::StoreError)
+                    return Ok(());
                 }
+                // Hack to skirt mutable borrow of self lasting longer than it should
+                if let Entry::Vacant(_) = self.stack.entry(var.binding.clone()) {
+                    // TODO Need to call `push` on the root scope?
+                    // Push into this scope and just give to parent when done?
+                    return self.push(var, ptr);
+                }
+                unreachable!();
             },
         }
     }
 
+    /// Called when a scope exits. Transfers the stack of this scope to its parent,
+    /// and returns the parent scope, which may be `None`.
     pub fn transfer_stack(&mut self) -> Option<Box<Scope>> {
-        if self.alloc_box.borrow().len() > GC_THRESHOLD {
-            self.alloc_box.borrow_mut().mark_roots(&self.roots);
-            self.alloc_box.borrow_mut().mark_ptrs();
-            self.alloc_box.borrow_mut().sweep_ptrs();
+        if self.heap.borrow().len() > GC_THRESHOLD {
+            self.heap.borrow_mut().mark_roots(&self.roots);
+            self.heap.borrow_mut().mark_ptrs();
+            self.heap.borrow_mut().sweep_ptrs();
         }
         if let Some(ref mut parent) = self.parent {
             for (_, var) in self.stack.drain() {
@@ -130,7 +148,6 @@ impl Scope {
                     _ => (),
                 }
             }
-            // TODO do analysis on where we are in the AST to determine live-out refs
             parent.roots = parent.roots.union(&self.roots).cloned().collect();
         }
         mem::replace(&mut self.parent, None)
@@ -148,41 +165,33 @@ mod tests {
 
     #[test]
     fn test_new_scope() {
-        let alloc_box = test_utils::make_alloc_box();
-        let test_scope = Scope::new(&alloc_box);
+        let heap = test_utils::make_alloc_box();
+        let test_scope = Scope::new(&heap);
         assert!(test_scope.parent.is_none());
     }
 
     #[test]
     fn test_as_child_scope() {
-        let alloc_box = test_utils::make_alloc_box();
-        let parent_scope = Scope::new(&alloc_box);
-        let test_scope = Scope::as_child(parent_scope, &alloc_box);
+        let heap = test_utils::make_alloc_box();
+        let parent_scope = Scope::new(&heap);
+        let test_scope = Scope::as_child(parent_scope, &heap);
         assert!(test_scope.parent.is_some());
     }
 
     #[test]
     fn test_set_parent() {
-        let alloc_box = test_utils::make_alloc_box();
-        let parent_scope = Scope::new(&alloc_box);
-        let mut test_scope = Scope::new(&alloc_box);
+        let heap = test_utils::make_alloc_box();
+        let parent_scope = Scope::new(&heap);
+        let mut test_scope = Scope::new(&heap);
         assert!(test_scope.parent.is_none());
         test_scope.set_parent(parent_scope);
         assert!(test_scope.parent.is_some());
     }
 
     #[test]
-    fn test_alloc() {
-        let alloc_box = test_utils::make_alloc_box();
-        let mut test_scope = Scope::new(&alloc_box);
-        let (x, x_ptr, _) = test_utils::make_str("x");
-        assert!(test_scope.alloc(x.binding, x_ptr).is_ok());
-    }
-
-    #[test]
     fn test_get_var_copy() {
-        let alloc_box = test_utils::make_alloc_box();
-        let mut test_scope = Scope::new(&alloc_box);
+        let heap = test_utils::make_alloc_box();
+        let mut test_scope = Scope::new(&heap);
         let (x, x_ptr, x_bnd) = test_utils::make_str("x");
         test_scope.push(x, Some(x_ptr)).unwrap();
         let bad_bnd = Binding::anon();
@@ -198,12 +207,12 @@ mod tests {
 
     #[test]
     fn test_get_var_copy_from_parent_scope() {
-        let alloc_box = test_utils::make_alloc_box();
-        let mut parent_scope = Scope::new(&alloc_box);
+        let heap = test_utils::make_alloc_box();
+        let mut parent_scope = Scope::new(&heap);
         let (x, x_ptr, x_bnd) = test_utils::make_str("x");
         parent_scope.push(x, Some(x_ptr)).unwrap();
 
-        let mut child_scope= Scope::as_child(parent_scope, &alloc_box);
+        let mut child_scope= Scope::as_child(parent_scope, &heap);
 
         let (var_copy, ptr_copy) = child_scope.get_var_copy(&x_bnd);
         assert!(var_copy.is_some());
@@ -212,8 +221,8 @@ mod tests {
 
     #[test]
     fn test_update_var() {
-        let alloc_box = test_utils::make_alloc_box();
-        let mut test_scope = Scope::new(&alloc_box);
+        let heap = test_utils::make_alloc_box();
+        let mut test_scope = Scope::new(&heap);
         let (x, x_ptr, x_bnd) = test_utils::make_str("x");
         assert!(test_scope.push(x, Some(x_ptr)).is_ok());
         let (update, _) = test_scope.get_var_copy(&x_bnd);
@@ -230,10 +239,10 @@ mod tests {
 
     #[test]
     fn test_transfer_stack() {
-        let alloc_box = test_utils::make_alloc_box();
-        let mut parent_scope = Scope::new(&alloc_box);
+        let heap = test_utils::make_alloc_box();
+        let mut parent_scope = Scope::new(&heap);
         {
-            let mut test_scope = Scope::as_child(parent_scope, &alloc_box);
+            let mut test_scope = Scope::as_child(parent_scope, &heap);
             test_scope.push(test_utils::make_num(0.), None).unwrap();
             test_scope.push(test_utils::make_num(1.), None).unwrap();
             test_scope.push(test_utils::make_num(2.), None).unwrap();
