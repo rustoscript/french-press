@@ -72,7 +72,8 @@ mod tests {
     use super::*;
 
     use test_utils;
-    use js_types::js_type::{Binding, JsType};
+    use js_types::js_var::JsType;
+    use js_types::binding::Binding;
 
     #[test]
     fn test_pop_scope() {
@@ -80,7 +81,7 @@ mod tests {
         let mut mgr = ScopeManager::new(alloc_box);
         mgr.push_scope();
         assert!(mgr.curr_scope.parent.is_some());
-        mgr.pop_scope().unwrap();
+        mgr.pop_scope(false).unwrap();
         assert!(mgr.curr_scope.parent.is_none());
     }
 

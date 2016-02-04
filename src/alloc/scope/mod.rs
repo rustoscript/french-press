@@ -162,7 +162,8 @@ impl Scope {
 mod tests {
     use super::*;
 
-    use js_types::js_type::{Binding, JsPtrEnum, JsKey, JsKeyEnum};
+    use js_types::js_var::{JsPtrEnum, JsKey, JsKeyEnum};
+    use js_types::binding::Binding;
     use js_types::js_str::JsStrStruct;
     use test_utils;
 
@@ -215,7 +216,7 @@ mod tests {
         let (x, x_ptr, x_bnd) = test_utils::make_str("x");
         parent_scope.push(x, Some(x_ptr)).unwrap();
 
-        let mut child_scope= Scope::as_child(parent_scope, &heap);
+        let child_scope = Scope::as_child(parent_scope, &heap);
 
         let (var_copy, ptr_copy) = child_scope.get_var_copy(&x_bnd);
         assert!(var_copy.is_some());
@@ -253,7 +254,7 @@ mod tests {
                             test_utils::make_num(1.))];
             let (var, ptr) = test_utils::make_obj(kvs);
             test_scope.push(var, Some(ptr)).unwrap();
-            parent_scope = *test_scope.transfer_stack().unwrap();
+            parent_scope = *test_scope.transfer_stack(false).unwrap();
         }
         assert_eq!(parent_scope.stack.len(), 1);
     }

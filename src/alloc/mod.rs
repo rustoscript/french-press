@@ -126,7 +126,7 @@ mod tests {
     use super::*;
     use std::collections::hash_set::HashSet;
 
-    use js_types::js_type::Binding;
+    use js_types::binding::Binding;
     use test_utils;
 
     #[test]
