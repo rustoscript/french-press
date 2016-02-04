@@ -2,6 +2,7 @@
 name = "french_press"
 version = "0.1.0"
 dependencies = [
+ "clippy 0.0.37 (registry+https://github.com/rust-lang/crates.io-index)",
  "jsrs-common 0.1.0 (git+https://github.com/rustoscript/js.rs-common.git)",
  "uuid 0.1.17 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -16,6 +17,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "clippy"
+version = "0.0.37"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "semver 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "unicode-normalization 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "jsrs-common"
 version = "0.1.0"
 source = "git+https://github.com/rustoscript/js.rs-common.git#1597dfb15c5a6543915c2699eb5448e3c3b54dbb"
@@ -23,6 +33,11 @@ source = "git+https://github.com/rustoscript/js.rs-common.git#1597dfb15c5a654391
 [[package]]
 name = "libc"
 version = "0.1.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "nom"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
@@ -38,6 +53,19 @@ dependencies = [
 [[package]]
 name = "rustc-serialize"
 version = "0.3.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "semver"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "nom 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "unicode-normalization"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
