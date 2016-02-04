@@ -129,8 +129,9 @@ impl Scope {
 
     /// Called when a scope exits. Transfers the stack of this scope to its parent,
     /// and returns the parent scope, which may be `None`.
-    pub fn transfer_stack(&mut self) -> Option<Box<Scope>> {
-        if self.heap.borrow().len() > GC_THRESHOLD {
+    pub fn transfer_stack(&mut self, gc_yield: bool) -> Option<Box<Scope>> {
+        if gc_yield {
+            // The interpreter says we can GC now
             self.heap.borrow_mut().mark_roots(&self.roots);
             self.heap.borrow_mut().mark_ptrs();
             self.heap.borrow_mut().sweep_ptrs();
