@@ -2,10 +2,10 @@
 
 extern crate uuid;
 extern crate jsrs_common;
+extern crate js_types;
 
 pub mod alloc;
 mod gc_error;
-pub mod js_types;
 mod test_utils;
 
 use std::cell::RefCell;
@@ -15,7 +15,8 @@ use std::rc::Rc;
 use alloc::AllocBox;
 use alloc::scope::Scope;
 use gc_error::{GcError, Result};
-use js_types::js_type::{JsPtrEnum, JsVar, Binding};
+use js_types::js_var::{JsPtrEnum, JsVar};
+use js_types::binding::Binding;
 
 pub struct ScopeManager {
     curr_scope: Scope,
@@ -36,6 +37,7 @@ impl ScopeManager {
     }
 
     pub fn pop_scope(&mut self) -> Result<()> {
+        // TODO yield-to-GC parameter
         let parent = self.curr_scope.transfer_stack();
         if let Some(parent) = parent {
             mem::replace(&mut self.curr_scope, *parent);

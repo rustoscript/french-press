@@ -4,7 +4,8 @@ use std::collections::hash_set::HashSet;
 use std::rc::Rc;
 
 use gc_error::{GcError, Result};
-use js_types::js_type::{Binding, JsPtrEnum};
+use js_types::js_var::JsPtrEnum;
+use js_types::binding::Binding;
 
 pub mod scope;
 

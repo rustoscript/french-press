@@ -2,7 +2,7 @@ use std::error::Error;
 use std::fmt;
 use std::result;
 
-use js_types::js_type::Binding;
+use js_types::binding::Binding;
 
 #[derive(Debug)]
 pub enum GcError {

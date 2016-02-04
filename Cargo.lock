@@ -3,6 +3,7 @@ name = "french_press"
 version = "0.1.0"
 dependencies = [
  "clippy 0.0.37 (registry+https://github.com/rust-lang/crates.io-index)",
+ "js-types 0.1.0 (git+https://github.com/rustoscript/js-types.git?rev=3ee9463)",
  "jsrs-common 0.1.0 (git+https://github.com/rustoscript/js.rs-common.git)",
  "uuid 0.1.17 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -23,6 +24,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "semver 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "unicode-normalization 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "js-types"
+version = "0.1.0"
+source = "git+https://github.com/rustoscript/js-types.git?rev=3ee9463#3ee9463eaba26b66144c96fc12415b493a477e18"
+dependencies = [
+ "uuid 0.1.17 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

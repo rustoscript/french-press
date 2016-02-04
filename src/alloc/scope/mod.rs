@@ -6,7 +6,8 @@ use std::rc::Rc;
 
 use alloc::AllocBox;
 use gc_error::{GcError, Result};
-use js_types::js_type::{JsPtrEnum, JsType, JsVar, Binding};
+use js_types::js_var::{JsPtrEnum, JsType, JsVar};
+use js_types::binding::Binding;
 
 // Tunable GC parameter. Probably should not be a constant, but good enough for now.
 const GC_THRESHOLD: usize = 64;
