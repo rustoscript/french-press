@@ -8,10 +8,6 @@ use js_types::js_obj::JsObjStruct;
 use js_types::js_str::JsStrStruct;
 use js_types::js_type::{Binding, JsKey, JsPtrEnum, JsType, JsVar};
 
-pub fn dummy_callback() -> HashSet<Binding> {
-    HashSet::new()
-}
-
 pub fn make_str(s: &str) -> (JsVar, JsPtrEnum, Binding) {
     let var = JsVar::new(JsType::JsPtr);
     let bnd = var.binding.clone();
