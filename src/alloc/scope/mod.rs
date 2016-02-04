@@ -50,6 +50,7 @@ impl Scope {
 
     /// Sets the parent of a scope, and clones and unions its root bindings.
     pub fn set_parent(&mut self, parent: Scope) {
+        self.roots = self.roots.union(&parent.roots).cloned().collect();
         self.parent = Some(Box::new(parent));
     }
 
