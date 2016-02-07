@@ -5,6 +5,7 @@ use std::rc::Rc;
 
 use gc_error::{GcError, Result};
 use js_types::js_var::JsPtrEnum;
+use js_types::allocator::Allocator;
 use js_types::binding::Binding;
 
 pub mod scope;
@@ -15,6 +16,20 @@ pub struct AllocBox {
     black_set: HashMap<Binding, Alloc<JsPtrEnum>>,
     grey_set: HashMap<Binding, Alloc<JsPtrEnum>>,
     white_set: HashMap<Binding, Alloc<JsPtrEnum>>,
+}
+
+impl Allocator for AllocBox {
+    type Error = GcError;
+
+    fn alloc(&mut self, binding: Binding, ptr: JsPtrEnum) -> Result<()> {
+        if let None = self.white_set.insert(binding.clone(), Rc::new(RefCell::new(ptr))) {
+            Ok(())
+        } else {
+            // If a binding already exists and we try to allocate it, this should
+            // be an unrecoverable error.
+            Err(GcError::AllocError(binding))
+        }
+    }
 }
 
 impl AllocBox {
@@ -30,15 +45,6 @@ impl AllocBox {
         self.black_set.len() + self.grey_set.len() + self.white_set.len()
     }
 
-    pub fn alloc(&mut self, binding: Binding, ptr: JsPtrEnum) -> Result<()> {
-        if let None = self.white_set.insert(binding.clone(), Rc::new(RefCell::new(ptr))) {
-            Ok(())
-        } else {
-            // If a binding already exists and we try to allocate it, this should
-            // be an unrecoverable error.
-            Err(GcError::AllocError(binding))
-        }
-    }
 
     pub fn mark_roots(&mut self, marks: &HashSet<Binding>) {
         for mark in marks {
@@ -127,6 +133,7 @@ mod tests {
     use std::collections::hash_set::HashSet;
 
     use js_types::binding::Binding;
+    use js_types::allocator::Allocator;
     use test_utils;
 
     #[test]

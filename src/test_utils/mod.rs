@@ -18,9 +18,10 @@ pub fn make_num(i: f64) -> JsVar {
     JsVar::new(JsType::JsNum(i))
 }
 
-pub fn make_obj(kvs: Vec<(JsKey, JsVar)>) -> (JsVar, JsPtrEnum) {
-    (JsVar::new(JsType::JsPtr),
-     JsPtrEnum::JsObj(JsObjStruct::new(None, "test", kvs)))
+pub fn make_obj(kvs: Vec<(JsKey, JsVar, Option<JsPtrEnum>)>, heap: Rc<RefCell<AllocBox>>) -> (JsVar, JsPtrEnum, Binding) {
+    let var = JsVar::new(JsType::JsPtr);
+    let bnd = var.binding.clone();
+    (var, JsPtrEnum::JsObj(JsObjStruct::new(None, "test", kvs, heap)), bnd)
 }
 
 pub fn make_alloc_box() -> Rc<RefCell<AllocBox>> {
