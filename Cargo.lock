@@ -3,7 +3,7 @@ name = "french_press"
 version = "0.1.0"
 dependencies = [
  "clippy 0.0.37 (registry+https://github.com/rust-lang/crates.io-index)",
- "js-types 0.1.0 (git+https://github.com/rustoscript/js-types.git?rev=3ee9463)",
+ "js-types 0.1.0 (git+https://github.com/rustoscript/js-types.git?rev=caf4f29)",
  "jsrs-common 0.1.0 (git+https://github.com/rustoscript/js.rs-common.git)",
  "uuid 0.1.17 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -29,8 +29,9 @@ dependencies = [
 [[package]]
 name = "js-types"
 version = "0.1.0"
-source = "git+https://github.com/rustoscript/js-types.git?rev=3ee9463#3ee9463eaba26b66144c96fc12415b493a477e18"
+source = "git+https://github.com/rustoscript/js-types.git?rev=caf4f29#caf4f297920b4d8575e5af875da30525e0cd27c2"
 dependencies = [
+ "jsrs-common 0.1.0 (git+https://github.com/rustoscript/js.rs-common.git?rev=ad1e542)",
  "uuid 0.1.17 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -38,6 +39,11 @@ dependencies = [
 name = "jsrs-common"
 version = "0.1.0"
 source = "git+https://github.com/rustoscript/js.rs-common.git#1597dfb15c5a6543915c2699eb5448e3c3b54dbb"
+
+[[package]]
+name = "jsrs-common"
+version = "0.1.0"
+source = "git+https://github.com/rustoscript/js.rs-common.git?rev=ad1e542#ad1e54250680a562151bc86eeadaa90f837a5bc2"
 
 [[package]]
 name = "libc"
