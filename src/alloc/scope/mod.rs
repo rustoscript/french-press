@@ -258,11 +258,59 @@ mod tests {
             test_scope.push(test_utils::make_num(1.), None).unwrap();
             test_scope.push(test_utils::make_num(2.), None).unwrap();
             let kvs = vec![(JsKey::new(JsKeyEnum::JsBool(true)),
-                            test_utils::make_num(1.))];
-            let (var, ptr) = test_utils::make_obj(kvs);
+                            test_utils::make_num(1.), None)];
+            let (var, ptr, _) = test_utils::make_obj(kvs, heap.clone());
             test_scope.push(var, Some(ptr)).unwrap();
             parent_scope = *test_scope.transfer_stack(false).unwrap();
         }
         assert_eq!(parent_scope.stack.len(), 1);
     }
+
+    #[test]
+    fn test_transfer_stack_with_yield() {
+        let heap = test_utils::make_alloc_box();
+        // Make a scope
+        let mut parent_scope = Scope::new(&heap);
+        {
+            // Push a child scope
+            let mut test_scope = Scope::as_child(parent_scope, &heap);
+            // Allocate some non-root variables (numbers)
+            test_scope.push(test_utils::make_num(0.), None).unwrap();
+            test_scope.push(test_utils::make_num(1.), None).unwrap();
+            test_scope.push(test_utils::make_num(2.), None).unwrap();
+
+            // Make a string to put into an object
+            // (so it's heap-allocated and we can lose its ref from the object)
+            let (var, ptr, _) = test_utils::make_str("test");
+
+            // Create an obj of { true: 1.0, false: heap("test") }
+            let kvs = vec![(JsKey::new(JsKeyEnum::JsBool(true)),
+                            test_utils::make_num(1.), None),
+                           (JsKey::new(JsKeyEnum::JsBool(false)),
+                            var, Some(ptr))];
+            let key_bnd = kvs[1].0.binding.clone();
+            let (var, ptr, bnd) = test_utils::make_obj(kvs, heap.clone());
+
+            // Push the obj into the current scope
+            test_scope.push(var, Some(ptr)).unwrap();
+
+            // Replace the string in the object with something else so it's no longer live
+            let copy = test_scope.get_var_copy(&bnd);
+            let (var_cp, mut ptr_cp) = (copy.0.unwrap(), copy.1.unwrap());
+            let key = JsKey { binding: key_bnd, k: JsKeyEnum::JsBool(false) };
+            match ptr_cp {
+                JsPtrEnum::JsObj(ref mut obj) => { obj.dict.insert(key, test_utils::make_num(-1.)); }
+                _ => unreachable!()
+            }
+            test_scope.update_var(var_cp, Some(ptr_cp)).unwrap();
+
+            // Kill the current scope & give its refs to the parent,
+            // allowing the GC to kick in beforehand.
+            parent_scope = *test_scope.transfer_stack(true).unwrap();
+        }
+        // The object we created above should still exist
+        assert_eq!(parent_scope.stack.len(), 1);
+        assert_eq!(heap.borrow().len(), 1);
+    }
+
 }
