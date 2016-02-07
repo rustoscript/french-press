@@ -8,6 +8,7 @@ use alloc::AllocBox;
 use gc_error::{GcError, Result};
 use js_types::js_var::{JsPtrEnum, JsType, JsVar};
 use js_types::binding::Binding;
+use js_types::allocator::Allocator;
 
 // Tunable GC parameter. Probably should not be a constant, but good enough for now.
 const GC_THRESHOLD: usize = 64;
@@ -135,6 +136,12 @@ impl Scope {
             self.heap.borrow_mut().mark_roots(&self.roots);
             self.heap.borrow_mut().mark_ptrs();
             self.heap.borrow_mut().sweep_ptrs();
+            // Pop all of the roots we just deleted
+            for bnd in self.roots.iter() {
+                if let None = self.heap.borrow().find_id(bnd) {
+                    self.stack.remove(bnd);
+                }
+            }
         }
         if let Some(ref mut parent) = self.parent {
             for (_, var) in self.stack.drain() {
