@@ -5,6 +5,7 @@ authors = ["David Mally <djmally@gmail.com>"]
 
 [dependencies]
 uuid = "0.1"
+matches = "0.1.2"
 clippy = "*"
 
 [dependencies.jsrs-common]
