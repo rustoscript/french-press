@@ -170,7 +170,8 @@ impl Scope {
 mod tests {
     use super::*;
 
-    use js_types::js_var::{JsPtrEnum, JsKey, JsKeyEnum};
+    use gc_error::GcError;
+    use js_types::js_var::{JsPtrEnum, JsKey, JsKeyEnum, JsType};
     use js_types::binding::Binding;
     use js_types::js_str::JsStrStruct;
     use test_utils;
@@ -201,18 +202,50 @@ mod tests {
     }
 
     #[test]
+    fn test_push() {
+        let heap = test_utils::make_alloc_box();
+        let mut test_scope = Scope::new(&heap);
+        let (var, ptr, _) = test_utils::make_str("test");
+        assert!(test_scope.push(var, Some(ptr)).is_ok());
+        assert_eq!(test_scope.heap.borrow().len(), 1);
+        let var = test_utils::make_num(1.);
+        assert!(test_scope.push(var, None).is_ok());
+        assert_eq!(test_scope.heap.borrow().len(), 1);
+    }
+
+    #[test]
+    fn test_push_fail() {
+        let heap = test_utils::make_alloc_box();
+        let mut test_scope = Scope::new(&heap);
+        let (var, ptr, _) = test_utils::make_str("test");
+        let res = test_scope.push(var, None);
+        assert!(res.is_err());
+        assert!(matches!(res, Err(GcError::PtrError)));
+        assert_eq!(test_scope.heap.borrow().len(), 0);
+        let var = test_utils::make_num(1.);
+        let res = test_scope.push(var, Some(ptr));
+        assert!(res.is_err());
+        assert!(matches!(res, Err(GcError::PtrError)));
+        assert_eq!(test_scope.heap.borrow().len(), 0);
+    }
+
+    #[test]
     fn test_get_var_copy() {
         let heap = test_utils::make_alloc_box();
         let mut test_scope = Scope::new(&heap);
         let (x, x_ptr, x_bnd) = test_utils::make_str("x");
         test_scope.push(x, Some(x_ptr)).unwrap();
-        let bad_bnd = Binding::anon();
 
         let (var_copy, ptr_copy) = test_scope.get_var_copy(&x_bnd);
         assert!(var_copy.is_some());
         assert!(ptr_copy.is_some());
+    }
 
-        let (bad_copy, ptr_copy) = test_scope.get_var_copy(&bad_bnd);
+    #[test]
+    fn test_get_var_copy_fail() {
+        let heap = test_utils::make_alloc_box();
+        let mut test_scope = Scope::new(&heap);
+        let (bad_copy, ptr_copy) = test_scope.get_var_copy(&Binding::anon());
         assert!(bad_copy.is_none());
         assert!(ptr_copy.is_none());
     }
@@ -244,9 +277,27 @@ mod tests {
         let (update, update_ptr) = test_scope.get_var_copy(&x_bnd);
         match update_ptr.unwrap() {
             JsPtrEnum::JsStr(JsStrStruct{text: ref s}) => assert_eq!(s, "test"),
-            _ => panic!("Updated var was not equal to expected!")
+            _ => unreachable!(),
         }
         assert_eq!(update.unwrap().binding, x_bnd);
+    }
+
+    #[test]
+    fn test_update_var_fail() {
+        let heap = test_utils::make_alloc_box();
+        let mut test_scope = Scope::new(&heap);
+        let (x, x_ptr, x_bnd) = test_utils::make_str("x");
+        assert!(test_scope.push(x, Some(x_ptr)).is_ok());
+        let (mut update, update_ptr) = test_scope.get_var_copy(&x_bnd);
+        let res = test_scope.update_var(update.clone().unwrap(), None);
+        assert!(res.is_err());
+        assert!(matches!(res, Err(GcError::PtrError)));
+
+        let mut update = update.unwrap();
+        update.t = JsType::JsNum(1.);
+        let res = test_scope.update_var(update, update_ptr);
+        assert!(res.is_err());
+        assert!(matches!(res, Err(GcError::PtrError)));
     }
 
     #[test]
