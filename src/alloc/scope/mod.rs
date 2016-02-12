@@ -67,7 +67,7 @@ impl Scope {
                 } else {
                     return Err(GcError::PtrError);
                 },
-            _ => Ok(()),
+            _ => if let Some(_) = ptr { Err(GcError::PtrError) } else { Ok(()) },
         };
         self.stack.insert(var.binding.clone(), var);
         res
@@ -111,6 +111,7 @@ impl Scope {
                     Err(GcError::PtrError)
                 },
             _ => {
+                if let Some(_) = ptr { return Err(GcError::PtrError); }
                 if let Entry::Occupied(mut view) = self.stack.entry(var.binding.clone()) {
                     // A root was potentially removed
                     self.roots.remove(&var.binding);
