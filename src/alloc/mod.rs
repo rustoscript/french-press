@@ -45,6 +45,9 @@ impl AllocBox {
         self.black_set.len() + self.grey_set.len() + self.white_set.len()
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
 
     pub fn mark_roots(&mut self, marks: &HashSet<Binding>) {
         for mark in marks {
@@ -142,7 +145,7 @@ mod tests {
     #[test]
     fn test_len() {
         let mut ab = AllocBox::new();
-        assert_eq!(ab.len(), 0);
+        assert_eq!(ab.is_empty());
         assert!(ab.alloc(Binding::anon(), test_utils::make_str("").1).is_ok());
         assert_eq!(ab.len(), 1);
     }

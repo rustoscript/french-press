@@ -58,8 +58,8 @@ impl Scope {
 
     /// Push a new JsVar onto the stack, and maybe allocate a pointer in the heap.
     pub fn push(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
-        let res = match &var.t {
-            &JsType::JsPtr =>
+        let res = match var.t {
+            JsType::JsPtr =>
                 if let Some(ptr) = ptr {
                     // Creating a new pointer creates a new root
                     self.roots.insert(var.binding.clone());
@@ -138,7 +138,7 @@ impl Scope {
             self.heap.borrow_mut().mark_ptrs();
             self.heap.borrow_mut().sweep_ptrs();
             // Pop all of the roots we just deleted
-            for bnd in self.roots.iter() {
+            for bnd in &self.roots {
                 if let None = self.heap.borrow().find_id(bnd) {
                     self.stack.remove(bnd);
                 }
@@ -146,8 +146,7 @@ impl Scope {
         }
         if let Some(ref mut parent) = self.parent {
             for (_, var) in self.stack.drain() {
-                match var.t {
-                    JsType::JsPtr => {
+                if let JsType::JsPtr = var.t {
                         // Mangle each binding before giving it to the parent
                         // scope. This avoids binding collisions, and helps
                         // identify to a human observer which bindings are
@@ -155,8 +154,6 @@ impl Scope {
                         let mut mangled_var = var.clone();
                         mangled_var.binding = Binding::mangle(var.binding);
                         parent.own(mangled_var);
-                    }
-                    _ => (),
                 }
             }
             parent.roots = parent.roots.union(&self.roots).cloned().collect();
@@ -221,12 +218,12 @@ mod tests {
         let res = test_scope.push(var, None);
         assert!(res.is_err());
         assert!(matches!(res, Err(GcError::PtrError)));
-        assert_eq!(test_scope.heap.borrow().len(), 0);
+        assert!(test_scope.heap.borrow().is_empty());
         let var = test_utils::make_num(1.);
         let res = test_scope.push(var, Some(ptr));
         assert!(res.is_err());
         assert!(matches!(res, Err(GcError::PtrError)));
-        assert_eq!(test_scope.heap.borrow().len(), 0);
+        assert!(test_scope.heap.borrow().is_empty());
     }
 
     #[test]

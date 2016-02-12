@@ -1,4 +1,7 @@
 #![feature(associated_consts)]
+#![feature(plugin)]
+
+#![plugin(clippy)]
 
 extern crate uuid;
 extern crate jsrs_common;
@@ -105,7 +108,7 @@ mod tests {
         mgr.alloc(test_utils::make_num(1.), None).unwrap();
         mgr.push_scope();
         mgr.alloc(test_utils::make_num(2.), None).unwrap();
-        assert_eq!(mgr.alloc_box.borrow().len(), 0);
+        assert!(mgr.alloc_box.borrow().is_empty());
     }
 
     #[test]
