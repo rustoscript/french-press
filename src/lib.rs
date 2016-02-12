@@ -4,6 +4,9 @@ extern crate uuid;
 extern crate jsrs_common;
 extern crate js_types;
 
+#[cfg(test)]
+#[macro_use] extern crate matches;
+
 pub mod alloc;
 mod gc_error;
 mod test_utils;
@@ -71,9 +74,10 @@ pub fn init_gc() -> ScopeManager {
 mod tests {
     use super::*;
 
-    use test_utils;
+    use gc_error::GcError;
     use js_types::js_var::JsType;
     use js_types::binding::Binding;
+    use test_utils;
 
     #[test]
     fn test_pop_scope() {
@@ -83,6 +87,15 @@ mod tests {
         assert!(mgr.curr_scope.parent.is_some());
         mgr.pop_scope(false).unwrap();
         assert!(mgr.curr_scope.parent.is_none());
+    }
+
+    #[test]
+    fn test_pop_scope_fail() {
+        let alloc_box = test_utils::make_alloc_box();
+        let mut mgr = ScopeManager::new(alloc_box);
+        let res = mgr.pop_scope(false);
+        assert!(res.is_err());
+        assert!(matches!(res, Err(GcError::ScopeError)));
     }
 
     #[test]
@@ -107,10 +120,19 @@ mod tests {
         let load = load.unwrap();
         match load.0.t {
             JsType::JsNum(n) => assert_eq!(n, 1.),
-            _ => panic!("load result was not equal to value allocated!"),
+            _ => unreachable!(),
         }
         assert!(load.1.is_none());
-        assert!(mgr.load(&Binding::anon()).is_err());
+    }
+
+    #[test]
+    fn test_load_fail() {
+        let alloc_box = test_utils::make_alloc_box();
+        let mgr = ScopeManager::new(alloc_box);
+        let bnd = Binding::anon();
+        let res = mgr.load(&bnd);
+        assert!(res.is_err());
+        assert!(matches!(res, Err(GcError::LoadError(bnd))));
     }
 
     #[test]
