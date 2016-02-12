@@ -132,8 +132,11 @@ mod tests {
     use super::*;
     use std::collections::hash_set::HashSet;
 
-    use js_types::binding::Binding;
+    use gc_error::GcError;
     use js_types::allocator::Allocator;
+    use js_types::binding::Binding;
+    use js_types::js_var::JsPtrEnum;
+    use js_types::js_str::JsStrStruct;
     use test_utils;
 
     #[test]
@@ -152,7 +155,47 @@ mod tests {
         let x_bnd_2 = x_bnd.clone();
         assert!(ab.alloc(x_bnd, x_ptr.clone()).is_ok());
         assert!(ab.alloc(y_bnd, y_ptr).is_ok());
-        assert!(ab.alloc(x_bnd_2, x_ptr).is_err());
+    }
+
+    #[test]
+    fn test_alloc_fail() {
+        let mut ab = AllocBox::new();
+        let (_, x_ptr, x_bnd) = test_utils::make_str("x");
+        let x_bnd_2 = x_bnd.clone();
+        assert!(ab.alloc(x_bnd, x_ptr.clone()).is_ok());
+        let res = ab.alloc(x_bnd_2, x_ptr);
+        assert!(res.is_err());
+        assert!(matches!(res, Err(GcError::AllocError(x_bnd_2))));
+    }
+
+    #[test]
+    fn test_update_ptr() {
+        let mut ab = AllocBox::new();
+        let (_, x_ptr, x_bnd) = test_utils::make_str("x");
+        let x_bnd_2 = x_bnd.clone();
+        assert!(ab.alloc(x_bnd, x_ptr.clone()).is_ok());
+        let (_, new_ptr, _) = test_utils::make_str("y");
+        assert!(ab.update_ptr(&x_bnd_2, new_ptr).is_ok());
+        let opt_ptr = ab.find_id(&x_bnd_2);
+        assert!(opt_ptr.is_some());
+        // Hack to get around some borrowck failures I don't fully understand
+        if let Some(ptr) = opt_ptr {
+            match ptr.borrow().clone() {
+                JsPtrEnum::JsStr(JsStrStruct { ref text }) => assert_eq!(text.clone(), "y".to_string()),
+                _ => unreachable!(),
+            }
+        } else {
+            unreachable!()
+        }
+    }
+
+    #[test]
+    fn test_update_ptr_fail() {
+        let mut ab = AllocBox::new();
+        let (_, ptr, _) = test_utils::make_str("");
+        let res = ab.update_ptr(&Binding::anon(), ptr);
+        assert!(res.is_err());
+        assert!(matches!(res, Err(GcError::StoreError)));
     }
 
     #[test]
