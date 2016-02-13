@@ -21,6 +21,7 @@ const GC_THRESHOLD: usize = 64;
 /// heap: A shared reference to the heap allocator.
 /// stack: The stack of the current scope, containing all variables allocated
 ///        by this scope.
+#[derive(Clone)]
 pub struct Scope {
     roots: HashSet<Binding>,
     pub parent: Option<Box<Scope>>,

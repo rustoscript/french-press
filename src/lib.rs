@@ -24,6 +24,7 @@ use gc_error::{GcError, Result};
 use js_types::js_var::{JsPtrEnum, JsVar};
 use js_types::binding::Binding;
 
+#[derive(Clone)]
 pub struct ScopeManager {
     curr_scope: Scope,
     alloc_box: Rc<RefCell<AllocBox>>,
