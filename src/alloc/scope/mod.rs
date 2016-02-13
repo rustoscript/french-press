@@ -21,22 +21,23 @@ const GC_THRESHOLD: usize = 64;
 /// heap: A shared reference to the heap allocator.
 /// stack: The stack of the current scope, containing all variables allocated
 ///        by this scope.
-#[derive(Clone)]
 pub struct Scope {
     roots: HashSet<Binding>,
     pub parent: Option<Box<Scope>>,
+    pub id: i32,
     heap: Rc<RefCell<AllocBox>>,
     stack: HashMap<Binding, JsVar>,
 }
 
 impl Scope {
     /// Create a new, parentless scope node.
-    pub fn new(heap: &Rc<RefCell<AllocBox>>) -> Scope {
+    pub fn new(id: i32, heap: &Rc<RefCell<AllocBox>>) -> Scope {
         Scope {
             roots: HashSet::new(),
             parent: None,
             heap: heap.clone(),
             stack: HashMap::new(),
+            id: id,
         }
     }
 
@@ -48,6 +49,7 @@ impl Scope {
             parent: Some(Box::new(parent)),
             heap: heap.clone(),
             stack: HashMap::new(),
+            id: -1,
         }
     }
 
@@ -58,19 +60,19 @@ impl Scope {
     }
 
     /// Push a new JsVar onto the stack, and maybe allocate a pointer in the heap.
-    pub fn push(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
+    pub fn push(&mut self, var: &JsVar, ptr: Option<&JsPtrEnum>) -> Result<()> {
         let res = match var.t {
             JsType::JsPtr =>
                 if let Some(ptr) = ptr {
                     // Creating a new pointer creates a new root
                     self.roots.insert(var.binding.clone());
-                    self.heap.borrow_mut().alloc(var.binding.clone(), ptr)
+                    self.heap.borrow_mut().alloc(var.binding.clone(), ptr.clone())
                 } else {
                     return Err(GcError::PtrError);
                 },
             _ => if let Some(_) = ptr { Err(GcError::PtrError) } else { Ok(()) },
         };
-        self.stack.insert(var.binding.clone(), var);
+        self.stack.insert(var.binding.clone(), var.clone());
         res
     }
 
@@ -101,13 +103,13 @@ impl Scope {
     }
 
     /// Try to update a variable that's been allocated.
-    pub fn update_var(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
+    pub fn update_var(&mut self, var: &JsVar, ptr: Option<&JsPtrEnum>) -> Result<()> {
         match var.t {
             JsType::JsPtr =>
                 if let Some(ptr) = ptr {
                     // A new root was potentially created
                     self.roots.insert(var.binding.clone());
-                    self.heap.borrow_mut().update_ptr(&var.binding, ptr)
+                    self.heap.borrow_mut().update_ptr(&var.binding, ptr.clone())
                 } else {
                     Err(GcError::PtrError)
                 },
@@ -116,14 +118,14 @@ impl Scope {
                 if let Entry::Occupied(mut view) = self.stack.entry(var.binding.clone()) {
                     // A root was potentially removed
                     self.roots.remove(&var.binding);
-                    *view.get_mut() = var;
+                    *view.get_mut() = var.clone();
                     return Ok(());
                 }
                 // Hack to skirt mutable borrow of self lasting longer than it should
                 if let Entry::Vacant(_) = self.stack.entry(var.binding.clone()) {
                     // TODO Need to call `push` on the root scope?
                     // Push into this scope and just give to parent when done?
-                    return self.push(var, ptr);
+                    return self.push(&var, ptr);
                 }
                 unreachable!();
             },

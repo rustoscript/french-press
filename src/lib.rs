@@ -12,59 +12,78 @@ extern crate js_types;
 
 pub mod alloc;
 mod gc_error;
+mod scope_tree;
 mod test_utils;
 
 use std::cell::RefCell;
-use std::mem;
 use std::rc::Rc;
 
 use alloc::AllocBox;
-use alloc::scope::Scope;
 use gc_error::{GcError, Result};
 use js_types::js_var::{JsPtrEnum, JsVar};
 use js_types::binding::Binding;
+use scope_tree::ScopeTree;
 
-#[derive(Clone)]
 pub struct ScopeManager {
-    curr_scope: Scope,
+    scopes: ScopeTree,
+    current_stack: Vec<i32>,
+    next: i32,
     alloc_box: Rc<RefCell<AllocBox>>,
 }
 
 impl ScopeManager {
     fn new(alloc_box: Rc<RefCell<AllocBox>>) -> ScopeManager {
         ScopeManager {
-            curr_scope: Scope::new(&alloc_box),
+            scopes: ScopeTree::new(0, &alloc_box),
+            current_stack: vec![0],
+            next: 1,
             alloc_box: alloc_box,
         }
     }
 
-    pub fn push_scope(&mut self) {
-        let parent = mem::replace(&mut self.curr_scope, Scope::new(&self.alloc_box));
-        self.curr_scope.set_parent(parent);
+    fn get_current_scope_id(&self) -> Result<i32> {
+        if let Some(i) = self.current_stack.last() {
+            return Ok(*i);
+        }
+
+        Err(GcError::ScopeError)
     }
 
-    pub fn pop_scope(&mut self, gc_yield: bool) -> Result<()> {
-        let parent = self.curr_scope.transfer_stack(gc_yield);
-        if let Some(parent) = parent {
-            mem::replace(&mut self.curr_scope, *parent);
-            Ok(())
-        } else {
-            Err(GcError::ScopeError)
+    pub fn add_scope(&mut self) -> Result<i32> {
+        let id = try!(self.get_current_scope_id());
+        if self.scopes.add_child_to_id(self.next, id, &self.alloc_box) {
+            self.current_stack.push(self.next);
+            self.next += 1;
+            return self.get_current_scope_id()
         }
+
+        Err(GcError::ScopeError)
+    }
+
+    pub fn push_scope(&mut self, id: i32) {
+        self.current_stack.push(id);
+    }
+
+    pub fn pop_scope(&mut self, gc_yield: bool) {
+        self.current_stack.pop();
     }
 
     pub fn alloc(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
-        self.curr_scope.push(var, ptr)
+        let id = try!(self.get_current_scope_id());
+
+        self.scopes.push_on_id(id, &var, ptr.as_ref())
     }
 
     pub fn load(&self, bnd: &Binding) -> Result<(JsVar, Option<JsPtrEnum>)> {
-        if let (Some(v), ptr) = self.curr_scope.get_var_copy(bnd) {
+        let id = try!(self.get_current_scope_id());
+        if let (Some(v), ptr) = try!(self.scopes.get_var_copy_from_id(id, bnd)) {
             Ok((v, ptr))
         } else { Err(GcError::LoadError(bnd.clone())) }
     }
 
     pub fn store(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
-        self.curr_scope.update_var(var, ptr)
+        let id = try!(self.get_current_scope_id());
+        self.scopes.update_var_in_id(id, &var, ptr.as_ref())
     }
 }
 

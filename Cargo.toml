@@ -14,7 +14,7 @@ rev = "3e8c1b0"
 
 [dependencies.js-types]
 git = "https://github.com/rustoscript/js-types.git"
-rev = "660b592"
+branch = "scope-tree"
 
 [profile.dev]
 opt-level = 0
