@@ -2,9 +2,9 @@
 name = "french_press"
 version = "0.1.0"
 dependencies = [
- "clippy 0.0.37 (registry+https://github.com/rust-lang/crates.io-index)",
- "js-types 0.1.0 (git+https://github.com/rustoscript/js-types.git?rev=b856d41)",
- "jsrs-common 0.1.0 (git+https://github.com/rustoscript/js.rs-common.git)",
+ "clippy 0.0.39 (registry+https://github.com/rust-lang/crates.io-index)",
+ "js-types 0.1.0 (git+https://github.com/rustoscript/js-types.git?rev=660b592)",
+ "jsrs-common 0.1.0 (git+https://github.com/rustoscript/js.rs-common.git?rev=3e8c1b0)",
  "matches 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "uuid 0.1.17 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -20,9 +20,10 @@ dependencies = [
 
 [[package]]
 name = "clippy"
-version = "0.0.37"
+version = "0.0.39"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
+ "regex-syntax 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "semver 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "unicode-normalization 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -30,21 +31,16 @@ dependencies = [
 [[package]]
 name = "js-types"
 version = "0.1.0"
-source = "git+https://github.com/rustoscript/js-types.git?rev=b856d41#b856d413a32e697ae57d804fb517925d7d021c9f"
+source = "git+https://github.com/rustoscript/js-types.git?rev=660b592#660b5928782ffbef959affbea79dc7620cf784bd"
 dependencies = [
- "jsrs-common 0.1.0 (git+https://github.com/rustoscript/js.rs-common.git?rev=ad1e542)",
+ "jsrs-common 0.1.0 (git+https://github.com/rustoscript/js.rs-common.git?rev=3e8c1b0)",
  "uuid 0.1.17 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "jsrs-common"
 version = "0.1.0"
-source = "git+https://github.com/rustoscript/js.rs-common.git#1597dfb15c5a6543915c2699eb5448e3c3b54dbb"
-
-[[package]]
-name = "jsrs-common"
-version = "0.1.0"
-source = "git+https://github.com/rustoscript/js.rs-common.git?rev=ad1e542#ad1e54250680a562151bc86eeadaa90f837a5bc2"
+source = "git+https://github.com/rustoscript/js.rs-common.git?rev=3e8c1b0#3e8c1b09ebf96d651bd2ecb331dcac1de3f82604"
 
 [[package]]
 name = "libc"
@@ -70,6 +66,11 @@ dependencies = [
  "libc 0.1.10 (registry+https://github.com/rust-lang/crates.io-index)",
  "winapi 0.2.4 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[package]]
+name = "regex-syntax"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "rustc-serialize"
