@@ -12,6 +12,12 @@ pub struct ScopeTree {
     children: Vec<Box<ScopeTree>>,
 }
 
+enum ParentResult<T> {
+    NoMatch,
+    MatchError,
+    Match(T),
+}
+
 impl ScopeTree {
     pub fn new(id: i32, alloc_box: &Rc<RefCell<AllocBox>>) -> ScopeTree {
         ScopeTree { scope: Scope::new(id, &alloc_box), children: Vec::new() }
@@ -33,36 +39,80 @@ impl ScopeTree {
     }
 
     pub fn update_var_in_id(&mut self, id: i32, var: &JsVar, ptr: Option<&JsPtrEnum>) -> Result<()> {
-        self.update_var_in_id_ok(id, var, ptr).unwrap_or(Err(GcError::ScopeError))
+        if let ParentResult::Match(_) = self.update_var_in_id_ok(id, var, ptr) {
+            Ok(())
+        } else {
+            Err(GcError::ScopeError)
+        }
     }
 
-    fn update_var_in_id_ok(&mut self, id: i32, var: &JsVar, ptr: Option<&JsPtrEnum>) -> Option<Result<()>> {
+    fn update_var_in_id_ok(&mut self, id: i32, var: &JsVar, ptr: Option<&JsPtrEnum>) -> ParentResult<()> {
         if self.scope.id == id {
-            return Some(self.scope.update_var(var, ptr));
-        }
-
-
-        for ref mut s in &mut self.children {
-            if let Some(r) = s.update_var_in_id_ok(id, var, ptr) {
-                return Some(r);
+            return if self.scope.update_var(var, ptr).is_ok() {
+                ParentResult::Match(())
+            } else {
+                ParentResult::MatchError
             }
         }
 
-        None
+        for ref mut s in &mut self.children {
+            match s.update_var_in_id_ok(id, var ,ptr) {
+                ParentResult::Match(t) => return ParentResult::Match(t),
+                ParentResult::MatchError => return if self.scope.update_var(var, ptr).is_ok() {
+                    ParentResult::Match(())
+                } else {
+                    ParentResult::MatchError
+                },
+                _ => ()
+            };
+        }
+
+        ParentResult::NoMatch
+
+        // if self.scope.id == id {
+        //     return Some(self.scope.update_var(var, ptr));
+        // }
+        //
+        //
+        // for ref mut s in &mut self.children {
+        //     if let Some(r) = s.update_var_in_id_ok(id, var, ptr) {
+        //         return Some(r);
+        //     }
+        // }
+        //
+        // None
     }
 
     pub fn get_var_copy_from_id(&self, id: i32, bnd: &Binding) -> Result<(Option<JsVar>, Option<JsPtrEnum>)>  {
-        if self.scope.id == id {
-            return Ok(self.scope.get_var_copy(bnd));
+        if let ParentResult::Match(x) = self.get_var_copy_from_id_ok(id, bnd) {
+            Ok(x)
+        } else {
+            Err(GcError::ScopeError)
         }
+    }
 
-        for ref s in &self.children {
-            if let Ok(t) = s.get_var_copy_from_id(id, bnd) {
-                return Ok(t)
+    fn get_var_copy_from_id_ok(&self, id: i32, bnd: &Binding) -> ParentResult<(Option<JsVar>, Option<JsPtrEnum>)> {
+        if self.scope.id == id {
+            return if let (Some(x), y) = self.scope.get_var_copy(bnd) {
+                ParentResult::Match((Some(x), y))
+            } else {
+                ParentResult::MatchError
             }
         }
 
-        Err(GcError::ScopeError)
+        for ref s in &self.children {
+            match s.get_var_copy_from_id_ok(id, bnd) {
+                ParentResult::Match(t) => return ParentResult::Match(t),
+                ParentResult::MatchError => return if let (Some(x), y) = self.scope.get_var_copy(bnd) {
+                    ParentResult::Match((Some(x), y))
+                } else {
+                    ParentResult::MatchError
+                },
+                _ => ()
+            };
+        }
+
+        ParentResult::NoMatch
     }
 
     pub fn push_on_id(&mut self, id: i32, var: &JsVar, ptr: Option<&JsPtrEnum>) -> Result<()> {

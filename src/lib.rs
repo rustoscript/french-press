@@ -171,5 +171,4 @@ mod tests {
         test_num.binding = x_bnd;
         assert!(mgr.store(test_num, None).is_ok());
     }
-
 }
