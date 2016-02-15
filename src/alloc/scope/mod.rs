@@ -44,7 +44,7 @@ impl Scope {
     pub fn as_child(parent: Scope, heap: &Rc<RefCell<AllocBox>>) -> Scope {
         Scope {
             roots: parent.roots.clone(),
-            parent: Some(Box::new(parent)),
+            parent: Some(box parent),
             heap: heap.clone(),
             stack: HashMap::new(),
         }
@@ -53,7 +53,7 @@ impl Scope {
     /// Sets the parent of a scope, and clones and unions its root bindings.
     pub fn set_parent(&mut self, parent: Scope) {
         self.roots = self.roots.union(&parent.roots).cloned().collect();
-        self.parent = Some(Box::new(parent));
+        self.parent = Some(box parent);
     }
 
     /// Push a new JsVar onto the stack, and maybe allocate a pointer in the heap.

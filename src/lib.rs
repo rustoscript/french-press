@@ -1,4 +1,6 @@
 #![feature(associated_consts)]
+#![feature(box_patterns)]
+#![feature(box_syntax)]
 #![feature(plugin)]
 
 #![plugin(clippy)]
