@@ -145,7 +145,7 @@ mod tests {
     #[test]
     fn test_len() {
         let mut ab = AllocBox::new();
-        assert_eq!(ab.is_empty());
+        assert!(ab.is_empty());
         assert!(ab.alloc(Binding::anon(), test_utils::make_str("").1).is_ok());
         assert_eq!(ab.len(), 1);
     }
