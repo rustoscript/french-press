@@ -1,9 +1,9 @@
 #![feature(associated_consts)]
 #![feature(box_patterns)]
 #![feature(box_syntax)]
-#![feature(plugin)]
+//#![feature(plugin)]
 
-#![plugin(clippy)]
+//#![plugin(clippy)]
 
 extern crate uuid;
 extern crate jsrs_common;
