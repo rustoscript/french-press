@@ -138,7 +138,10 @@ mod tests {
         let bnd = Binding::anon();
         let res = mgr.load(&bnd);
         assert!(res.is_err());
-        assert!(matches!(res, Err(GcError::LoadError(bnd))));
+        assert!(matches!(res, Err(GcError::LoadError(_))));
+        if let Err(GcError::LoadError(res_bnd)) = res {
+            assert_eq!(bnd, res_bnd);
+        }
     }
 
     #[test]

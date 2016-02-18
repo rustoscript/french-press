@@ -266,7 +266,7 @@ mod tests {
     #[test]
     fn test_get_var_copy_fail() {
         let heap = test_utils::make_alloc_box();
-        let mut test_scope = Scope::new(&heap);
+        let test_scope = Scope::new(&heap);
         let (bad_copy, ptr_copy) = test_scope.get_var_copy(&Binding::anon());
         assert!(bad_copy.is_none());
         assert!(ptr_copy.is_none());
@@ -310,7 +310,7 @@ mod tests {
         let mut test_scope = Scope::new(&heap);
         let (x, x_ptr, x_bnd) = test_utils::make_str("x");
         assert!(test_scope.push_var(x, Some(x_ptr)).is_ok());
-        let (mut update, update_ptr) = test_scope.get_var_copy(&x_bnd);
+        let (update, update_ptr) = test_scope.get_var_copy(&x_bnd);
         let res = test_scope.update_var(update.clone().unwrap(), None);
         assert!(res.is_err());
         assert!(matches!(res, Err(GcError::PtrError)));

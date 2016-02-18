@@ -153,7 +153,6 @@ mod tests {
         let mut ab = AllocBox::new();
         let (_, x_ptr, x_bnd) = test_utils::make_str("x");
         let (_, y_ptr, y_bnd) = test_utils::make_str("y");
-        let x_bnd_2 = x_bnd.clone();
         assert!(ab.alloc(x_bnd, x_ptr.clone()).is_ok());
         assert!(ab.alloc(y_bnd, y_ptr).is_ok());
     }
@@ -164,9 +163,12 @@ mod tests {
         let (_, x_ptr, x_bnd) = test_utils::make_str("x");
         let x_bnd_2 = x_bnd.clone();
         assert!(ab.alloc(x_bnd, x_ptr.clone()).is_ok());
-        let res = ab.alloc(x_bnd_2, x_ptr);
+        let res = ab.alloc(x_bnd_2.clone(), x_ptr);
         assert!(res.is_err());
-        assert!(matches!(res, Err(GcError::AllocError(x_bnd_2))));
+        assert!(matches!(res, Err(GcError::AllocError(_))));
+        if let Err(GcError::AllocError(bnd)) = res {
+            assert_eq!(x_bnd_2, bnd);
+        }
     }
 
     #[test]
