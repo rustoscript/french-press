@@ -323,7 +323,7 @@ mod tests {
     }
 
     #[test]
-    fn test_transfer_stack() {
+    fn test_transfer_stack_no_gc() {
         let heap = test_utils::make_alloc_box();
         let mut parent_scope = Scope::new(&heap);
         {
@@ -367,6 +367,8 @@ mod tests {
 
             // Push the obj into the current scope
             test_scope.push_var(var, Some(ptr)).unwrap();
+            // The heap should now have 2 things in it: an object and a string
+            assert_eq!(heap.borrow().len(), 2);
 
             // Replace the string in the object with something else so it's no longer live
             let copy = test_scope.get_var_copy(&bnd);
@@ -377,6 +379,8 @@ mod tests {
                 _ => unreachable!()
             }
             test_scope.update_var(var_cp, Some(ptr_cp)).unwrap();
+            // The heap should still have 2 things in it: an object and a string
+            assert_eq!(heap.borrow().len(), 2);
 
             // Kill the current scope & give its refs to the parent,
             // allowing the GC to kick in beforehand.
@@ -384,7 +388,22 @@ mod tests {
         }
         // The object we created above should still exist
         assert_eq!(parent_scope.stack.len(), 1);
+        // But the string it had allocated shouldn't, since we leaked it into the void
         assert_eq!(heap.borrow().len(), 1);
+    }
+
+    #[test]
+    fn test_transfer_stack_return_closure() {
+        let heap = test_utils::make_alloc_box();
+        let mut parent_scope = Scope::new(&heap);
+        {
+            let mut test_scope = new_scope_as_child(parent_scope, &heap);
+            let (var, test_fn, bnd) = test_utils::make_fn(&Some("test".to_string()), &Vec::new());
+            test_scope.push_var(test_utils::make_num(1.), None).unwrap();
+            test_scope.push_var(var, Some(test_fn)).unwrap();
+            parent_scope = *test_scope.transfer_stack(false).unwrap();
+        }
+        assert_eq!(parent_scope.stack.len(), 2);
     }
 
 }
