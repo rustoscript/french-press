@@ -68,19 +68,6 @@ impl ScopeTree {
         }
 
         ParentResult::NoMatch
-
-        // if self.scope.id == id {
-        //     return Some(self.scope.update_var(var, ptr));
-        // }
-        //
-        //
-        // for ref mut s in &mut self.children {
-        //     if let Some(r) = s.update_var_in_id_ok(id, var, ptr) {
-        //         return Some(r);
-        //     }
-        // }
-        //
-        // None
     }
 
     pub fn get_var_copy_from_id(&self, id: i32, bnd: &Binding) -> Result<(Option<JsVar>, Option<JsPtrEnum>)>  {
@@ -128,21 +115,4 @@ impl ScopeTree {
 
         Err(GcError::ScopeError)
     }
-
-    // pub fn get_id_of_parent(&self, id: i32) -> Option<i32> {
-    //     self.get_id_of_parent_given_last(id, None)
-    // }
-    //
-    // fn get_id_of_parent_given_last(&self, id: i32, parent: Option<i32>) -> Option<i32> {
-    //     if self.scope.id == id {
-    //         return parent
-    //     }
-    //     for ref s in &self.children {
-    //         if let Some(i) = s.get_id_of_parent_given_last(id, Some(self.scope.id)) {
-    //             return Some(i);
-    //         }
-    //     }
-    //
-    //     None
-    // }
 }
