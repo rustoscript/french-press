@@ -39,17 +39,6 @@ impl Scope {
         }
     }
 
-    /// Create a scope as a child of another scope. Clones all of bindings of
-    /// root references from the parent.
-    pub fn as_child(parent: Scope, heap: &Rc<RefCell<AllocBox>>) -> Scope {
-        Scope {
-            roots: parent.roots.clone(),
-            parent: Some(box parent),
-            heap: heap.clone(),
-            stack: HashMap::new(),
-        }
-    }
-
     /// Sets the parent of a scope, and clones and unions its root bindings.
     pub fn set_parent(&mut self, parent: Scope) {
         self.roots = self.roots.union(&parent.roots).cloned().collect();
@@ -167,11 +156,25 @@ impl Scope {
 mod tests {
     use super::*;
 
+    use std::cell::RefCell;
+    use std::collections::hash_map::HashMap;
+    use std::rc::Rc;
+
+    use alloc::AllocBox;
     use gc_error::GcError;
     use js_types::js_var::{JsPtrEnum, JsKey, JsKeyEnum, JsType};
     use js_types::binding::Binding;
     use js_types::js_str::JsStrStruct;
     use test_utils;
+
+    fn new_scope_as_child(parent: Scope, heap: &Rc<RefCell<AllocBox>>) -> Scope {
+        Scope {
+            roots: parent.roots.clone(),
+            parent: Some(box parent),
+            heap: heap.clone(),
+            stack: HashMap::new(),
+        }
+    }
 
     #[test]
     fn test_new_scope() {
@@ -184,7 +187,7 @@ mod tests {
     fn test_as_child_scope() {
         let heap = test_utils::make_alloc_box();
         let parent_scope = Scope::new(&heap);
-        let test_scope = Scope::as_child(parent_scope, &heap);
+        let test_scope = new_scope_as_child(parent_scope, &heap);
         assert!(test_scope.parent.is_some());
     }
 
@@ -254,7 +257,7 @@ mod tests {
         let (x, x_ptr, x_bnd) = test_utils::make_str("x");
         parent_scope.push(x, Some(x_ptr)).unwrap();
 
-        let child_scope = Scope::as_child(parent_scope, &heap);
+        let child_scope = new_scope_as_child(parent_scope, &heap);
 
         let (var_copy, ptr_copy) = child_scope.get_var_copy(&x_bnd);
         assert!(var_copy.is_some());
@@ -302,7 +305,7 @@ mod tests {
         let heap = test_utils::make_alloc_box();
         let mut parent_scope = Scope::new(&heap);
         {
-            let mut test_scope = Scope::as_child(parent_scope, &heap);
+            let mut test_scope = new_scope_as_child(parent_scope, &heap);
             test_scope.push(test_utils::make_num(0.), None).unwrap();
             test_scope.push(test_utils::make_num(1.), None).unwrap();
             test_scope.push(test_utils::make_num(2.), None).unwrap();
@@ -322,7 +325,7 @@ mod tests {
         let mut parent_scope = Scope::new(&heap);
         {
             // Push a child scope
-            let mut test_scope = Scope::as_child(parent_scope, &heap);
+            let mut test_scope = new_scope_as_child(parent_scope, &heap);
             // Allocate some non-root variables (numbers)
             test_scope.push(test_utils::make_num(0.), None).unwrap();
             test_scope.push(test_utils::make_num(1.), None).unwrap();
