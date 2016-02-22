@@ -5,11 +5,11 @@ use std::rc::Rc;
 use alloc::AllocBox;
 use js_types::js_obj::JsObjStruct;
 use js_types::js_str::JsStrStruct;
-use js_types::js_var::{JsKey, JsPtrEnum, JsType, JsVar};
+use js_types::js_var::{JsKey, JsPtrEnum, JsPtrTag, JsType, JsVar};
 use js_types::binding::Binding;
 
 pub fn make_str(s: &str) -> (JsVar, JsPtrEnum, Binding) {
-    let var = JsVar::new(JsType::JsPtr);
+    let var = JsVar::new(JsType::JsPtr(JsPtrTag::JsStr));
     let bnd = var.binding.clone();
     (var, JsPtrEnum::JsStr(JsStrStruct::new(s)), bnd)
 }
@@ -19,7 +19,7 @@ pub fn make_num(i: f64) -> JsVar {
 }
 
 pub fn make_obj(kvs: Vec<(JsKey, JsVar, Option<JsPtrEnum>)>, heap: Rc<RefCell<AllocBox>>) -> (JsVar, JsPtrEnum, Binding) {
-    let var = JsVar::new(JsType::JsPtr);
+    let var = JsVar::new(JsType::JsPtr(JsPtrTag::JsObj));
     let bnd = var.binding.clone();
     (var, JsPtrEnum::JsObj(JsObjStruct::new(None, "test", kvs, &mut *heap.borrow_mut())), bnd)
 }
