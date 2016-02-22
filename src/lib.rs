@@ -20,12 +20,13 @@ use std::cell::RefCell;
 use std::mem;
 use std::rc::Rc;
 
+use jsrs_common::ast::{Exp, Stmt};
 use js_types::js_var::{JsPtrEnum, JsVar};
 use js_types::binding::Binding;
 
 use alloc::AllocBox;
 use gc_error::{GcError, Result};
-use scope::Scope;
+use scope::{Scope, ScopeTag};
 
 pub struct ScopeManager {
     curr_scope: Scope,
@@ -35,13 +36,20 @@ pub struct ScopeManager {
 impl ScopeManager {
     fn new(alloc_box: Rc<RefCell<AllocBox>>) -> ScopeManager {
         ScopeManager {
-            curr_scope: Scope::new(&alloc_box),
+            curr_scope: Scope::new(ScopeTag::Call, &alloc_box),
             alloc_box: alloc_box,
         }
     }
 
-    pub fn push_scope(&mut self) {
-        let parent = mem::replace(&mut self.curr_scope, Scope::new(&self.alloc_box));
+    pub fn push_scope(&mut self, stmt: &Stmt) {
+        let tag = match *stmt {
+            Stmt::BareExp(ref exp) => match *exp {
+                Exp::Call(..) => ScopeTag::Call,
+                _ => ScopeTag::Block,
+            },
+            _ => ScopeTag::Block,
+        };
+        let parent = mem::replace(&mut self.curr_scope, Scope::new(tag, &self.alloc_box));
         self.curr_scope.set_parent(parent);
     }
 
@@ -80,16 +88,18 @@ pub fn init_gc() -> ScopeManager {
 mod tests {
     use super::*;
 
-    use gc_error::GcError;
+    use jsrs_common::ast::Stmt;
     use js_types::js_var::JsType;
     use js_types::binding::Binding;
+
+    use gc_error::GcError;
     use test_utils;
 
     #[test]
     fn test_pop_scope() {
         let alloc_box = test_utils::make_alloc_box();
         let mut mgr = ScopeManager::new(alloc_box);
-        mgr.push_scope();
+        mgr.push_scope(&Stmt::Empty);
         assert!(mgr.curr_scope.parent.is_some());
         mgr.pop_scope(false).unwrap();
         assert!(mgr.curr_scope.parent.is_none());
@@ -109,7 +119,7 @@ mod tests {
         let alloc_box = test_utils::make_alloc_box();
         let mut mgr = ScopeManager::new(alloc_box);
         mgr.alloc(test_utils::make_num(1.), None).unwrap();
-        mgr.push_scope();
+        mgr.push_scope(&Stmt::Empty);
         mgr.alloc(test_utils::make_num(2.), None).unwrap();
         assert!(mgr.alloc_box.borrow().is_empty());
     }
@@ -125,7 +135,7 @@ mod tests {
         assert!(load.is_ok());
         let load = load.unwrap();
         match load.0.t {
-            JsType::JsNum(n) => assert_eq!(n, 1.),
+            JsType::JsNum(n) => assert!(f64::abs(n - 1.) < 0.0001),
             _ => unreachable!(),
         }
         assert!(load.1.is_none());
@@ -148,7 +158,7 @@ mod tests {
     fn test_store() {
         let alloc_box = test_utils::make_alloc_box();
         let mut mgr = ScopeManager::new(alloc_box,);
-        mgr.push_scope();
+        mgr.push_scope(&Stmt::Empty);
         let x = test_utils::make_num(1.);
         let x_bnd = x.binding.clone();
         mgr.alloc(x, None).unwrap();
