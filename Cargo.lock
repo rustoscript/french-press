@@ -2,7 +2,7 @@
 name = "french_press"
 version = "0.1.0"
 dependencies = [
- "js-types 0.1.0 (git+https://github.com/rustoscript/js-types.git?rev=f52e32f)",
+ "js-types 0.1.0 (git+https://github.com/rustoscript/js-types.git?rev=f3a9c2f)",
  "jsrs-common 0.1.0 (git+https://github.com/rustoscript/js.rs-common.git)",
  "matches 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "uuid 0.1.17 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -20,7 +20,7 @@ dependencies = [
 [[package]]
 name = "js-types"
 version = "0.1.0"
-source = "git+https://github.com/rustoscript/js-types.git?rev=f52e32f#f52e32fb726dd885ca8600591db8889b832c7bce"
+source = "git+https://github.com/rustoscript/js-types.git?rev=f3a9c2f#f3a9c2fddb1cd100cd591df17790fe015740c7d0"
 dependencies = [
  "jsrs-common 0.1.0 (git+https://github.com/rustoscript/js.rs-common.git?rev=ad1e542)",
  "uuid 0.1.17 (registry+https://github.com/rust-lang/crates.io-index)",
