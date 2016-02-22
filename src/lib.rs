@@ -50,7 +50,7 @@ impl ScopeManager {
             mem::replace(&mut self.curr_scope, *parent);
             Ok(())
         } else {
-            Err(GcError::ScopeError)
+            Err(GcError::Scope)
         }
     }
 
@@ -61,7 +61,7 @@ impl ScopeManager {
     pub fn load(&self, bnd: &Binding) -> Result<(JsVar, Option<JsPtrEnum>)> {
         if let (Some(v), ptr) = self.curr_scope.get_var_copy(bnd) {
             Ok((v, ptr))
-        } else { Err(GcError::LoadError(bnd.clone())) }
+        } else { Err(GcError::Load(bnd.clone())) }
     }
 
     pub fn store(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
@@ -100,7 +100,7 @@ mod tests {
         let mut mgr = ScopeManager::new(alloc_box);
         let res = mgr.pop_scope(false);
         assert!(res.is_err());
-        assert!(matches!(res, Err(GcError::ScopeError)));
+        assert!(matches!(res, Err(GcError::Scope)));
     }
 
     #[test]
@@ -137,7 +137,7 @@ mod tests {
         let bnd = Binding::anon();
         let res = mgr.load(&bnd);
         assert!(res.is_err());
-        assert!(matches!(res, Err(GcError::LoadError(bnd))));
+        assert!(matches!(res, Err(GcError::Load(bnd))));
     }
 
     #[test]

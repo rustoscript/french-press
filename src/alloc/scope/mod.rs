@@ -54,9 +54,9 @@ impl Scope {
                     self.roots.insert(var.binding.clone());
                     self.heap.borrow_mut().alloc(var.binding.clone(), ptr)
                 } else {
-                    return Err(GcError::PtrError);
+                    return Err(GcError::Ptr);
                 },
-            _ => if let Some(_) = ptr { Err(GcError::PtrError) } else { Ok(()) },
+            _ => if let Some(_) = ptr { Err(GcError::Ptr) } else { Ok(()) },
         };
         self.stack.insert(var.binding.clone(), var);
         res
@@ -97,10 +97,10 @@ impl Scope {
                     self.roots.insert(var.binding.clone());
                     self.heap.borrow_mut().update_ptr(&var.binding, ptr)
                 } else {
-                    Err(GcError::PtrError)
+                    Err(GcError::Ptr)
                 },
             _ => {
-                if let Some(_) = ptr { return Err(GcError::PtrError); }
+                if let Some(_) = ptr { return Err(GcError::Ptr); }
                 if let Entry::Occupied(mut view) = self.stack.entry(var.binding.clone()) {
                     // A root was potentially removed
                     self.roots.remove(&var.binding);
@@ -227,12 +227,12 @@ mod tests {
         let (var, ptr, _) = test_utils::make_str("test");
         let res = test_scope.push_var(var, None);
         assert!(res.is_err());
-        assert!(matches!(res, Err(GcError::PtrError)));
+        assert!(matches!(res, Err(GcError::Ptr)));
         assert!(test_scope.heap.borrow().is_empty());
         let var = test_utils::make_num(1.);
         let res = test_scope.push_var(var, Some(ptr));
         assert!(res.is_err());
-        assert!(matches!(res, Err(GcError::PtrError)));
+        assert!(matches!(res, Err(GcError::Ptr)));
         assert!(test_scope.heap.borrow().is_empty());
     }
 
@@ -298,13 +298,13 @@ mod tests {
         let (mut update, update_ptr) = test_scope.get_var_copy(&x_bnd);
         let res = test_scope.update_var(update.clone().unwrap(), None);
         assert!(res.is_err());
-        assert!(matches!(res, Err(GcError::PtrError)));
+        assert!(matches!(res, Err(GcError::Ptr)));
 
         let mut update = update.unwrap();
         update.t = JsType::JsNum(1.);
         let res = test_scope.update_var(update, update_ptr);
         assert!(res.is_err());
-        assert!(matches!(res, Err(GcError::PtrError)));
+        assert!(matches!(res, Err(GcError::Ptr)));
     }
 
     #[test]
