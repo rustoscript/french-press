@@ -6,7 +6,7 @@ use std::rc::Rc;
 
 use alloc::AllocBox;
 use gc_error::{GcError, Result};
-use js_types::js_var::{JsPtrEnum, JsType, JsVar};
+use js_types::js_var::{JsPtrEnum, JsPtrTag, JsType, JsVar};
 use js_types::binding::Binding;
 use js_types::allocator::Allocator;
 
@@ -48,7 +48,7 @@ impl Scope {
     /// Push a new JsVar onto the stack, and maybe allocate a pointer in the heap.
     pub fn push(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
         let res = match var.t {
-            JsType::JsPtr =>
+            JsType::JsPtr(_) =>
                 if let Some(ptr) = ptr {
                     // Creating a new pointer creates a new root
                     self.roots.insert(var.binding.clone());
@@ -71,7 +71,7 @@ impl Scope {
     pub fn get_var_copy(&self, bnd: &Binding) -> (Option<JsVar>, Option<JsPtrEnum>) {
         if let Some(var) = self.stack.get(bnd) {
             match var.t {
-                JsType::JsPtr => {
+                JsType::JsPtr(_) => {
                     if let Some(alloc) = self.heap.borrow().find_id(bnd) {
                         (Some(var.clone()), Some(alloc.borrow().clone()))
                     } else {
@@ -91,9 +91,11 @@ impl Scope {
     /// Try to update a variable that's been allocated.
     pub fn update_var(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
         match var.t {
-            JsType::JsPtr =>
+            JsType::JsPtr(tag) =>
                 if let Some(ptr) = ptr {
                     // A new root was potentially created
+                    // If the pointer and its underlying type are not equal, return an error.
+                    if !tag.eq_ptr_type(&ptr) { return Err(GcError::PtrError); }
                     self.roots.insert(var.binding.clone());
                     self.heap.borrow_mut().update_ptr(&var.binding, ptr)
                 } else {
@@ -134,15 +136,28 @@ impl Scope {
             }
         }
         if let Some(ref mut parent) = self.parent {
-            for (_, var) in self.stack.drain() {
-                if let JsType::JsPtr = var.t {
-                        // Mangle each binding before giving it to the parent
-                        // scope. This avoids binding collisions, and helps
-                        // identify to a human observer which bindings are
-                        // not from the current scope.
-                        let mut mangled_var = var.clone();
-                        mangled_var.binding = Binding::mangle(var.binding);
-                        parent.own(mangled_var);
+            let returning_closure = self.stack.iter()
+                                              .any(|(_, v)|
+                                                   matches!(v.t, JsType::JsPtr(JsPtrTag::JsFn)));
+            // If we're returning a closure, conservatively assume the closure takes ownership of
+            // every binding defined in this scope, so it must all live into the parent scope.
+            if returning_closure {
+                for (_, var) in self.stack.drain() {
+                    let mut mangled_var = var.clone();
+                    mangled_var.binding = Binding::mangle(var.binding);
+                    parent.own(mangled_var);
+                }
+            } else {
+                for (_, var) in self.stack.drain() {
+                    if let JsType::JsPtr(_) = var.t {
+                            // Mangle each binding before giving it to the parent
+                            // scope. This avoids binding collisions, and helps
+                            // identify to a human observer which bindings are
+                            // not from the current scope.
+                            let mut mangled_var = var.clone();
+                            mangled_var.binding = Binding::mangle(var.binding);
+                            parent.own(mangled_var);
+                    }
                 }
             }
             parent.roots = parent.roots.union(&self.roots).cloned().collect();
