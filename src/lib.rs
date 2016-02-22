@@ -56,7 +56,7 @@ impl ScopeManager {
     }
 
     pub fn alloc(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
-        self.curr_scope.push(var, ptr)
+        self.curr_scope.push_var(var, ptr)
     }
 
     pub fn load(&self, bnd: &Binding) -> Result<(JsVar, Option<JsPtrEnum>)> {
