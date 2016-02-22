@@ -27,7 +27,7 @@ impl Allocator for AllocBox {
         } else {
             // If a binding already exists and we try to allocate it, this should
             // be an unrecoverable error.
-            Err(GcError::AllocError(binding))
+            Err(GcError::Alloc(binding))
         }
     }
 }
@@ -103,7 +103,7 @@ impl AllocBox {
             *inner.borrow_mut() = ptr;
             Ok(())
         } else {
-            Err(GcError::StoreError)
+            Err(GcError::Store)
         }
     }
 
@@ -168,7 +168,7 @@ mod tests {
         assert!(ab.alloc(x_bnd, x_ptr.clone()).is_ok());
         let res = ab.alloc(x_bnd_2, x_ptr);
         assert!(res.is_err());
-        assert!(matches!(res, Err(GcError::AllocError(x_bnd_2))));
+        assert!(matches!(res, Err(GcError::Alloc(x_bnd_2))));
     }
 
     #[test]
@@ -198,7 +198,7 @@ mod tests {
         let (_, ptr, _) = test_utils::make_str("");
         let res = ab.update_ptr(&Binding::anon(), ptr);
         assert!(res.is_err());
-        assert!(matches!(res, Err(GcError::StoreError)));
+        assert!(matches!(res, Err(GcError::Store)));
     }
 
     #[test]

@@ -1,9 +1,9 @@
 #![feature(associated_consts)]
 #![feature(box_patterns)]
 #![feature(box_syntax)]
-//#![feature(plugin)]
+#![feature(plugin)]
 
-//#![plugin(clippy)]
+#![plugin(clippy)]
 
 extern crate uuid;
 extern crate jsrs_common;
@@ -14,7 +14,7 @@ extern crate js_types;
 
 pub mod alloc;
 mod gc_error;
-mod scope_tree;
+mod scope_node;
 mod test_utils;
 
 use std::cell::RefCell;
@@ -24,10 +24,10 @@ use alloc::AllocBox;
 use gc_error::{GcError, Result};
 use js_types::js_var::{JsPtrEnum, JsVar};
 use js_types::binding::Binding;
-use scope_tree::ScopeTree;
+use scope_node::ScopeNode;
 
 pub struct ScopeManager {
-    scopes: ScopeTree,
+    curr_scope: ScopeNode,
     current_stack: Vec<i32>,
     next: i32,
     alloc_box: Rc<RefCell<AllocBox>>,
@@ -36,7 +36,7 @@ pub struct ScopeManager {
 impl ScopeManager {
     fn new(alloc_box: Rc<RefCell<AllocBox>>) -> ScopeManager {
         ScopeManager {
-            scopes: ScopeTree::new(0, &alloc_box),
+            curr_scope: ScopeNode::new(0, &alloc_box),
             current_stack: vec![0],
             next: 1,
             alloc_box: alloc_box,
@@ -48,18 +48,17 @@ impl ScopeManager {
             return Ok(*i);
         }
 
-        Err(GcError::ScopeError)
+        // TODO different error here
+        Err(GcError::Scope(-1))
     }
 
     pub fn add_scope(&mut self) -> Result<i32> {
         let id = try!(self.get_current_scope_id());
-        if self.scopes.add_child_to_id(self.next, id, &self.alloc_box) {
-            self.current_stack.push(self.next);
-            self.next += 1;
-            return self.get_current_scope_id()
-        }
+        try!(self.curr_scope.add_child_to_id(self.next, id, &self.alloc_box));
+        self.current_stack.push(self.next);
+        self.next += 1;
+        self.get_current_scope_id()
 
-        Err(GcError::ScopeError)
     }
 
     pub fn push_scope(&mut self, id: i32) {
@@ -73,19 +72,19 @@ impl ScopeManager {
     pub fn alloc(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
         let id = try!(self.get_current_scope_id());
 
-        self.scopes.push_on_id(id, &var, ptr.as_ref())
+        self.curr_scope.push_var_to_id(id, &var, ptr.as_ref())
     }
 
     pub fn load(&self, bnd: &Binding) -> Result<(JsVar, Option<JsPtrEnum>)> {
         let id = try!(self.get_current_scope_id());
-        if let (Some(v), ptr) = try!(self.scopes.get_var_copy_from_id(id, bnd)) {
+        if let (Some(v), ptr) = try!(self.curr_scope.get_var_copy_from_id(id, bnd)) {
             Ok((v, ptr))
-        } else { Err(GcError::LoadError(bnd.clone())) }
+        } else { Err(GcError::Load(bnd.clone())) }
     }
 
     pub fn store(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
         let id = try!(self.get_current_scope_id());
-        self.scopes.update_var_in_id(id, &var, ptr.as_ref())
+        self.curr_scope.update_var_in_id(id, &var, ptr.as_ref())
     }
 }
 
@@ -120,7 +119,7 @@ mod tests {
         let mut mgr = ScopeManager::new(alloc_box);
         let res = mgr.pop_scope(false);
         assert!(res.is_err());
-        assert!(matches!(res, Err(GcError::ScopeError)));
+        assert!(matches!(res, Err(GcError::Scope)));
     }
 
     #[test]
@@ -157,7 +156,7 @@ mod tests {
         let bnd = Binding::anon();
         let res = mgr.load(&bnd);
         assert!(res.is_err());
-        assert!(matches!(res, Err(GcError::LoadError(bnd))));
+        assert!(matches!(res, Err(GcError::Load(bnd))));
     }
 
     #[test]
