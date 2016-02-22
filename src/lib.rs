@@ -14,7 +14,7 @@ extern crate js_types;
 
 pub mod alloc;
 mod gc_error;
-mod scope_node;
+mod scope;
 mod test_utils;
 
 use std::cell::RefCell;
@@ -24,10 +24,10 @@ use alloc::AllocBox;
 use gc_error::{GcError, Result};
 use js_types::js_var::{JsPtrEnum, JsVar};
 use js_types::binding::Binding;
-use scope_node::ScopeNode;
+use scope::scope_node::ScopeNode;
 
 pub struct ScopeManager {
-    curr_scope: ScopeNode,
+    root: ScopeNode,
     current_stack: Vec<i32>,
     next: i32,
     alloc_box: Rc<RefCell<AllocBox>>,
@@ -36,7 +36,7 @@ pub struct ScopeManager {
 impl ScopeManager {
     fn new(alloc_box: Rc<RefCell<AllocBox>>) -> ScopeManager {
         ScopeManager {
-            curr_scope: ScopeNode::new(0, &alloc_box),
+            root: ScopeNode::new(0, None, &alloc_box),
             current_stack: vec![0],
             next: 1,
             alloc_box: alloc_box,
@@ -47,44 +47,44 @@ impl ScopeManager {
         if let Some(i) = self.current_stack.last() {
             return Ok(*i);
         }
-
         // TODO different error here
         Err(GcError::Scope(-1))
     }
 
-    pub fn add_scope(&mut self) -> Result<i32> {
+    pub fn push_scope(&mut self) -> Result<i32> {
         let id = try!(self.get_current_scope_id());
-        try!(self.curr_scope.add_child_to_id(self.next, id, &self.alloc_box));
+        try!(self.root.add_child_to_id(self.next, id, &self.alloc_box));
         self.current_stack.push(self.next);
         self.next += 1;
         self.get_current_scope_id()
 
     }
 
-    pub fn push_scope(&mut self, id: i32) {
-        self.current_stack.push(id);
-    }
-
-    pub fn pop_scope(&mut self, gc_yield: bool) {
-        self.current_stack.pop();
-    }
+    // TODO FIXME
+    /*pub fn pop_scope(&mut self, gc_yield: bool) -> Result<()> {
+        if let Some(id) = self.current_stack.pop() {
+            if let Some(&mut scope) = self.root.find_scope_by_id(id) {
+                scope.transfer_stack(gc_yield);
+            }
+        }
+    }*/
 
     pub fn alloc(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
         let id = try!(self.get_current_scope_id());
 
-        self.curr_scope.push_var_to_id(id, &var, ptr.as_ref())
+        self.root.push_var_to_id(id, &var, ptr.as_ref())
     }
 
     pub fn load(&self, bnd: &Binding) -> Result<(JsVar, Option<JsPtrEnum>)> {
         let id = try!(self.get_current_scope_id());
-        if let (Some(v), ptr) = try!(self.curr_scope.get_var_copy_from_id(id, bnd)) {
+        if let (Some(v), ptr) = try!(self.root.get_var_copy_from_id(id, bnd)) {
             Ok((v, ptr))
         } else { Err(GcError::Load(bnd.clone())) }
     }
 
     pub fn store(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
         let id = try!(self.get_current_scope_id());
-        self.curr_scope.update_var_in_id(id, &var, ptr.as_ref())
+        self.root.update_var_in_id(id, &var, ptr.as_ref())
     }
 }
 

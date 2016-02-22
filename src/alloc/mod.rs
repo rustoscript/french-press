@@ -8,8 +8,6 @@ use js_types::js_var::JsPtrEnum;
 use js_types::allocator::Allocator;
 use js_types::binding::Binding;
 
-pub mod scope;
-
 pub type Alloc<T> = Rc<RefCell<T>>;
 
 pub struct AllocBox {

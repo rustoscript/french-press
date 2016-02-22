@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use alloc::scope::Scope;
+use scope::Scope;
 use alloc::AllocBox;
 use gc_error::{GcError, Result};
 use js_types::binding::Binding;
@@ -9,7 +9,8 @@ use js_types::js_var::{JsPtrEnum, JsVar};
 
 pub struct ScopeNode {
     scope: Scope,
-    children: Vec<Box<ScopeNode>>,
+    parent: Option<Weak<RefCell<ScopeNode>>>,
+    children: Vec<Rc<RefCell<ScopeNode>>>,
 }
 
 enum ParentResult<T, E> {
@@ -22,21 +23,33 @@ enum ParentResult<T, E> {
 }
 
 impl ScopeNode {
-    pub fn new(id: i32, alloc_box: &Rc<RefCell<AllocBox>>) -> ScopeNode {
+    pub fn new(id: i32, parent: Option<&Rc<RefCell<ScopeNode>>>, alloc_box: &Rc<RefCell<AllocBox>>) -> ScopeNode {
         ScopeNode {
             scope: Scope::new(id, &alloc_box),
+            parent: if let Some(p) = parent { Some(Rc::downgrade(p)) } else { None },
             children: Vec::new(),
+        }
+    }
+
+    pub fn find_scope_by_id(&mut self, id: i32) -> Option<&mut Scope> {
+        if self.scope.id == id {
+            Some(&mut self.scope)
+        } else {
+            for node in &mut self.children {
+                if node.find_scope_by_id(id).is_some() { return Some(&mut node.scope); }
+            }
+            None
         }
     }
 
     /// Add a child Scope to the specified Scope by `new_id`
     pub fn add_child_to_id(&mut self, new_id: i32, parent_id: i32, alloc_box: &Rc<RefCell<AllocBox>>) -> Result<()> {
         if self.scope.id == parent_id {
-            self.children.push(Box::new(ScopeNode::new(new_id, &alloc_box)));
+            self.children.push(Rc::new(RefCell::new(ScopeNode::new(new_id, Some(Rc::downgrade(&self)), &alloc_box))));
             Ok(())
         } else {
             for s in &mut self.children {
-                if s.add_child_to_id(new_id, parent_id, alloc_box).is_ok() {
+                if s.borrow_mut().add_child_to_id(new_id, parent_id, alloc_box).is_ok() {
                     return Ok(());
                 }
             }
@@ -66,7 +79,7 @@ impl ScopeNode {
         } else {
             // Otherwise, search the child scopes all the way down the tree.
             for s in &mut self.children {
-                match s.update_var_in_id_ok(id, var, ptr) {
+                match s.borrow_mut().update_var_in_id_ok(id, var, ptr) {
                     // If we were able to update in this child, then we're copacetic again.
                     ParentResult::Match(t) => return ParentResult::Match(t),
                     // If we weren't, but the scope existed, try to put the variable into the
@@ -106,9 +119,10 @@ impl ScopeNode {
                 ParentResult::MatchError(GcError::Scope(id))
             }
         } else {
+            // TODO might have to look upwards in the tree as well? If scopes are functions then no
             for s in &self.children {
                 // Otherwise, search the child scopes all the way down the tree.
-                match s.get_var_copy_from_id_ok(id, bnd) {
+                match s.borrow().get_var_copy_from_id_ok(id, bnd) {
                     // If we were able to get a copy in this child, then we're copacetic again.
                     ParentResult::Match(t) => return ParentResult::Match(t),
                     // If we weren't, but the scope existed, try to copy the variable from the
@@ -135,7 +149,7 @@ impl ScopeNode {
         }
 
         for ref mut s in &mut self.children {
-            if s.push_var_to_id(id, var, ptr).is_ok() {
+            if s.borrow_mut().push_var_to_id(id, var, ptr).is_ok() {
                 return Ok(())
             }
         }

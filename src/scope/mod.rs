@@ -10,6 +10,8 @@ use js_types::js_var::{JsPtrEnum, JsType, JsVar};
 use js_types::binding::Binding;
 use js_types::allocator::Allocator;
 
+pub mod scope_node;
+
 // Tunable GC parameter. Probably should not be a constant, but good enough for now.
 const GC_THRESHOLD: usize = 64;
 
@@ -22,7 +24,6 @@ const GC_THRESHOLD: usize = 64;
 /// stack: The stack of the current scope, containing all variables allocated
 ///        by this scope.
 pub struct Scope {
-    pub parent: Option<Box<Scope>>,
     stack: HashMap<Binding, JsVar>,
     heap: Rc<RefCell<AllocBox>>,
     roots: HashSet<Binding>,
@@ -33,7 +34,6 @@ impl Scope {
     /// Create a new, parentless scope node.
     pub fn new(id: i32, heap: &Rc<RefCell<AllocBox>>) -> Scope {
         Scope {
-            parent: None,
             stack: HashMap::new(),
             heap: heap.clone(),
             roots: HashSet::new(),
@@ -43,10 +43,10 @@ impl Scope {
 
     /// Sets the parent of a scope, and clones and unions its root bindings.
     /// This is not implemented as its own constructor due to ownership conflicts.
-    pub fn set_parent(&mut self, parent: Scope) {
+    /*pub fn set_parent(&mut self, parent: Scope) {
         self.roots = self.roots.union(&parent.roots).cloned().collect();
         self.parent = Some(box parent);
-    }
+    }*/
 
     /// Push a new JsVar onto the stack, and maybe allocate a pointer in the heap.
     pub fn push_var(&mut self, var: &JsVar, ptr: Option<&JsPtrEnum>) -> Result<()> {
@@ -80,10 +80,6 @@ impl Scope {
                 },
                 _ => (Some(var.clone()), None),
             }
-        } else if let Some(ref parent) = self.parent {
-            // FIXME? This is slow.
-            // TODO figure out if this still makes sense with scope_tree
-            parent.get_var_copy(bnd)
         } else { (None, None) }
     }
 
@@ -119,7 +115,7 @@ impl Scope {
 
     /// Called when a scope exits. Transfers the stack of this scope to its parent,
     /// and returns the parent scope, which may be `None`.
-    pub fn transfer_stack(&mut self, gc_yield: bool) -> Option<Box<Scope>> {
+    pub fn transfer_stack(&mut self, gc_yield: bool) {
         if gc_yield {
             // The interpreter says we can GC now
             self.heap.borrow_mut().mark_roots(&self.roots);
@@ -132,7 +128,8 @@ impl Scope {
                 }
             }
         }
-        if let Some(ref mut parent) = self.parent {
+        // TODO move the code below somewhere else
+        /*if let Some(ref mut parent) = self.parent {
             for (_, var) in self.stack.drain() {
                 if let JsType::JsPtr = var.t {
                         // Mangle each binding before giving it to the parent
@@ -145,8 +142,8 @@ impl Scope {
                 }
             }
             parent.roots = parent.roots.union(&self.roots).cloned().collect();
-        }
-        mem::replace(&mut self.parent, None)
+        }*/
+        //mem::replace(&mut self.parent, None)
     }
 
     /// Take ownership of a variable (usually from another scope).
