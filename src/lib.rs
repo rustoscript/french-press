@@ -9,22 +9,23 @@ extern crate uuid;
 extern crate jsrs_common;
 extern crate js_types;
 
-#[cfg(test)]
 #[macro_use] extern crate matches;
 
 pub mod alloc;
 mod gc_error;
+mod scope;
 mod test_utils;
 
 use std::cell::RefCell;
 use std::mem;
 use std::rc::Rc;
 
-use alloc::AllocBox;
-use alloc::scope::Scope;
-use gc_error::{GcError, Result};
 use js_types::js_var::{JsPtrEnum, JsVar};
 use js_types::binding::Binding;
+
+use alloc::AllocBox;
+use gc_error::{GcError, Result};
+use scope::Scope;
 
 pub struct ScopeManager {
     curr_scope: Scope,
