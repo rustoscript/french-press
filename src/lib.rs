@@ -1,9 +1,9 @@
 #![feature(associated_consts)]
 #![feature(box_patterns)]
 #![feature(box_syntax)]
-//#![feature(plugin)]
+#![feature(plugin)]
 
-//#![plugin(clippy)]
+#![plugin(clippy)]
 
 extern crate uuid;
 extern crate jsrs_common;
@@ -29,6 +29,7 @@ use gc_error::{GcError, Result};
 use scope::{Scope, ScopeTag};
 
 pub struct ScopeManager {
+    globals: Scope,
     curr_scope: Scope,
     alloc_box: Rc<RefCell<AllocBox>>,
 }
@@ -36,6 +37,7 @@ pub struct ScopeManager {
 impl ScopeManager {
     fn new(alloc_box: Rc<RefCell<AllocBox>>) -> ScopeManager {
         ScopeManager {
+            globals: Scope::new(ScopeTag::Call, &alloc_box),
             curr_scope: Scope::new(ScopeTag::Call, &alloc_box),
             alloc_box: alloc_box,
         }
@@ -54,7 +56,7 @@ impl ScopeManager {
     }
 
     pub fn pop_scope(&mut self, gc_yield: bool) -> Result<()> {
-        let parent = self.curr_scope.transfer_stack(gc_yield);
+        let parent = self.curr_scope.transfer_stack(&mut self.globals, gc_yield);
         if let Some(parent) = parent {
             mem::replace(&mut self.curr_scope, *parent);
             Ok(())
@@ -67,14 +69,22 @@ impl ScopeManager {
         self.curr_scope.push_var(var, ptr)
     }
 
+    /// Try to load the variable behind a binding
     pub fn load(&self, bnd: &Binding) -> Result<(JsVar, Option<JsPtrEnum>)> {
-        if let (Some(v), ptr) = self.curr_scope.get_var_copy(bnd) {
-            Ok((v, ptr))
-        } else { Err(GcError::LoadError(bnd.clone())) }
+        self.curr_scope.get_var_copy(bnd)
+                       // Binding lookup failed locally, so check the root
+                       // scope (globals)
+                       .or(self.globals.get_var_copy(bnd))
+                       .ok_or_else(|| GcError::LoadError(bnd.clone()))
     }
 
     pub fn store(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
-        self.curr_scope.update_var(var, ptr)
+        let update = self.curr_scope.update_var(var, ptr);
+        if let Err(GcError::StoreError(var, ptr)) = update{
+            self.globals.update_var(var, ptr)
+        } else {
+            update
+        }
     }
 }
 

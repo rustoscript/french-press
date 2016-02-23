@@ -70,35 +70,36 @@ impl Scope {
     }
 
     /// Take ownership of a variable (usually from another scope).
-    pub fn own(&mut self, var: JsVar) {
+    pub fn own_var(&mut self, var: JsVar) {
         self.stack.insert(var.binding.clone(), var);
     }
 
     /// Return an optional copy of a variable and an optional pointer into the heap.
-    pub fn get_var_copy(&self, bnd: &Binding) -> (Option<JsVar>, Option<JsPtrEnum>) {
+    pub fn get_var_copy(&self, bnd: &Binding) -> Option<(JsVar, Option<JsPtrEnum>)> {
         if let Some(var) = self.stack.get(bnd) {
             match var.t {
                 JsType::JsPtr(_) => {
                     if let Some(alloc) = self.heap.borrow().find_id(bnd) {
-                        (Some(var.clone()), Some(alloc.borrow().clone()))
+                        Some((var.clone(), Some(alloc.borrow().clone())))
                     } else {
                         // This case should be impossible unless you have an
                         // invalid ptr, which should also be impossible.
-                        (None, None)
+                        None
                     }
                 },
-                _ => (Some(var.clone()), None),
+                _ => Some((var.clone(), None)),
             }
         } else if self.tag != ScopeTag::Call {
             // FIXME? This is slow.
             // A nonexistent binding in the current scope might require searching
             // the scope tree upwards for the binding. However, if the current
             // scope is a function call, it does not have access to anything from
-            // its parent scope, so it should not do this lookup.
+            // its parent scope, so it should not do this lookup. If the overall
+            // lookup fails, the ScopeManager will check the global scope.
             if let Some(ref parent) = self.parent {
                 parent.get_var_copy(bnd)
-            } else { (None, None) }
-        } else { (None, None) }
+            } else { None }
+        } else { None }
     }
 
     /// Try to update a variable that's been allocated.
@@ -121,28 +122,16 @@ impl Scope {
                     self.roots.remove(&var.binding);
                     *view.get_mut() = var;
                     return Ok(());
+                } else {
+                    Err(GcError::StoreError(var, ptr))
                 }
-                // Hack to skirt mutable borrow of self lasting longer than it should
-                if let Entry::Vacant(_) = self.stack.entry(var.binding.clone()) {
-                    // This creates a global, so find the root of the scope stack and push into it.
-                    return self.push_to_root(var, ptr);
-                }
-                unreachable!();
             },
-        }
-    }
-
-    fn push_to_root(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
-        if let Some(box ref mut p) = self.parent {
-            p.push_to_root(var, ptr)
-        } else {
-            self.push_var(var, ptr)
         }
     }
 
     /// Called when a scope exits. Transfers the stack of this scope to its parent,
     /// and returns the parent scope, which may be `None`.
-    pub fn transfer_stack(&mut self, gc_yield: bool) -> Option<Box<Scope>> {
+    pub fn transfer_stack(&mut self, globals: &mut Scope, gc_yield: bool) -> Option<Box<Scope>> {
         if gc_yield {
             // The interpreter says we can GC now
             self.heap.borrow_mut().mark_roots(&self.roots);
@@ -165,7 +154,7 @@ impl Scope {
                 for (_, var) in self.stack.drain() {
                     let mut mangled_var = var.clone();
                     mangled_var.binding = Binding::mangle(var.binding);
-                    parent.own(mangled_var);
+                    globals.own_var(mangled_var);
                 }
             } else {
                 for (_, var) in self.stack.drain() {
@@ -176,7 +165,7 @@ impl Scope {
                             // not from the current scope.
                             let mut mangled_var = var.clone();
                             mangled_var.binding = Binding::mangle(var.binding);
-                            parent.own(mangled_var);
+                            parent.own_var(mangled_var);
                     }
                 }
             }
@@ -197,7 +186,7 @@ mod tests {
 
     use alloc::AllocBox;
     use gc_error::GcError;
-    use js_types::js_var::{JsPtrEnum, JsKey, JsKeyEnum, JsType};
+    use js_types::js_var::{JsVar, JsPtrEnum, JsKey, JsKeyEnum, JsType};
     use js_types::binding::Binding;
     use js_types::js_str::JsStrStruct;
     use test_utils;
@@ -272,8 +261,10 @@ mod tests {
         let (x, x_ptr, x_bnd) = test_utils::make_str("x");
         test_scope.push_var(x, Some(x_ptr)).unwrap();
 
-        let (var_copy, ptr_copy) = test_scope.get_var_copy(&x_bnd);
-        assert!(var_copy.is_some());
+        let copy = test_scope.get_var_copy(&x_bnd);
+        assert!(copy.is_some());
+        let (var_copy, ptr_copy) = copy.unwrap();
+        assert!(matches!(var_copy, JsVar { t: JsType::JsPtr, .. }));
         assert!(ptr_copy.is_some());
     }
 
@@ -281,9 +272,8 @@ mod tests {
     fn test_get_var_copy_fail() {
         let heap = test_utils::make_alloc_box();
         let test_scope = Scope::new(ScopeTag::Block, &heap);
-        let (bad_copy, ptr_copy) = test_scope.get_var_copy(&Binding::anon());
-        assert!(bad_copy.is_none());
-        assert!(ptr_copy.is_none());
+        let copy = test_scope.get_var_copy(&Binding::anon());
+        assert!(copy.is_none());
     }
 
     #[test]
@@ -294,9 +284,8 @@ mod tests {
         parent_scope.push_var(x, Some(x_ptr)).unwrap();
         let child_scope = new_scope_as_child(parent_scope, ScopeTag::Call, &heap);
 
-        let (var_copy, ptr_copy) = child_scope.get_var_copy(&x_bnd);
-        assert!(var_copy.is_none());
-        assert!(ptr_copy.is_none());
+        let copy = child_scope.get_var_copy(&x_bnd);
+        assert!(copy.is_none());
     }
 
     #[test]
@@ -308,8 +297,10 @@ mod tests {
 
         let child_scope = new_scope_as_child(parent_scope, ScopeTag::Block, &heap);
 
-        let (var_copy, ptr_copy) = child_scope.get_var_copy(&x_bnd);
-        assert!(var_copy.is_some());
+        let copy = child_scope.get_var_copy(&x_bnd);
+        assert!(copy.is_some());
+        let (var_copy, ptr_copy) = copy.unwrap();
+        assert!(matches!(var_copy, JsVar { t: JsType::JsPtr, .. }));
         assert!(ptr_copy.is_some());
     }
 
@@ -319,16 +310,16 @@ mod tests {
         let mut test_scope = Scope::new(ScopeTag::Block, &heap);
         let (x, x_ptr, x_bnd) = test_utils::make_str("x");
         assert!(test_scope.push_var(x, Some(x_ptr)).is_ok());
-        let (update, _) = test_scope.get_var_copy(&x_bnd);
+        let (update, _) = test_scope.get_var_copy(&x_bnd).unwrap();
         let update_ptr = Some(JsPtrEnum::JsStr(JsStrStruct::new("test")));
-        assert!(test_scope.update_var(update.unwrap(), update_ptr).is_ok());
+        assert!(test_scope.update_var(update, update_ptr).is_ok());
 
-        let (update, update_ptr) = test_scope.get_var_copy(&x_bnd);
+        let (update, update_ptr) = test_scope.get_var_copy(&x_bnd).unwrap();
         match update_ptr.unwrap() {
             JsPtrEnum::JsStr(JsStrStruct{text: ref s}) => assert_eq!(s, "test"),
             _ => unreachable!(),
         }
-        assert_eq!(update.unwrap().binding, x_bnd);
+        assert_eq!(update.binding, x_bnd);
     }
 
     #[test]
@@ -337,12 +328,11 @@ mod tests {
         let mut test_scope = Scope::new(ScopeTag::Block, &heap);
         let (x, x_ptr, x_bnd) = test_utils::make_str("x");
         assert!(test_scope.push_var(x, Some(x_ptr)).is_ok());
-        let (update, update_ptr) = test_scope.get_var_copy(&x_bnd);
-        let res = test_scope.update_var(update.clone().unwrap(), None);
+        let (mut update, update_ptr) = test_scope.get_var_copy(&x_bnd).unwrap();
+        let res = test_scope.update_var(update.clone(), None);
         assert!(res.is_err());
         assert!(matches!(res, Err(GcError::PtrError)));
 
-        let mut update = update.unwrap();
         update.t = JsType::JsNum(1.);
         let res = test_scope.update_var(update, update_ptr);
         assert!(res.is_err());
@@ -352,6 +342,7 @@ mod tests {
     #[test]
     fn test_transfer_stack_no_gc() {
         let heap = test_utils::make_alloc_box();
+        let mut globals = Scope::new(ScopeTag::Block, &heap);
         let mut parent_scope = Scope::new(ScopeTag::Block, &heap);
         {
             let mut test_scope = new_scope_as_child(parent_scope, ScopeTag::Block, &heap);
@@ -362,7 +353,7 @@ mod tests {
                             test_utils::make_num(1.), None)];
             let (var, ptr, _) = test_utils::make_obj(kvs, heap.clone());
             test_scope.push_var(var, Some(ptr)).unwrap();
-            parent_scope = *test_scope.transfer_stack(false).unwrap();
+            parent_scope = *test_scope.transfer_stack(&mut globals, false).unwrap();
         }
         assert_eq!(parent_scope.stack.len(), 1);
     }
@@ -370,7 +361,8 @@ mod tests {
     #[test]
     fn test_transfer_stack_with_yield() {
         let heap = test_utils::make_alloc_box();
-        // Make a scope
+        // Make some scopes
+        let mut globals = Scope::new(ScopeTag::Block, &heap);
         let mut parent_scope = Scope::new(ScopeTag::Block, &heap);
         {
             // Push a child scope
@@ -399,19 +391,21 @@ mod tests {
 
             // Replace the string in the object with something else so it's no longer live
             let copy = test_scope.get_var_copy(&bnd);
-            let (var_cp, mut ptr_cp) = (copy.0.unwrap(), copy.1.unwrap());
+            let (var_cp, mut ptr_cp) = copy.unwrap();
             let key = JsKey { binding: key_bnd, k: JsKeyEnum::JsBool(false) };
-            match ptr_cp {
-                JsPtrEnum::JsObj(ref mut obj) => { obj.dict.insert(key, test_utils::make_num(-1.)); }
+            match *&mut ptr_cp {
+                Some(JsPtrEnum::JsObj(ref mut obj)) => {
+                    obj.dict.insert(key, test_utils::make_num(-1.));
+                },
                 _ => unreachable!()
             }
-            test_scope.update_var(var_cp, Some(ptr_cp)).unwrap();
+            test_scope.update_var(var_cp, ptr_cp).unwrap();
             // The heap should still have 2 things in it: an object and a string
             assert_eq!(heap.borrow().len(), 2);
 
             // Kill the current scope & give its refs to the parent,
             // allowing the GC to kick in beforehand.
-            parent_scope = *test_scope.transfer_stack(true).unwrap();
+            parent_scope = *test_scope.transfer_stack(&mut globals, true).unwrap();
         }
         // The object we created above should still exist
         assert_eq!(parent_scope.stack.len(), 1);
@@ -422,15 +416,17 @@ mod tests {
     #[test]
     fn test_transfer_stack_return_closure() {
         let heap = test_utils::make_alloc_box();
+        let mut globals = Scope::new(ScopeTag::Block, &heap);
         let mut parent_scope = Scope::new(ScopeTag::Block, &heap);
         {
             let mut test_scope = new_scope_as_child(parent_scope, ScopeTag::Block, &heap);
             let (var, test_fn, _) = test_utils::make_fn(&Some("test".to_owned()), &Vec::new());
             test_scope.push_var(test_utils::make_num(1.), None).unwrap();
             test_scope.push_var(var, Some(test_fn)).unwrap();
-            parent_scope = *test_scope.transfer_stack(false).unwrap();
+            parent_scope = *test_scope.transfer_stack(&mut globals, false).unwrap();
         }
-        assert_eq!(parent_scope.stack.len(), 2);
+        assert_eq!(parent_scope.stack.len(), 0);
+        assert_eq!(globals.stack.len(), 2);
     }
 
 }
