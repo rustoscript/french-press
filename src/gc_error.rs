@@ -3,6 +3,7 @@ use std::fmt;
 use std::result;
 
 use js_types::binding::Binding;
+use js_types::js_var::{JsPtrEnum, JsVar};
 
 #[derive(Debug)]
 pub enum GcError {
@@ -10,7 +11,7 @@ pub enum GcError {
     LoadError(Binding),
     PtrError,
     ScopeError,
-    StoreError,
+    StoreError(JsVar, Option<JsPtrEnum>),
 }
 
 pub type Result<T> = result::Result<T, GcError>;
@@ -22,7 +23,7 @@ impl fmt::Display for GcError {
             GcError::LoadError(ref bnd) => write!(f, "Lookup of binding {} failed!", bnd),
             GcError::PtrError => write!(f, "Attempted allocation of invalid heap pointer"),
             GcError::ScopeError => write!(f, "Parent scope did not exist"),
-            GcError::StoreError => write!(f, "Invalid store!"), // TODO update this error
+            GcError::StoreError(_,_) => write!(f, "Invalid store!"), // TODO update this error
         }
     }
 }
@@ -34,7 +35,7 @@ impl Error for GcError {
             GcError::LoadError(_) => "load of invalid ID",
             GcError::PtrError => "bad ptr",
             GcError::ScopeError => "no parent scope",
-            GcError::StoreError => "store of invalid ID",
+            GcError::StoreError(_,_) => "store of invalid ID",
         }
     }
 }

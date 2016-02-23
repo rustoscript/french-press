@@ -101,7 +101,7 @@ impl AllocBox {
             *inner.borrow_mut() = ptr;
             Ok(())
         } else {
-            Err(GcError::StoreError)
+            Err(GcError::PtrError) // FIXME TODO change this error type
         }
     }
 
@@ -198,7 +198,7 @@ mod tests {
         let (_, ptr, _) = test_utils::make_str("");
         let res = ab.update_ptr(&Binding::anon(), ptr);
         assert!(res.is_err());
-        assert!(matches!(res, Err(GcError::StoreError)));
+        assert!(matches!(res, Err(GcError::PtrError)));
     }
 
     #[test]
