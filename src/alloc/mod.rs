@@ -47,6 +47,15 @@ impl AllocBox {
         self.len() == 0
     }
 
+    pub fn realloc(&mut self, old: &Binding, new: Binding) -> Result<()> {
+        if let Some(ptr) = self.remove_binding(old) {
+            self.white_set.insert(new, ptr);
+            Ok(())
+        } else {
+            Err(GcError::Ptr)
+        }
+    }
+
     pub fn mark_roots(&mut self, marks: &HashSet<Binding>) {
         for mark in marks {
             if let Some(ptr) = self.white_set.remove(mark) {
@@ -103,6 +112,12 @@ impl AllocBox {
         } else {
             Err(GcError::Ptr) // FIXME TODO change this error type
         }
+    }
+
+    fn remove_binding(&mut self, binding: &Binding) -> Option<Alloc<JsPtrEnum>> {
+        self.white_set.remove(binding).or(
+            self.grey_set.remove(binding).or(
+                self.black_set.remove(binding)))
     }
 
     fn grey_children(&mut self, child_ids: HashSet<Binding>) {

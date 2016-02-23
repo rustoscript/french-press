@@ -58,7 +58,7 @@ impl ScopeManager {
     }
 
     pub fn pop_scope(&mut self, gc_yield: bool) -> Result<()> {
-        let parent = self.curr_scope.transfer_stack(&mut self.closures, gc_yield);
+        let parent = try!(self.curr_scope.transfer_stack(&mut self.closures, gc_yield));
         if let Some(parent) = parent {
             mem::replace(&mut self.curr_scope, *parent);
             Ok(())

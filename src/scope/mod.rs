@@ -66,9 +66,15 @@ impl Scope {
         res
     }
 
-    /// Take ownership of a variable (usually from another scope).
-    pub fn own_var(&mut self, var: JsVar) {
+    fn rebind_var(&mut self, old_bnd: &Binding, var: JsVar) -> Result<()> {
+        let res =
+            if let JsType::JsPtr(_) = var.t {
+                self.heap.borrow_mut().realloc(old_bnd, var.binding.clone())
+            } else {
+                Ok(())
+            };
         self.stack.insert(var.binding.clone(), var);
+        res
     }
 
     /// Return an optional copy of a variable and an optional pointer into the heap.
@@ -128,7 +134,7 @@ impl Scope {
 
     /// Called when a scope exits. Transfers the stack of this scope to its parent,
     /// and returns the parent scope, which may be `None`.
-    pub fn transfer_stack(&mut self, closures: &mut Vec<Scope>, gc_yield: bool) -> Option<Box<Scope>> {
+    pub fn transfer_stack(&mut self, closures: &mut Vec<Scope>, gc_yield: bool) -> Result<Option<Box<Scope>>> {
         if gc_yield {
             // The interpreter says we can GC now
             self.heap.borrow_mut().mark_roots(&self.roots);
@@ -149,28 +155,26 @@ impl Scope {
             // every binding defined in this scope, so it must all live into the parent scope.
             if returning_closure {
                 let mut closure_scope = Scope::new(ScopeTag::Call, &self.heap);
-                for (_, var) in self.stack.drain() {
-                    let mut mangled_var = var.clone();
-                    mangled_var.binding = Binding::mangle(var.binding);
-                    closure_scope.own_var(mangled_var);
+                for (old_bnd, mut var) in self.stack.drain() {
+                    var.binding = Binding::mangle(old_bnd.clone());
+                    try!(closure_scope.rebind_var(&old_bnd, var));
                 }
                 closures.push(closure_scope);
             } else {
-                for (_, var) in self.stack.drain() {
+                for (old_bnd, mut var) in self.stack.drain() {
                     if let JsType::JsPtr(_) = var.t {
-                            // Mangle each binding before giving it to the parent
-                            // scope. This avoids binding collisions, and helps
-                            // identify to a human observer which bindings are
-                            // not from the current scope.
-                            let mut mangled_var = var.clone();
-                            mangled_var.binding = Binding::mangle(var.binding);
-                            parent.own_var(mangled_var);
+                        // Mangle each binding before giving it to the parent
+                        // scope. This avoids binding collisions, and helps
+                        // identify to a human observer which bindings are
+                        // not from the current scope.
+                        var.binding = Binding::mangle(old_bnd.clone());
+                        try!(parent.rebind_var(&old_bnd, var));
                     }
                 }
             }
             parent.roots = parent.roots.union(&self.roots).cloned().collect();
         }
-        mem::replace(&mut self.parent, None)
+        Ok(mem::replace(&mut self.parent, None))
     }
 }
 
@@ -352,7 +356,7 @@ mod tests {
                             test_utils::make_num(1.), None)];
             let (var, ptr, _) = test_utils::make_obj(kvs, heap.clone());
             test_scope.push_var(var, Some(ptr)).unwrap();
-            parent_scope = *test_scope.transfer_stack(&mut closures, false).unwrap();
+            parent_scope = *test_scope.transfer_stack(&mut closures, false).unwrap().unwrap();
         }
         assert_eq!(parent_scope.stack.len(), 1);
         assert_eq!(closures.len(), 0);
@@ -405,7 +409,7 @@ mod tests {
 
             // Kill the current scope & give its refs to the parent,
             // allowing the GC to kick in beforehand.
-            parent_scope = *test_scope.transfer_stack(&mut closures, true).unwrap();
+            parent_scope = *test_scope.transfer_stack(&mut closures, true).unwrap().unwrap();
         }
         // The object we created above should still exist
         assert_eq!(parent_scope.stack.len(), 1);
@@ -418,16 +422,22 @@ mod tests {
         let heap = test_utils::make_alloc_box();
         let mut closures = Vec::new();
         let mut parent_scope = Scope::new(ScopeTag::Block, &heap);
-        {
+        let fn_bnd = {
             let mut test_scope = new_scope_as_child(parent_scope, ScopeTag::Block, &heap);
-            let (var, test_fn, _) = test_utils::make_fn(&Some("test".to_owned()), &Vec::new());
+            let (var, test_fn, fn_bnd) = test_utils::make_fn(&Some("test".to_owned()), &Vec::new());
             test_scope.push_var(test_utils::make_num(1.), None).unwrap();
             test_scope.push_var(var, Some(test_fn)).unwrap();
-            parent_scope = *test_scope.transfer_stack(&mut closures, false).unwrap();
-        }
+            parent_scope = *test_scope.transfer_stack(&mut closures, false).unwrap().unwrap();
+            fn_bnd
+        };
         assert_eq!(parent_scope.stack.len(), 0);
         assert_eq!(closures.len(), 1);
         assert_eq!(closures[0].stack.len(), 2);
+        assert_eq!(heap.borrow().len(), 1);
+        assert!(heap.borrow().find_id(&fn_bnd).is_none());
+        for bnd in parent_scope.stack.keys() {
+            assert!(heap.borrow().find_id(bnd).is_some());
+        }
     }
 
 }
