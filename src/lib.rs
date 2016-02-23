@@ -63,7 +63,7 @@ impl ScopeManager {
             mem::replace(&mut self.curr_scope, *parent);
             Ok(())
         } else {
-            Err(GcError::ScopeError)
+            Err(GcError::Scope)
         }
     }
 
@@ -77,12 +77,12 @@ impl ScopeManager {
                        // Binding lookup failed locally, so check the root
                        // scope (globals)
                        .or(self.globals.get_var_copy(bnd))
-                       .ok_or_else(|| GcError::LoadError(bnd.clone()))
+                       .ok_or_else(|| GcError::Load(bnd.clone()))
     }
 
     pub fn store(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
         let update = self.curr_scope.update_var(var, ptr);
-        if let Err(GcError::StoreError(var, ptr)) = update{
+        if let Err(GcError::Store(var, ptr)) = update{
             self.globals.update_var(var, ptr)
         } else {
             update
@@ -123,7 +123,7 @@ mod tests {
         let mut mgr = ScopeManager::new(alloc_box);
         let res = mgr.pop_scope(false);
         assert!(res.is_err());
-        assert!(matches!(res, Err(GcError::ScopeError)));
+        assert!(matches!(res, Err(GcError::Scope)));
     }
 
     #[test]
@@ -160,8 +160,8 @@ mod tests {
         let bnd = Binding::anon();
         let res = mgr.load(&bnd);
         assert!(res.is_err());
-        assert!(matches!(res, Err(GcError::LoadError(_))));
-        if let Err(GcError::LoadError(res_bnd)) = res {
+        assert!(matches!(res, Err(GcError::Load(_))));
+        if let Err(GcError::Load(res_bnd)) = res {
             assert_eq!(bnd, res_bnd);
         }
     }

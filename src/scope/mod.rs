@@ -10,9 +10,6 @@ use js_types::js_var::{JsPtrEnum, JsPtrTag, JsType, JsVar};
 use js_types::binding::Binding;
 use js_types::allocator::Allocator;
 
-// Tunable GC parameter. Probably should not be a constant, but good enough for now.
-const GC_THRESHOLD: usize = 64;
-
 /// A logical scope in the AST. Represents any scoped block of Javascript code.
 /// roots: A set of all root references into the heap
 /// parent: An optional parent scope, e.g. the caller of this function scope,
@@ -61,9 +58,9 @@ impl Scope {
                     self.roots.insert(var.binding.clone());
                     self.heap.borrow_mut().alloc(var.binding.clone(), ptr)
                 } else {
-                    return Err(GcError::PtrError);
+                    return Err(GcError::Ptr);
                 },
-            _ => if let Some(_) = ptr { Err(GcError::PtrError) } else { Ok(()) },
+            _ => if let Some(_) = ptr { Err(GcError::Ptr) } else { Ok(()) },
         };
         self.stack.insert(var.binding.clone(), var);
         res
@@ -109,21 +106,21 @@ impl Scope {
                 if let Some(ptr) = ptr {
                     // A new root was potentially created
                     // If the pointer and its underlying type are not equal, return an error.
-                    if !tag.eq_ptr_type(&ptr) { return Err(GcError::PtrError); }
+                    if !tag.eq_ptr_type(&ptr) { return Err(GcError::Ptr); }
                     self.roots.insert(var.binding.clone());
                     self.heap.borrow_mut().update_ptr(&var.binding, ptr)
                 } else {
-                    Err(GcError::PtrError)
+                    Err(GcError::Ptr)
                 },
             _ => {
-                if let Some(_) = ptr { return Err(GcError::PtrError); }
+                if let Some(_) = ptr { return Err(GcError::Ptr); }
                 if let Entry::Occupied(mut view) = self.stack.entry(var.binding.clone()) {
                     // A root was potentially removed
                     self.roots.remove(&var.binding);
                     *view.get_mut() = var;
                     return Ok(());
                 } else {
-                    Err(GcError::StoreError(var, ptr))
+                    Err(GcError::Store(var, ptr))
                 }
             },
         }
@@ -247,12 +244,12 @@ mod tests {
         let (var, ptr, _) = test_utils::make_str("test");
         let res = test_scope.push_var(var, None);
         assert!(res.is_err());
-        assert!(matches!(res, Err(GcError::PtrError)));
+        assert!(matches!(res, Err(GcError::Ptr)));
         assert!(test_scope.heap.borrow().is_empty());
         let var = test_utils::make_num(1.);
         let res = test_scope.push_var(var, Some(ptr));
         assert!(res.is_err());
-        assert!(matches!(res, Err(GcError::PtrError)));
+        assert!(matches!(res, Err(GcError::Ptr)));
         assert!(test_scope.heap.borrow().is_empty());
     }
 
@@ -333,12 +330,12 @@ mod tests {
         let (mut update, update_ptr) = test_scope.get_var_copy(&x_bnd).unwrap();
         let res = test_scope.update_var(update.clone(), None);
         assert!(res.is_err());
-        assert!(matches!(res, Err(GcError::PtrError)));
+        assert!(matches!(res, Err(GcError::Ptr)));
 
         update.t = JsType::JsNum(1.);
         let res = test_scope.update_var(update, update_ptr);
         assert!(res.is_err());
-        assert!(matches!(res, Err(GcError::PtrError)));
+        assert!(matches!(res, Err(GcError::Ptr)));
     }
 
     #[test]
