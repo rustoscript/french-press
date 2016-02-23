@@ -8,8 +8,6 @@ use js_types::js_var::JsPtrEnum;
 use js_types::allocator::Allocator;
 use js_types::binding::Binding;
 
-pub mod scope;
-
 pub type Alloc<T> = Rc<RefCell<T>>;
 
 pub struct AllocBox {
@@ -103,7 +101,7 @@ impl AllocBox {
             *inner.borrow_mut() = ptr;
             Ok(())
         } else {
-            Err(GcError::Store)
+            Err(GcError::Ptr) // FIXME TODO change this error type
         }
     }
 
@@ -155,7 +153,6 @@ mod tests {
         let mut ab = AllocBox::new();
         let (_, x_ptr, x_bnd) = test_utils::make_str("x");
         let (_, y_ptr, y_bnd) = test_utils::make_str("y");
-        let x_bnd_2 = x_bnd.clone();
         assert!(ab.alloc(x_bnd, x_ptr.clone()).is_ok());
         assert!(ab.alloc(y_bnd, y_ptr).is_ok());
     }
@@ -166,9 +163,12 @@ mod tests {
         let (_, x_ptr, x_bnd) = test_utils::make_str("x");
         let x_bnd_2 = x_bnd.clone();
         assert!(ab.alloc(x_bnd, x_ptr.clone()).is_ok());
-        let res = ab.alloc(x_bnd_2, x_ptr);
+        let res = ab.alloc(x_bnd_2.clone(), x_ptr);
         assert!(res.is_err());
-        assert!(matches!(res, Err(GcError::Alloc(x_bnd_2))));
+        assert!(matches!(res, Err(GcError::Alloc(_))));
+        if let Err(GcError::Alloc(bnd)) = res {
+            assert_eq!(x_bnd_2, bnd);
+        }
     }
 
     #[test]
@@ -198,7 +198,7 @@ mod tests {
         let (_, ptr, _) = test_utils::make_str("");
         let res = ab.update_ptr(&Binding::anon(), ptr);
         assert!(res.is_err());
-        assert!(matches!(res, Err(GcError::Store)));
+        assert!(matches!(res, Err(GcError::Ptr)));
     }
 
     #[test]
