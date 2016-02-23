@@ -31,6 +31,7 @@ use scope::{Scope, ScopeTag};
 pub struct ScopeManager {
     globals: Scope,
     curr_scope: Scope,
+    closures: Vec<Scope>,
     alloc_box: Rc<RefCell<AllocBox>>,
 }
 
@@ -39,6 +40,7 @@ impl ScopeManager {
         ScopeManager {
             globals: Scope::new(ScopeTag::Call, &alloc_box),
             curr_scope: Scope::new(ScopeTag::Call, &alloc_box),
+            closures: Vec::new(),
             alloc_box: alloc_box,
         }
     }
@@ -56,7 +58,7 @@ impl ScopeManager {
     }
 
     pub fn pop_scope(&mut self, gc_yield: bool) -> Result<()> {
-        let parent = self.curr_scope.transfer_stack(&mut self.globals, gc_yield);
+        let parent = self.curr_scope.transfer_stack(&mut self.closures, gc_yield);
         if let Some(parent) = parent {
             mem::replace(&mut self.curr_scope, *parent);
             Ok(())

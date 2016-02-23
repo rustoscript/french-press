@@ -131,7 +131,7 @@ impl Scope {
 
     /// Called when a scope exits. Transfers the stack of this scope to its parent,
     /// and returns the parent scope, which may be `None`.
-    pub fn transfer_stack(&mut self, globals: &mut Scope, gc_yield: bool) -> Option<Box<Scope>> {
+    pub fn transfer_stack(&mut self, closures: &mut Vec<Scope>, gc_yield: bool) -> Option<Box<Scope>> {
         if gc_yield {
             // The interpreter says we can GC now
             self.heap.borrow_mut().mark_roots(&self.roots);
@@ -151,11 +151,13 @@ impl Scope {
             // If we're returning a closure, conservatively assume the closure takes ownership of
             // every binding defined in this scope, so it must all live into the parent scope.
             if returning_closure {
+                let mut closure_scope = Scope::new(ScopeTag::Call, &self.heap);
                 for (_, var) in self.stack.drain() {
                     let mut mangled_var = var.clone();
                     mangled_var.binding = Binding::mangle(var.binding);
-                    globals.own_var(mangled_var);
+                    closure_scope.own_var(mangled_var);
                 }
+                closures.push(closure_scope);
             } else {
                 for (_, var) in self.stack.drain() {
                     if let JsType::JsPtr(_) = var.t {
@@ -342,7 +344,7 @@ mod tests {
     #[test]
     fn test_transfer_stack_no_gc() {
         let heap = test_utils::make_alloc_box();
-        let mut globals = Scope::new(ScopeTag::Block, &heap);
+        let mut closures = Vec::new();
         let mut parent_scope = Scope::new(ScopeTag::Block, &heap);
         {
             let mut test_scope = new_scope_as_child(parent_scope, ScopeTag::Block, &heap);
@@ -353,16 +355,17 @@ mod tests {
                             test_utils::make_num(1.), None)];
             let (var, ptr, _) = test_utils::make_obj(kvs, heap.clone());
             test_scope.push_var(var, Some(ptr)).unwrap();
-            parent_scope = *test_scope.transfer_stack(&mut globals, false).unwrap();
+            parent_scope = *test_scope.transfer_stack(&mut closures, false).unwrap();
         }
         assert_eq!(parent_scope.stack.len(), 1);
+        assert_eq!(closures.len(), 0);
     }
 
     #[test]
     fn test_transfer_stack_with_yield() {
         let heap = test_utils::make_alloc_box();
         // Make some scopes
-        let mut globals = Scope::new(ScopeTag::Block, &heap);
+        let mut closures = Vec::new();
         let mut parent_scope = Scope::new(ScopeTag::Block, &heap);
         {
             // Push a child scope
@@ -405,7 +408,7 @@ mod tests {
 
             // Kill the current scope & give its refs to the parent,
             // allowing the GC to kick in beforehand.
-            parent_scope = *test_scope.transfer_stack(&mut globals, true).unwrap();
+            parent_scope = *test_scope.transfer_stack(&mut closures, true).unwrap();
         }
         // The object we created above should still exist
         assert_eq!(parent_scope.stack.len(), 1);
@@ -416,17 +419,18 @@ mod tests {
     #[test]
     fn test_transfer_stack_return_closure() {
         let heap = test_utils::make_alloc_box();
-        let mut globals = Scope::new(ScopeTag::Block, &heap);
+        let mut closures = Vec::new();
         let mut parent_scope = Scope::new(ScopeTag::Block, &heap);
         {
             let mut test_scope = new_scope_as_child(parent_scope, ScopeTag::Block, &heap);
             let (var, test_fn, _) = test_utils::make_fn(&Some("test".to_owned()), &Vec::new());
             test_scope.push_var(test_utils::make_num(1.), None).unwrap();
             test_scope.push_var(var, Some(test_fn)).unwrap();
-            parent_scope = *test_scope.transfer_stack(&mut globals, false).unwrap();
+            parent_scope = *test_scope.transfer_stack(&mut closures, false).unwrap();
         }
         assert_eq!(parent_scope.stack.len(), 0);
-        assert_eq!(globals.stack.len(), 2);
+        assert_eq!(closures.len(), 1);
+        assert_eq!(closures[0].stack.len(), 2);
     }
 
 }
