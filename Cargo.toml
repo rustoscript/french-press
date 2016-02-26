@@ -13,7 +13,7 @@ git = "https://github.com/rustoscript/js.rs-common.git"
 
 [dependencies.js-types]
 git = "https://github.com/rustoscript/js-types.git"
-rev = "f52e32f"
+rev = "ae0af22"
 
 [profile.dev]
 opt-level = 0
