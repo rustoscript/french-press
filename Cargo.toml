@@ -14,7 +14,7 @@ rev = "682abf3"
 
 [dependencies.js-types]
 git = "https://github.com/rustoscript/js-types.git"
-rev = "6ee31d6"
+rev = "ae0af22"
 
 [profile.dev]
 opt-level = 0
