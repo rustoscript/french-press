@@ -8,8 +8,6 @@ use js_types::js_var::JsPtrEnum;
 use js_types::allocator::Allocator;
 use js_types::binding::Binding;
 
-pub mod scope;
-
 pub type Alloc<T> = Rc<RefCell<T>>;
 
 pub struct AllocBox {
@@ -27,7 +25,7 @@ impl Allocator for AllocBox {
         } else {
             // If a binding already exists and we try to allocate it, this should
             // be an unrecoverable error.
-            Err(GcError::AllocError(binding))
+            Err(GcError::Alloc(binding))
         }
     }
 }
@@ -47,6 +45,15 @@ impl AllocBox {
 
     pub fn is_empty(&self) -> bool {
         self.len() == 0
+    }
+
+    pub fn realloc(&mut self, old: &Binding, new: Binding) -> Result<()> {
+        if let Some(ptr) = self.remove_binding(old) {
+            self.white_set.insert(new, ptr);
+            Ok(())
+        } else {
+            Err(GcError::Ptr)
+        }
     }
 
     pub fn mark_roots(&mut self, marks: &HashSet<Binding>) {
@@ -103,8 +110,14 @@ impl AllocBox {
             *inner.borrow_mut() = ptr;
             Ok(())
         } else {
-            Err(GcError::StoreError)
+            Err(GcError::Ptr) // FIXME TODO change this error type
         }
+    }
+
+    fn remove_binding(&mut self, binding: &Binding) -> Option<Alloc<JsPtrEnum>> {
+        self.white_set.remove(binding).or(
+            self.grey_set.remove(binding).or(
+                self.black_set.remove(binding)))
     }
 
     fn grey_children(&mut self, child_ids: HashSet<Binding>) {
@@ -145,7 +158,7 @@ mod tests {
     #[test]
     fn test_len() {
         let mut ab = AllocBox::new();
-        assert_eq!(ab.is_empty());
+        assert!(ab.is_empty());
         assert!(ab.alloc(Binding::anon(), test_utils::make_str("").1).is_ok());
         assert_eq!(ab.len(), 1);
     }
@@ -155,7 +168,6 @@ mod tests {
         let mut ab = AllocBox::new();
         let (_, x_ptr, x_bnd) = test_utils::make_str("x");
         let (_, y_ptr, y_bnd) = test_utils::make_str("y");
-        let x_bnd_2 = x_bnd.clone();
         assert!(ab.alloc(x_bnd, x_ptr.clone()).is_ok());
         assert!(ab.alloc(y_bnd, y_ptr).is_ok());
     }
@@ -166,9 +178,12 @@ mod tests {
         let (_, x_ptr, x_bnd) = test_utils::make_str("x");
         let x_bnd_2 = x_bnd.clone();
         assert!(ab.alloc(x_bnd, x_ptr.clone()).is_ok());
-        let res = ab.alloc(x_bnd_2, x_ptr);
+        let res = ab.alloc(x_bnd_2.clone(), x_ptr);
         assert!(res.is_err());
-        assert!(matches!(res, Err(GcError::AllocError(x_bnd_2))));
+        assert!(matches!(res, Err(GcError::Alloc(_))));
+        if let Err(GcError::Alloc(bnd)) = res {
+            assert_eq!(x_bnd_2, bnd);
+        }
     }
 
     #[test]
@@ -198,7 +213,7 @@ mod tests {
         let (_, ptr, _) = test_utils::make_str("");
         let res = ab.update_ptr(&Binding::anon(), ptr);
         assert!(res.is_err());
-        assert!(matches!(res, Err(GcError::StoreError)));
+        assert!(matches!(res, Err(GcError::Ptr)));
     }
 
     #[test]

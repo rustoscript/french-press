@@ -6,10 +6,11 @@ authors = ["David Mally <djmally@gmail.com>"]
 [dependencies]
 uuid = "0.1"
 matches = "0.1.2"
-clippy = "*"
+clippy = "0.0.43"
 
 [dependencies.jsrs-common]
 git = "https://github.com/rustoscript/js.rs-common.git"
+rev = "682abf3"
 
 [dependencies.js-types]
 git = "https://github.com/rustoscript/js-types.git"
