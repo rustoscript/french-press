@@ -189,7 +189,7 @@ mod tests {
 
     use alloc::AllocBox;
     use gc_error::GcError;
-    use js_types::js_var::{JsVar, JsPtrEnum, JsKey, JsKeyEnum, JsType};
+    use js_types::js_var::{JsVar, JsPtrEnum, JsKey, JsType};
     use js_types::binding::Binding;
     use js_types::js_str::JsStrStruct;
     use test_utils;
@@ -352,7 +352,7 @@ mod tests {
             test_scope.push_var(test_utils::make_num(0.), None).unwrap();
             test_scope.push_var(test_utils::make_num(1.), None).unwrap();
             test_scope.push_var(test_utils::make_num(2.), None).unwrap();
-            let kvs = vec![(JsKey::new(JsKeyEnum::JsBool(true)),
+            let kvs = vec![(JsKey::JsSym("true".to_string()),
                             test_utils::make_num(1.), None)];
             let (var, ptr, _) = test_utils::make_obj(kvs, heap.clone());
             test_scope.push_var(var, Some(ptr)).unwrap();
@@ -381,11 +381,10 @@ mod tests {
             let (var, ptr, _) = test_utils::make_str("test");
 
             // Create an obj of { true: 1.0, false: heap("test") }
-            let kvs = vec![(JsKey::new(JsKeyEnum::JsBool(true)),
+            let kvs = vec![(JsKey::JsSym("true".to_string()),
                             test_utils::make_num(1.), None),
-                           (JsKey::new(JsKeyEnum::JsBool(false)),
+                           (JsKey::JsSym("false".to_string()),
                             var, Some(ptr))];
-            let key_bnd = kvs[1].0.binding.clone();
             let (var, ptr, bnd) = test_utils::make_obj(kvs, heap.clone());
 
             // Push the obj into the current scope
@@ -396,7 +395,7 @@ mod tests {
             // Replace the string in the object with something else so it's no longer live
             let copy = test_scope.get_var_copy(&bnd);
             let (var_cp, mut ptr_cp) = copy.unwrap();
-            let key = JsKey { binding: key_bnd, k: JsKeyEnum::JsBool(false) };
+            let key = JsKey::JsSym("false".to_string());
             match *&mut ptr_cp {
                 Some(JsPtrEnum::JsObj(ref mut obj)) => {
                     obj.dict.insert(key, test_utils::make_num(-1.));
