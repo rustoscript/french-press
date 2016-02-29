@@ -20,7 +20,7 @@ use std::cell::RefCell;
 use std::mem;
 use std::rc::Rc;
 
-use jsrs_common::ast::{Exp, Stmt};
+use jsrs_common::ast::Exp;
 use js_types::js_var::{JsPtrEnum, JsVar};
 use js_types::binding::Binding;
 
@@ -45,12 +45,9 @@ impl ScopeManager {
         }
     }
 
-    pub fn push_scope(&mut self, stmt: &Stmt) {
-        let tag = match *stmt {
-            Stmt::BareExp(ref exp) => match *exp {
-                Exp::Call(..) => ScopeTag::Call,
-                _ => ScopeTag::Block,
-            },
+    pub fn push_scope(&mut self, exp: &Exp) {
+        let tag = match *exp {
+            Exp::Call(..) => ScopeTag::Call,
             _ => ScopeTag::Block,
         };
         let parent = mem::replace(&mut self.curr_scope, Scope::new(tag, &self.alloc_box));
@@ -100,7 +97,7 @@ pub fn init_gc() -> ScopeManager {
 mod tests {
     use super::*;
 
-    use jsrs_common::ast::Stmt;
+    use jsrs_common::ast::Exp;
     use js_types::js_var::JsType;
     use js_types::binding::Binding;
 
@@ -111,7 +108,7 @@ mod tests {
     fn test_pop_scope() {
         let alloc_box = test_utils::make_alloc_box();
         let mut mgr = ScopeManager::new(alloc_box);
-        mgr.push_scope(&Stmt::Empty);
+        mgr.push_scope(&Exp::Undefined);
         assert!(mgr.curr_scope.parent.is_some());
         mgr.pop_scope(false).unwrap();
         assert!(mgr.curr_scope.parent.is_none());
@@ -131,7 +128,7 @@ mod tests {
         let alloc_box = test_utils::make_alloc_box();
         let mut mgr = ScopeManager::new(alloc_box);
         mgr.alloc(test_utils::make_num(1.), None).unwrap();
-        mgr.push_scope(&Stmt::Empty);
+        mgr.push_scope(&Exp::Undefined);
         mgr.alloc(test_utils::make_num(2.), None).unwrap();
         assert!(mgr.alloc_box.borrow().is_empty());
     }
@@ -170,7 +167,7 @@ mod tests {
     fn test_store() {
         let alloc_box = test_utils::make_alloc_box();
         let mut mgr = ScopeManager::new(alloc_box,);
-        mgr.push_scope(&Stmt::Empty);
+        mgr.push_scope(&Exp::Undefined);
         let x = test_utils::make_num(1.);
         let x_bnd = x.binding.clone();
         mgr.alloc(x, None).unwrap();
