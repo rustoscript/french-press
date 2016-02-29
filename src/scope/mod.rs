@@ -21,6 +21,7 @@ pub struct Scope {
     roots: HashSet<Binding>,
     pub parent: Option<Box<Scope>>,
     heap: Rc<RefCell<AllocBox>>,
+    locals: HashMap<Binding, Binding>,
     stack: HashMap<Binding, JsVar>,
     tag: ScopeTag,
 }
@@ -38,6 +39,7 @@ impl Scope {
             roots: HashSet::new(),
             parent: None,
             heap: heap.clone(),
+            locals: HashMap::new(),
             stack: HashMap::new(),
             tag: tag,
         }
@@ -50,7 +52,13 @@ impl Scope {
     }
 
     /// Push a new JsVar onto the stack, and maybe allocate a pointer in the heap.
-    pub fn push_var(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
+    pub fn push_var(&mut self, mut var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
+        // Copy the local binding of the variable (e.g. "x")
+        let local = var.binding.clone();
+        // Mangle the local binding to create a globally-unique name for the variable,
+        // so that it can be safely allocated anywhere without name collisions.
+        var.binding = Binding::mangle(var.binding.clone());
+        // Maybe insert the variable's pointer data into the heap
         let res = match var.t {
             JsType::JsPtr(_) =>
                 if let Some(ptr) = ptr {
@@ -62,36 +70,35 @@ impl Scope {
                 },
             _ => if let Some(_) = ptr { Err(GcError::Ptr) } else { Ok(()) },
         };
+        // Create a mapping from the local binding to the unique binding
+        self.locals.insert(local, var.binding.clone());
+        // Push the unique binding onto the stack
         self.stack.insert(var.binding.clone(), var);
         res
     }
 
-    fn rebind_var(&mut self, old_bnd: &Binding, var: JsVar) -> Result<()> {
-        let res =
-            if let JsType::JsPtr(_) = var.t {
-                self.heap.borrow_mut().realloc(old_bnd, var.binding.clone())
-            } else {
-                Ok(())
-            };
-        self.stack.insert(var.binding.clone(), var);
-        res
+    fn rebind_var(&mut self, local: Binding, unique: Binding, var: JsVar) {
+        self.locals.insert(local, unique.clone());
+        self.stack.insert(unique, var);
     }
 
     /// Return an optional copy of a variable and an optional pointer into the heap.
-    pub fn get_var_copy(&self, bnd: &Binding) -> Option<(JsVar, Option<JsPtrEnum>)> {
-        if let Some(var) = self.stack.get(bnd) {
-            match var.t {
-                JsType::JsPtr(_) => {
-                    if let Some(alloc) = self.heap.borrow().find_id(bnd) {
-                        Some((var.clone(), Some(alloc.borrow().clone())))
-                    } else {
-                        // This case should be impossible unless you have an
-                        // invalid ptr, which should also be impossible.
-                        None
-                    }
-                },
-                _ => Some((var.clone(), None)),
-            }
+    pub fn get_var_copy(&self, local: &Binding) -> Option<(JsVar, Option<JsPtrEnum>)> {
+        if let Some(unique) = self.locals.get(local) {
+            if let Some(var) = self.stack.get(unique) {
+                match var.t {
+                    JsType::JsPtr(_) => {
+                        if let Some(alloc) = self.heap.borrow().find_id(unique) {
+                            Some((var.clone(), Some(alloc.borrow().clone())))
+                        } else {
+                            // This case should be impossible unless you have an
+                            // invalid ptr, which should also be impossible.
+                            None
+                        }
+                    },
+                    _ => Some((var.clone(), None)),
+                }
+            } else { None }
         } else if self.tag != ScopeTag::Call {
             // FIXME? This is slow.
             // A nonexistent binding in the current scope might require searching
@@ -100,7 +107,7 @@ impl Scope {
             // its parent scope, so it should not do this lookup. If the overall
             // lookup fails, the ScopeManager will check the global scope.
             if let Some(ref parent) = self.parent {
-                parent.get_var_copy(bnd)
+                parent.get_var_copy(local)
             } else { None }
         } else { None }
     }
@@ -155,20 +162,24 @@ impl Scope {
             // every binding defined in this scope, so it must all live into the parent scope.
             if returning_closure {
                 let mut closure_scope = Scope::new(ScopeTag::Call, &self.heap);
-                for (old_bnd, mut var) in self.stack.drain() {
-                    var.binding = Binding::mangle(old_bnd.clone());
-                    try!(closure_scope.rebind_var(&old_bnd, var));
-                }
+                for (local, unique) in self.locals.drain() {
+                    let var = match self.stack.remove(&unique) {
+                        Some(var) => var,
+                        None => return Err(GcError::Scope),
+                    };
+                    closure_scope.rebind_var(local, unique, var);
+                };
                 closures.push(closure_scope);
             } else {
-                for (old_bnd, mut var) in self.stack.drain() {
+                for (local, unique) in self.locals.drain() {
+                    let var = match self.stack.remove(&unique) {
+                        Some(var) => var,
+                        None => return Err(GcError::Scope),
+                    };
+                    // Rebind all heap-allocated variables into the parent scope, so they may be
+                    // GC'd at a later time.
                     if let JsType::JsPtr(_) = var.t {
-                        // Mangle each binding before giving it to the parent
-                        // scope. This avoids binding collisions, and helps
-                        // identify to a human observer which bindings are
-                        // not from the current scope.
-                        var.binding = Binding::mangle(old_bnd.clone());
-                        try!(parent.rebind_var(&old_bnd, var));
+                        parent.rebind_var(local, unique, var);
                     }
                 }
             }
@@ -199,6 +210,7 @@ mod tests {
             roots: parent.roots.clone(),
             parent: Some(box parent),
             heap: heap.clone(),
+            locals: HashMap::new(),
             stack: HashMap::new(),
             tag: tag,
         }
@@ -297,6 +309,8 @@ mod tests {
         let mut parent_scope = Scope::new(ScopeTag::Block, &heap);
         let (x, x_ptr, x_bnd) = test_utils::make_str("x");
         parent_scope.push_var(x, Some(x_ptr)).unwrap();
+        println!("{:?}", x_bnd);
+        println!("{:?}", parent_scope.locals.get(&x_bnd));
 
         let child_scope = new_scope_as_child(parent_scope, ScopeTag::Block, &heap);
 
@@ -322,7 +336,7 @@ mod tests {
             JsPtrEnum::JsStr(JsStrStruct{text: ref s}) => assert_eq!(s, "test"),
             _ => unreachable!(),
         }
-        assert_eq!(update.binding, x_bnd);
+        assert_eq!(update.binding, *test_scope.locals.get(&x_bnd).unwrap());
     }
 
     #[test]

@@ -172,9 +172,10 @@ mod tests {
         let x_bnd = x.binding.clone();
         mgr.alloc(x, None).unwrap();
 
-        let mut test_num = test_utils::make_num(2.);
-        test_num.binding = x_bnd;
-        assert!(mgr.store(test_num, None).is_ok());
+        let (mut var, _) = mgr.load(&x_bnd).unwrap();
+        var.t = JsType::JsNum(2.);
+
+        assert!(mgr.store(var, None).is_ok());
     }
 
 }
