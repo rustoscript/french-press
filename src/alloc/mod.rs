@@ -52,7 +52,7 @@ impl AllocBox {
             self.white_set.insert(new, ptr);
             Ok(())
         } else {
-            Err(GcError::Ptr)
+            Err(GcError::HeapUpdate)
         }
     }
 
@@ -110,7 +110,7 @@ impl AllocBox {
             *inner.borrow_mut() = ptr;
             Ok(())
         } else {
-            Err(GcError::Ptr) // FIXME TODO change this error type
+            Err(GcError::HeapUpdate)
         }
     }
 
@@ -213,7 +213,7 @@ mod tests {
         let (_, ptr, _) = test_utils::make_str("");
         let res = ab.update_ptr(&Binding::anon(), ptr);
         assert!(res.is_err());
-        assert!(matches!(res, Err(GcError::Ptr)));
+        assert!(matches!(res, Err(GcError::HeapUpdate)));
     }
 
     #[test]

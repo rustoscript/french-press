@@ -66,9 +66,9 @@ impl Scope {
                     self.roots.insert(var.binding.clone());
                     self.heap.borrow_mut().alloc(var.binding.clone(), ptr)
                 } else {
-                    return Err(GcError::Ptr);
+                    return Err(GcError::PtrAlloc);
                 },
-            _ => if let Some(_) = ptr { Err(GcError::Ptr) } else { Ok(()) },
+            _ => if let Some(_) = ptr { Err(GcError::PtrAlloc) } else { Ok(()) },
         };
         // Create a mapping from the local binding to the unique binding
         self.locals.insert(local, var.binding.clone());
@@ -119,14 +119,14 @@ impl Scope {
                 if let Some(ptr) = ptr {
                     // A new root was potentially created
                     // If the pointer and its underlying type are not equal, return an error.
-                    if !tag.eq_ptr_type(&ptr) { return Err(GcError::Ptr); }
+                    if !tag.eq_ptr_type(&ptr) { return Err(GcError::PtrAlloc); }
                     self.roots.insert(var.binding.clone());
                     self.heap.borrow_mut().update_ptr(&var.binding, ptr)
                 } else {
-                    Err(GcError::Ptr)
+                    Err(GcError::PtrAlloc)
                 },
             _ => {
-                if let Some(_) = ptr { return Err(GcError::Ptr); }
+                if let Some(_) = ptr { return Err(GcError::PtrAlloc); }
                 if let Entry::Occupied(mut view) = self.stack.entry(var.binding.clone()) {
                     // A root was potentially removed
                     self.roots.remove(&var.binding);
@@ -260,12 +260,12 @@ mod tests {
         let (var, ptr, _) = test_utils::make_str("test");
         let res = test_scope.push_var(var, None);
         assert!(res.is_err());
-        assert!(matches!(res, Err(GcError::Ptr)));
+        assert!(matches!(res, Err(GcError::PtrAlloc)));
         assert!(test_scope.heap.borrow().is_empty());
         let var = test_utils::make_num(1.);
         let res = test_scope.push_var(var, Some(ptr));
         assert!(res.is_err());
-        assert!(matches!(res, Err(GcError::Ptr)));
+        assert!(matches!(res, Err(GcError::PtrAlloc)));
         assert!(test_scope.heap.borrow().is_empty());
     }
 
@@ -348,12 +348,12 @@ mod tests {
         let (mut update, update_ptr) = test_scope.get_var_copy(&x_bnd).unwrap();
         let res = test_scope.update_var(update.clone(), None);
         assert!(res.is_err());
-        assert!(matches!(res, Err(GcError::Ptr)));
+        assert!(matches!(res, Err(GcError::PtrAlloc)));
 
         update.t = JsType::JsNum(1.);
         let res = test_scope.update_var(update, update_ptr);
         assert!(res.is_err());
-        assert!(matches!(res, Err(GcError::Ptr)));
+        assert!(matches!(res, Err(GcError::PtrAlloc)));
     }
 
     #[test]
