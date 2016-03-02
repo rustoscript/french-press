@@ -79,8 +79,8 @@ impl ScopeManager {
 
     pub fn store(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
         let update = self.curr_scope.update_var(var, ptr);
-        if let Err(GcError::Store(var, ptr)) = update{
-            self.globals.update_var(var, ptr)
+        if let Err(GcError::Store(var, ptr)) = update {
+            self.alloc(var, ptr)
         } else {
             update
         }
@@ -176,6 +176,22 @@ mod tests {
         var.t = JsType::JsNum(2.);
 
         assert!(mgr.store(var, None).is_ok());
+    }
+
+    #[test]
+    fn test_store_failed_store() {
+        let alloc_box = test_utils::make_alloc_box();
+        let mut mgr = ScopeManager::new(alloc_box,);
+        let x = test_utils::make_num(1.);
+        let x_bnd = x.binding.clone();
+        assert!(mgr.store(x, None).is_ok());
+
+        let load = mgr.load(&x_bnd);
+        assert!(load.is_ok());
+        let (var, ptr) = load.unwrap();
+
+        assert!(matches!(var.t, JsType::JsNum(1.)));
+        assert!(ptr.is_none());
     }
 
 }
