@@ -99,7 +99,9 @@ impl Scope {
                     _ => Some((var.clone(), None)),
                 }
             } else { None }
-        } else if self.tag != ScopeTag::Call {
+        } else if self.tag == ScopeTag::Call {
+            None
+        } else {
             // FIXME? This is slow.
             // A nonexistent binding in the current scope might require searching
             // the scope tree upwards for the binding. However, if the current
@@ -109,7 +111,7 @@ impl Scope {
             if let Some(ref parent) = self.parent {
                 parent.get_var_copy(local)
             } else { None }
-        } else { None }
+        }
     }
 
     /// Try to update a variable that's been allocated.
