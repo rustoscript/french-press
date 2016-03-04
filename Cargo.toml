@@ -10,7 +10,7 @@ clippy = "0.0.45"
 
 [dependencies.jsrs-common]
 git = "https://github.com/rustoscript/js.rs-common.git"
-rev = "3e8c1b0"
+rev = "8e17624"
 
 [dependencies.js-types]
 git = "https://github.com/rustoscript/js-types.git"
