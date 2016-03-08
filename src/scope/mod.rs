@@ -281,7 +281,7 @@ mod tests {
         let copy = test_scope.get_var_copy(&x_bnd);
         assert!(copy.is_some());
         let (var_copy, ptr_copy) = copy.unwrap();
-        assert!(matches!(var_copy, JsVar { t: JsType::JsPtr, .. }));
+        assert!(matches!(var_copy, JsVar { t: JsType::JsPtr(_), .. }));
         assert!(ptr_copy.is_some());
     }
 
@@ -319,7 +319,7 @@ mod tests {
         let copy = child_scope.get_var_copy(&x_bnd);
         assert!(copy.is_some());
         let (var_copy, ptr_copy) = copy.unwrap();
-        assert!(matches!(var_copy, JsVar { t: JsType::JsPtr, .. }));
+        assert!(matches!(var_copy, JsVar { t: JsType::JsPtr(_), .. }));
         assert!(ptr_copy.is_some());
     }
 
