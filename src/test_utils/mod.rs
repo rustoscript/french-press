@@ -3,7 +3,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use alloc::AllocBox;
-use jsrs_common::ast::Stmt;
+use jsrs_common::ast::{Exp, Stmt};
 use js_types::js_fn::JsFnStruct;
 use js_types::js_obj::JsObjStruct;
 use js_types::js_str::JsStrStruct;
@@ -29,7 +29,7 @@ pub fn make_obj(kvs: Vec<(JsKey, JsVar, Option<JsPtrEnum>)>, heap: Rc<RefCell<Al
 pub fn make_fn(name: &Option<String>, params: &Vec<String>) -> (JsVar, JsPtrEnum, Binding) {
     let var = JsVar::new(JsType::JsPtr(JsPtrTag::JsFn));
     let bnd = var.binding.clone();
-    (var, JsPtrEnum::JsFn(JsFnStruct::new(name, params, &Stmt::Empty)), bnd)
+    (var, JsPtrEnum::JsFn(JsFnStruct::new(name, params, &Stmt::BareExp(Exp::Undefined))), bnd)
 }
 
 pub fn make_alloc_box() -> Rc<RefCell<AllocBox>> {

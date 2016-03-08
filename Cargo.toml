@@ -6,15 +6,15 @@ authors = ["David Mally <djmally@gmail.com>"]
 [dependencies]
 uuid = "0.1"
 matches = "0.1.2"
-clippy = "0.0.45"
+#clippy = "0.0.45"
 
 [dependencies.jsrs-common]
 git = "https://github.com/rustoscript/js.rs-common.git"
-rev = "8e17624"
+rev = "44275eb"
 
 [dependencies.js-types]
 git = "https://github.com/rustoscript/js-types.git"
-rev = "ae0af22"
+rev = "389ed6b"
 
 [profile.dev]
 opt-level = 0
