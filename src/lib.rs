@@ -5,13 +5,15 @@
 
 //#![plugin(clippy)]
 
-extern crate uuid;
 extern crate jsrs_common;
 extern crate js_types;
+extern crate linked_hash_map;
+extern crate uuid;
 
 #[macro_use] extern crate matches;
 
 pub mod alloc;
+mod cache;
 mod gc_error;
 mod scope;
 mod test_utils;
@@ -25,13 +27,18 @@ use js_types::js_var::{JsPtrEnum, JsVar};
 use js_types::binding::Binding;
 
 use alloc::AllocBox;
+use cache::LruCache;
 use gc_error::{GcError, Result};
 use scope::{Scope, ScopeTag};
+
+// Totally arbitrary cache capacity
+const CACHE_CAP: usize = 64;
 
 pub struct ScopeManager {
     globals: Scope,
     curr_scope: Scope,
     closures: Vec<Scope>,
+    binding_cache: LruCache<Binding, JsVar>,
     alloc_box: Rc<RefCell<AllocBox>>,
 }
 
@@ -41,6 +48,7 @@ impl ScopeManager {
             globals: Scope::new(ScopeTag::Call, &alloc_box),
             curr_scope: Scope::new(ScopeTag::Call, &alloc_box),
             closures: Vec::new(),
+            binding_cache: LruCache::with_capacity(CACHE_CAP),
             alloc_box: alloc_box,
         }
     }
