@@ -2,12 +2,12 @@ use std::error::Error;
 use std::fmt;
 use std::result;
 
-use js_types::binding::Binding;
+use js_types::binding::{Binding, UniqueBinding};
 use js_types::js_var::{JsPtrEnum, JsVar};
 
 #[derive(Debug)]
 pub enum GcError {
-    Alloc(Binding),
+    Alloc(UniqueBinding),
     HeapUpdate,
     Load(Binding),
     PtrAlloc,

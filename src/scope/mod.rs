@@ -7,7 +7,7 @@ use std::rc::Rc;
 use alloc::AllocBox;
 use gc_error::{GcError, Result};
 use js_types::js_var::{JsPtrEnum, JsPtrTag, JsType, JsVar};
-use js_types::binding::Binding;
+use js_types::binding::{Binding, UniqueBinding};
 use js_types::allocator::Allocator;
 
 /// A logical scope in the AST. Represents any scoped block of Javascript code.
@@ -18,11 +18,11 @@ use js_types::allocator::Allocator;
 /// stack: The stack of the current scope, containing all variables allocated
 ///        by this scope.
 pub struct Scope {
-    roots: HashSet<Binding>,
+    roots: HashSet<UniqueBinding>,
     pub parent: Option<Box<Scope>>,
     heap: Rc<RefCell<AllocBox>>,
-    locals: HashMap<Binding, Binding>,
-    stack: HashMap<Binding, JsVar>,
+    locals: HashMap<Binding, UniqueBinding>,
+    stack: HashMap<UniqueBinding, JsVar>,
     tag: ScopeTag,
 }
 
@@ -52,12 +52,10 @@ impl Scope {
     }
 
     /// Push a new JsVar onto the stack, and maybe allocate a pointer in the heap.
-    pub fn push_var(&mut self, mut var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
-        // Copy the local binding of the variable (e.g. "x")
-        let local = var.binding.clone();
+    pub fn push_var(&mut self, local: Binding, mut var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
         // Mangle the local binding to create a globally-unique name for the variable,
         // so that it can be safely allocated anywhere without name collisions.
-        var.binding = Binding::mangle(var.binding.clone());
+        var.binding = UniqueBinding::mangle(&local);
         // Maybe insert the variable's pointer data into the heap
         let res = match var.t {
             JsType::JsPtr(_) =>
@@ -77,7 +75,7 @@ impl Scope {
         res
     }
 
-    fn rebind_var(&mut self, local: Binding, unique: Binding, var: JsVar) {
+    fn rebind_var(&mut self, local: Binding, unique: UniqueBinding, var: JsVar) {
         self.locals.insert(local, unique.clone());
         self.stack.insert(unique, var);
     }
@@ -247,11 +245,11 @@ mod tests {
     fn test_push_var() {
         let heap = test_utils::make_alloc_box();
         let mut test_scope = Scope::new(ScopeTag::Block, &heap);
-        let (var, ptr, _) = test_utils::make_str("test");
-        assert!(test_scope.push_var(var, Some(ptr)).is_ok());
+        let (var, ptr, bnd) = test_utils::make_str("test");
+        assert!(test_scope.push_var(bnd, var, Some(ptr)).is_ok());
         assert_eq!(test_scope.heap.borrow().len(), 1);
         let var = test_utils::make_num(1.);
-        assert!(test_scope.push_var(var, None).is_ok());
+        assert!(test_scope.push_var(Binding::new("test".to_string()), var, None).is_ok());
         assert_eq!(test_scope.heap.borrow().len(), 1);
     }
 
@@ -259,13 +257,13 @@ mod tests {
     fn test_push_var_fail() {
         let heap = test_utils::make_alloc_box();
         let mut test_scope = Scope::new(ScopeTag::Block, &heap);
-        let (var, ptr, _) = test_utils::make_str("test");
-        let res = test_scope.push_var(var, None);
+        let (var, ptr, bnd) = test_utils::make_str("test");
+        let res = test_scope.push_var(bnd, var, None);
         assert!(res.is_err());
         assert!(matches!(res, Err(GcError::PtrAlloc)));
         assert!(test_scope.heap.borrow().is_empty());
         let var = test_utils::make_num(1.);
-        let res = test_scope.push_var(var, Some(ptr));
+        let res = test_scope.push_var(Binding::new("test".to_string()), var, Some(ptr));
         assert!(res.is_err());
         assert!(matches!(res, Err(GcError::PtrAlloc)));
         assert!(test_scope.heap.borrow().is_empty());
@@ -276,7 +274,7 @@ mod tests {
         let heap = test_utils::make_alloc_box();
         let mut test_scope = Scope::new(ScopeTag::Block, &heap);
         let (x, x_ptr, x_bnd) = test_utils::make_str("x");
-        test_scope.push_var(x, Some(x_ptr)).unwrap();
+        test_scope.push_var(x_bnd.clone(), x, Some(x_ptr)).unwrap();
 
         let copy = test_scope.get_var_copy(&x_bnd);
         assert!(copy.is_some());
@@ -289,7 +287,7 @@ mod tests {
     fn test_get_var_copy_fail() {
         let heap = test_utils::make_alloc_box();
         let test_scope = Scope::new(ScopeTag::Block, &heap);
-        let copy = test_scope.get_var_copy(&Binding::anon());
+        let copy = test_scope.get_var_copy(&Binding::new("".to_string()));
         assert!(copy.is_none());
     }
 
@@ -298,7 +296,7 @@ mod tests {
         let heap = test_utils::make_alloc_box();
         let mut parent_scope = Scope::new(ScopeTag::Block, &heap);
         let (x, x_ptr, x_bnd) = test_utils::make_str("x");
-        parent_scope.push_var(x, Some(x_ptr)).unwrap();
+        parent_scope.push_var(x_bnd.clone(), x, Some(x_ptr)).unwrap();
         let child_scope = new_scope_as_child(parent_scope, ScopeTag::Call, &heap);
 
         let copy = child_scope.get_var_copy(&x_bnd);
@@ -310,9 +308,7 @@ mod tests {
         let heap = test_utils::make_alloc_box();
         let mut parent_scope = Scope::new(ScopeTag::Block, &heap);
         let (x, x_ptr, x_bnd) = test_utils::make_str("x");
-        parent_scope.push_var(x, Some(x_ptr)).unwrap();
-        println!("{:?}", x_bnd);
-        println!("{:?}", parent_scope.locals.get(&x_bnd));
+        parent_scope.push_var(x_bnd.clone(), x, Some(x_ptr)).unwrap();
 
         let child_scope = new_scope_as_child(parent_scope, ScopeTag::Block, &heap);
 
@@ -328,7 +324,7 @@ mod tests {
         let heap = test_utils::make_alloc_box();
         let mut test_scope = Scope::new(ScopeTag::Block, &heap);
         let (x, x_ptr, x_bnd) = test_utils::make_str("x");
-        assert!(test_scope.push_var(x, Some(x_ptr)).is_ok());
+        assert!(test_scope.push_var(x_bnd.clone(), x, Some(x_ptr)).is_ok());
         let (update, _) = test_scope.get_var_copy(&x_bnd).unwrap();
         let update_ptr = Some(JsPtrEnum::JsStr(JsStrStruct::new("test")));
         assert!(test_scope.update_var(update, update_ptr).is_ok());
@@ -346,7 +342,7 @@ mod tests {
         let heap = test_utils::make_alloc_box();
         let mut test_scope = Scope::new(ScopeTag::Block, &heap);
         let (x, x_ptr, x_bnd) = test_utils::make_str("x");
-        assert!(test_scope.push_var(x, Some(x_ptr)).is_ok());
+        assert!(test_scope.push_var(x_bnd.clone(), x, Some(x_ptr)).is_ok());
         let (mut update, update_ptr) = test_scope.get_var_copy(&x_bnd).unwrap();
         let res = test_scope.update_var(update.clone(), None);
         assert!(res.is_err());
@@ -365,13 +361,13 @@ mod tests {
         let mut parent_scope = Scope::new(ScopeTag::Block, &heap);
         {
             let mut test_scope = new_scope_as_child(parent_scope, ScopeTag::Block, &heap);
-            test_scope.push_var(test_utils::make_num(0.), None).unwrap();
-            test_scope.push_var(test_utils::make_num(1.), None).unwrap();
-            test_scope.push_var(test_utils::make_num(2.), None).unwrap();
+            test_scope.push_var(Binding::new("zero".to_string()), test_utils::make_num(0.), None).unwrap();
+            test_scope.push_var(Binding::new("one".to_string()), test_utils::make_num(1.), None).unwrap();
+            test_scope.push_var(Binding::new("two".to_string()), test_utils::make_num(2.), None).unwrap();
             let kvs = vec![(JsKey::JsSym("true".to_string()),
                             test_utils::make_num(1.), None)];
-            let (var, ptr, _) = test_utils::make_obj(kvs, heap.clone());
-            test_scope.push_var(var, Some(ptr)).unwrap();
+            let (var, ptr, bnd) = test_utils::make_obj(kvs, heap.clone());
+            test_scope.push_var(bnd, var, Some(ptr)).unwrap();
             parent_scope = *test_scope.transfer_stack(&mut closures, false).unwrap().unwrap();
         }
         assert_eq!(parent_scope.stack.len(), 1);
@@ -388,9 +384,9 @@ mod tests {
             // Push a child scope
             let mut test_scope = new_scope_as_child(parent_scope, ScopeTag::Block, &heap);
             // Allocate some non-root variables (numbers)
-            test_scope.push_var(test_utils::make_num(0.), None).unwrap();
-            test_scope.push_var(test_utils::make_num(1.), None).unwrap();
-            test_scope.push_var(test_utils::make_num(2.), None).unwrap();
+            test_scope.push_var(Binding::new("zero".to_string()), test_utils::make_num(0.), None).unwrap();
+            test_scope.push_var(Binding::new("one".to_string()), test_utils::make_num(1.), None).unwrap();
+            test_scope.push_var(Binding::new("two".to_string()), test_utils::make_num(2.), None).unwrap();
 
             // Make a string to put into an object
             // (so it's heap-allocated and we can lose its ref from the object)
@@ -404,7 +400,7 @@ mod tests {
             let (var, ptr, bnd) = test_utils::make_obj(kvs, heap.clone());
 
             // Push the obj into the current scope
-            test_scope.push_var(var, Some(ptr)).unwrap();
+            test_scope.push_var(bnd.clone(), var, Some(ptr)).unwrap();
             // The heap should now have 2 things in it: an object and a string
             assert_eq!(heap.borrow().len(), 2);
 
@@ -440,16 +436,19 @@ mod tests {
         let fn_bnd = {
             let mut test_scope = new_scope_as_child(parent_scope, ScopeTag::Block, &heap);
             let (var, test_fn, fn_bnd) = test_utils::make_fn(&Some("test".to_owned()), &Vec::new());
-            test_scope.push_var(test_utils::make_num(1.), None).unwrap();
-            test_scope.push_var(var, Some(test_fn)).unwrap();
+            test_scope.push_var(Binding::new("".to_string()), test_utils::make_num(1.), None).unwrap();
+            test_scope.push_var(fn_bnd.clone(), var, Some(test_fn)).unwrap();
+            let (var, ptr, bnd) = test_utils::make_str("test");
+            test_scope.push_var(bnd, var, Some(ptr)).unwrap();
+            let fn_bnd = test_scope.get_var_copy(&fn_bnd).unwrap().0.binding;
             parent_scope = *test_scope.transfer_stack(&mut closures, false).unwrap().unwrap();
             fn_bnd
         };
         assert_eq!(parent_scope.stack.len(), 0);
         assert_eq!(closures.len(), 1);
-        assert_eq!(closures[0].stack.len(), 2);
-        assert_eq!(heap.borrow().len(), 1);
-        assert!(heap.borrow().find_id(&fn_bnd).is_none());
+        assert_eq!(closures[0].stack.len(), 3);
+        assert_eq!(heap.borrow().len(), 2);
+        assert!(heap.borrow().find_id(&fn_bnd).is_some());
         for bnd in parent_scope.stack.keys() {
             assert!(heap.borrow().find_id(bnd).is_some());
         }

@@ -64,8 +64,8 @@ impl ScopeManager {
         }
     }
 
-    pub fn alloc(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
-        self.curr_scope.push_var(var, ptr)
+    pub fn alloc(&mut self, bnd: Binding, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
+        self.curr_scope.push_var(bnd, var, ptr)
     }
 
     /// Try to load the variable behind a binding
@@ -77,10 +77,10 @@ impl ScopeManager {
                        .ok_or_else(|| GcError::Load(bnd.clone()))
     }
 
-    pub fn store(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
+    pub fn store(&mut self, bnd: Binding, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
         let update = self.curr_scope.update_var(var, ptr);
         if let Err(GcError::Store(var, ptr)) = update {
-            self.alloc(var, ptr)
+            self.alloc(bnd, var, ptr)
         } else {
             update
         }
@@ -99,7 +99,6 @@ mod tests {
 
     use jsrs_common::ast::Exp;
     use js_types::js_var::JsType;
-    use js_types::binding::Binding;
 
     use gc_error::GcError;
     use test_utils;
@@ -127,9 +126,9 @@ mod tests {
     fn test_alloc() {
         let alloc_box = test_utils::make_alloc_box();
         let mut mgr = ScopeManager::new(alloc_box);
-        mgr.alloc(test_utils::make_num(1.), None).unwrap();
+        mgr.alloc(test_utils::anon_binding(), test_utils::make_num(1.), None).unwrap();
         mgr.push_scope(&Exp::Undefined);
-        mgr.alloc(test_utils::make_num(2.), None).unwrap();
+        mgr.alloc(test_utils::anon_binding(), test_utils::make_num(2.), None).unwrap();
         assert!(mgr.alloc_box.borrow().is_empty());
     }
 
@@ -138,8 +137,8 @@ mod tests {
         let alloc_box = test_utils::make_alloc_box();
         let mut mgr = ScopeManager::new(alloc_box);
         let x = test_utils::make_num(1.);
-        let x_bnd = x.binding.clone();
-        mgr.alloc(x, None).unwrap();
+        let x_bnd = test_utils::anon_binding();
+        mgr.alloc(x_bnd.clone(), x, None).unwrap();
         let load = mgr.load(&x_bnd);
         assert!(load.is_ok());
         let load = load.unwrap();
@@ -154,7 +153,7 @@ mod tests {
     fn test_load_fail() {
         let alloc_box = test_utils::make_alloc_box();
         let mgr = ScopeManager::new(alloc_box);
-        let bnd = Binding::anon();
+        let bnd = test_utils::anon_binding();
         let res = mgr.load(&bnd);
         assert!(res.is_err());
         assert!(matches!(res, Err(GcError::Load(_))));
@@ -169,13 +168,13 @@ mod tests {
         let mut mgr = ScopeManager::new(alloc_box,);
         mgr.push_scope(&Exp::Undefined);
         let x = test_utils::make_num(1.);
-        let x_bnd = x.binding.clone();
-        mgr.alloc(x, None).unwrap();
+        let x_bnd = test_utils::anon_binding();
+        mgr.alloc(x_bnd.clone(), x, None).unwrap();
 
         let (mut var, _) = mgr.load(&x_bnd).unwrap();
         var.t = JsType::JsNum(2.);
 
-        assert!(mgr.store(var, None).is_ok());
+        assert!(mgr.store(x_bnd, var, None).is_ok());
     }
 
     #[test]
@@ -183,8 +182,8 @@ mod tests {
         let alloc_box = test_utils::make_alloc_box();
         let mut mgr = ScopeManager::new(alloc_box,);
         let x = test_utils::make_num(1.);
-        let x_bnd = x.binding.clone();
-        assert!(mgr.store(x, None).is_ok());
+        let x_bnd = test_utils::anon_binding();
+        assert!(mgr.store(x_bnd.clone(), x, None).is_ok());
 
         let load = mgr.load(&x_bnd);
         assert!(load.is_ok());
