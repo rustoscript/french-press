@@ -52,6 +52,10 @@ impl<K: Eq + Hash, V> LruCache<K, V> {
         }
     }
 
+    pub fn get(&self, k: &K) -> Option<&V> {
+        self.inner.get(k)
+    }
+
     pub fn remove(&mut self, k: &K) -> Option<WriteBack<V>> {
         self.inner.remove(k)
     }
