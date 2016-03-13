@@ -10,12 +10,9 @@ matches = "0.1.2"
 
 [dependencies.jsrs-common]
 git = "https://github.com/rustoscript/js.rs-common.git"
-rev = "44275eb"
 
 [dependencies.js-types]
 git = "https://github.com/rustoscript/js-types.git"
-rev = "7e5e3c4"
-
 
 [profile.dev]
 opt-level = 0
