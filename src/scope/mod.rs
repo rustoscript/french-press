@@ -1,6 +1,7 @@
 use std::cell::RefCell;
 use std::collections::hash_map::{Entry, HashMap};
 use std::collections::hash_set::HashSet;
+use std::hash::{Hash, Hasher};
 use std::mem;
 use std::rc::Rc;
 
@@ -9,20 +10,48 @@ use gc_error::{GcError, Result};
 use js_types::js_var::{JsPtrEnum, JsPtrTag, JsType, JsVar};
 use js_types::binding::{Binding, UniqueBinding};
 use js_types::allocator::Allocator;
+use linked_hash_map::LinkedHashMap;
+
+pub enum Either<L, R> {
+    Left(L),
+    Right(R),
+}
+
+impl<L, R> Hash for Either<L, R> where L: Hash, R: Hash {
+    fn hash<H>(&self, state: &mut H) where H: Hasher {
+        match *self {
+            Either::Left(l) => l.hash(state),
+            Either::Right(r) => r.hash(state),
+        }
+    }
+}
+
+impl<L, R> PartialEq for Either<L, R>  where L: PartialEq, R: PartialEq {
+    fn eq(&self, other: &Self) -> bool {
+        match (*self, *other) {
+            (Either::Left(l1), Either::Left(l2)) => l1 == l2,
+            (Either::Right(r1), Either::Right(r2)) => r1 == r2,
+            (_, _) => false
+        }
+    }
+}
+
+impl<L, R> Eq for Either<L, R> where L: Eq, R: Eq {}
 
 /// A logical scope in the AST. Represents any scoped block of Javascript code.
 /// roots: A set of all root references into the heap
-/// parent: An optional parent scope, e.g. the caller of this function scope,
+///// parent: An optional parent scope, e.g. the caller of this function scope,
 ///         or the function that owns an `if` statement
 /// heap: A shared reference to the heap allocator.
 /// stack: The stack of the current scope, containing all variables allocated
 ///        by this scope.
 pub struct Scope {
     roots: HashSet<UniqueBinding>,
-    pub parent: Option<Box<Scope>>,
+    //pub parent: Option<Box<Scope<'a>>>,
     heap: Rc<RefCell<AllocBox>>,
-    locals: HashMap<Binding, UniqueBinding>,
-    stack: HashMap<UniqueBinding, JsVar>,
+    //locals: HashMap<Binding, &'a JsVar>,
+    stack: HashMap<Either<Binding, UniqueBinding>, JsVar>,
+    //pub vars: LinkedHashMap<JsVar, ()>,
     tag: ScopeTag,
 }
 
@@ -37,66 +66,77 @@ impl Scope {
     pub fn new(tag: ScopeTag, heap: &Rc<RefCell<AllocBox>>) -> Scope {
         Scope {
             roots: HashSet::new(),
-            parent: None,
+            //parent: None,
             heap: heap.clone(),
-            locals: HashMap::new(),
+            //locals: HashMap::new(),
             stack: HashMap::new(),
+            //vars: LinkedHashMap::new(),
             tag: tag,
         }
     }
 
-    /// Sets the parent of a scope, and clones and unions its root bindings.
-    pub fn set_parent(&mut self, parent: Scope) {
+    /*/// Sets the parent of a scope, and clones and unions its root bindings.
+    pub fn set_parent(&mut self, parent: Scope<'a>) {
         self.roots = self.roots.union(&parent.roots).cloned().collect();
         self.parent = Some(box parent);
-    }
+    }*/
 
     /// Push a new JsVar onto the stack, and maybe allocate a pointer in the heap.
     pub fn push_var(&mut self, local: Binding, mut var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
         // Mangle the local binding to create a globally-unique name for the variable,
         // so that it can be safely allocated anywhere without name collisions.
-        var.binding = UniqueBinding::mangle(&local);
+        var.unique = UniqueBinding::mangle(&local);
+        var.binding = local;
         // Maybe insert the variable's pointer data into the heap
         let res = match var.t {
             JsType::JsPtr(_) =>
                 if let Some(ptr) = ptr {
                     // Creating a new pointer creates a new root
-                    self.roots.insert(var.binding.clone());
-                    self.heap.borrow_mut().alloc(var.binding.clone(), ptr)
+                    self.roots.insert(var.unique.clone());
+                    self.heap.borrow_mut().alloc(var.unique.clone(), ptr)
                 } else {
                     return Err(GcError::PtrAlloc);
                 },
             _ => if let Some(_) = ptr { Err(GcError::PtrAlloc) } else { Ok(()) },
         };
-        // Create a mapping from the local binding to the unique binding
-        self.locals.insert(local, var.binding.clone());
-        // Push the unique binding onto the stack
-        self.stack.insert(var.binding.clone(), var);
+        // Add the var to the context
+        self.vars.insert(var, ());
+        let var = match self.vars.back() {
+            Some((var, _)) => var,
+            None => unreachable!(),
+        };
+        // Create a mapping from the local binding to the var
+        self.locals.insert(var.binding.clone(), var);
+        // Create a mapping from the unique binding to the var
+        self.stack.insert(var.unique.clone(), var);
         res
     }
 
-    fn rebind_var(&mut self, local: Binding, unique: UniqueBinding, var: JsVar) {
-        self.locals.insert(local, unique.clone());
-        self.stack.insert(unique, var);
+    pub fn rebind_var(&mut self, var: JsVar) {
+        self.vars.insert(var, ());
+        let var_ref: &JsVar = match self.vars.back() {
+            Some((var, _)) => var,
+            None => unreachable!(),
+        };
+        self.locals.insert(var_ref.binding.clone(), var_ref);
+        self.stack.insert(var_ref.unique.clone(), var_ref);
     }
 
     /// Return an optional copy of a variable and an optional pointer into the heap.
     pub fn get_var_copy(&self, local: &Binding) -> Option<(JsVar, Option<JsPtrEnum>)> {
-        if let Some(unique) = self.locals.get(local) {
-            if let Some(var) = self.stack.get(unique) {
-                match var.t {
-                    JsType::JsPtr(_) => {
-                        if let Some(alloc) = self.heap.borrow().find_id(unique) {
-                            Some((var.clone(), Some(alloc.borrow().clone())))
-                        } else {
-                            // This case should be impossible unless you have an
-                            // invalid ptr, which should also be impossible.
-                            None
-                        }
-                    },
-                    _ => Some((var.clone(), None)),
-                }
-            } else { None }
+        if let Some(var) = self.locals.get(local) {
+            match var.t {
+                JsType::JsPtr(_) => {
+                    if let Some(alloc) = self.heap.borrow().find_id(&var.unique) {
+                        Some(((*var).clone(), Some(alloc.borrow().clone())))
+                    } else {
+                        // This case should be impossible unless you have an
+                        // invalid ptr, which should also be impossible.
+                        None
+                    }
+                },
+                _ => Some(((*var).clone(), None)),
+            }
         } else if self.tag == ScopeTag::Call {
             None
         } else {
@@ -106,9 +146,11 @@ impl Scope {
             // scope is a function call, it does not have access to anything from
             // its parent scope, so it should not do this lookup. If the overall
             // lookup fails, the ScopeManager will check the global scope.
-            if let Some(ref parent) = self.parent {
+            /*if let Some(ref parent) = self.parent {
                 parent.get_var_copy(local)
-            } else { None }
+            } else { None }*/
+            // TODO FIXME
+            None
         }
     }
 
@@ -116,32 +158,33 @@ impl Scope {
     pub fn update_var(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
         match var.t {
             JsType::JsPtr(tag) =>
-                if let Some(ptr) = ptr {
+                if let Some(ref ptr) = ptr {
                     // A new root was potentially created
                     // If the pointer and its underlying type are not equal, return an error.
-                    if !tag.eq_ptr_type(&ptr) { return Err(GcError::PtrAlloc); }
-                    self.roots.insert(var.binding.clone());
-                    self.heap.borrow_mut().update_ptr(&var.binding, ptr)
+                    if !tag.eq_ptr_type(ptr) { return Err(GcError::PtrAlloc); }
+                    self.roots.insert(var.unique.clone());
+                    self.heap.borrow_mut().update_ptr(&var.unique, ptr.clone())
                 } else {
                     Err(GcError::PtrAlloc)
                 },
             _ => {
                 if let Some(_) = ptr { return Err(GcError::PtrAlloc); }
-                if let Entry::Occupied(mut view) = self.stack.entry(var.binding.clone()) {
-                    // A root was potentially removed
-                    self.roots.remove(&var.binding);
-                    *view.get_mut() = var;
-                    return Ok(());
-                } else {
-                    Err(GcError::Store(var, ptr))
-                }
+                // A root was potentially removed
+                self.roots.remove(&var.unique);
+                Ok(())
             },
+        }?;
+        if self.vars.contains_key(&var) {
+            self.vars.insert(var, ());
+            Ok(())
+        } else {
+            Err(GcError::Store(var, ptr))
         }
     }
 
     /// Called when a scope exits. Transfers the stack of this scope to its parent,
     /// and returns the parent scope, which may be `None`.
-    pub fn transfer_stack(&mut self, closures: &mut Vec<Scope>, gc_yield: bool) -> Result<Option<Box<Scope>>> {
+    pub fn transfer_stack(&mut self, /*closures: &'a mut Vec<Scope<'a>>,*/ gc_yield: bool) -> Result<LinkedHashMap<JsVar, ()>> {//Result<Option<Box<Scope<'a>>>> {
         if gc_yield {
             // The interpreter says we can GC now
             self.heap.borrow_mut().mark_roots(&self.roots);
@@ -154,24 +197,30 @@ impl Scope {
                 }
             }
         }
-        if let Some(ref mut parent) = self.parent {
+        //if let Some(ref mut parent) = self.parent {
             let returning_closure = self.stack.iter()
                                               .any(|(_, v)|
                                                    matches!(v.t, JsType::JsPtr(JsPtrTag::JsFn)));
             // If we're returning a closure, conservatively assume the closure takes ownership of
             // every binding defined in this scope, so it must all live into the parent scope.
             if returning_closure {
-                let mut closure_scope = Scope::new(ScopeTag::Call, &self.heap);
-                for (local, unique) in self.locals.drain() {
-                    let var = match self.stack.remove(&unique) {
+                /*let mut closure_scope = Scope::new(ScopeTag::Call, &self.heap);
+                // FIXME
+                while let Some((var, _)) = self.vars.pop_front() {
+                    closure_scope.rebind_var(var);
+                }
+                /*for (local, unique) in self.locals.drain() {
+                    let var = match self.stack.remove(unique) {
                         Some(var) => var,
                         None => return Err(GcError::Scope),
                     };
                     closure_scope.rebind_var(local, unique, var);
-                };
-                closures.push(closure_scope);
+                };*/
+                closures.push(closure_scope);*/
+                Ok(mem::replace(&mut self.vars, LinkedHashMap::new()))
             } else {
-                for (local, unique) in self.locals.drain() {
+                // FIXME
+                /*for (local, unique) in self.locals.drain() {
                     let var = match self.stack.remove(&unique) {
                         Some(var) => var,
                         None => return Err(GcError::Scope),
@@ -181,11 +230,12 @@ impl Scope {
                     if let JsType::JsPtr(_) = var.t {
                         parent.rebind_var(local, unique, var);
                     }
-                }
+                }*/
+                Ok(mem::replace(&mut self.vars, LinkedHashMap::new()))
             }
-            parent.roots = parent.roots.union(&self.roots).cloned().collect();
-        }
-        Ok(mem::replace(&mut self.parent, None))
+            //parent.roots = parent.roots.union(&self.roots).cloned().collect();
+        //}
+        //Ok(mem::replace(&mut self.parent, None))
     }
 }
 

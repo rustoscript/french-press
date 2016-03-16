@@ -2,9 +2,11 @@
 #![feature(box_patterns)]
 #![feature(box_syntax)]
 //#![feature(plugin)]
+#![feature(question_mark)]
 
 //#![plugin(clippy)]
 
+extern crate linked_hash_map;
 extern crate uuid;
 extern crate jsrs_common;
 extern crate js_types;
@@ -30,19 +32,29 @@ use scope::{Scope, ScopeTag};
 
 pub struct ScopeManager {
     globals: Scope,
-    curr_scope: Scope,
+    scopes: Vec<Scope>,
     closures: Vec<Scope>,
     alloc_box: Rc<RefCell<AllocBox>>,
 }
 
 impl ScopeManager {
     fn new(alloc_box: Rc<RefCell<AllocBox>>) -> ScopeManager {
-        ScopeManager {
+        let mut sm = ScopeManager {
             globals: Scope::new(ScopeTag::Call, &alloc_box),
-            curr_scope: Scope::new(ScopeTag::Call, &alloc_box),
+            scopes: Vec::new(),
             closures: Vec::new(),
             alloc_box: alloc_box,
-        }
+        };
+        sm.scopes.push(Scope::new(ScopeTag::Call, &sm.alloc_box));
+        sm
+    }
+
+    pub fn curr_scope(&self) -> &Scope {
+        self.scopes.last().unwrap()
+    }
+
+    pub fn curr_scope_mut(&mut self) -> &mut Scope {
+        self.scopes.last_mut().unwrap()
     }
 
     pub fn push_scope(&mut self, exp: &Exp) {
@@ -50,27 +62,37 @@ impl ScopeManager {
             Exp::Call(..) => ScopeTag::Call,
             _ => ScopeTag::Block,
         };
-        let parent = mem::replace(&mut self.curr_scope, Scope::new(tag, &self.alloc_box));
-        self.curr_scope.set_parent(parent);
+        //let parent = mem::replace(&mut self.curr_scope, Scope::new(tag, &self.alloc_box));
+        //self.curr_scope.set_parent(parent);
+        self.scopes.push(Scope::new(tag, &self.alloc_box));
     }
 
     pub fn pop_scope(&mut self, gc_yield: bool) -> Result<()> {
-        let parent = try!(self.curr_scope.transfer_stack(&mut self.closures, gc_yield));
-        if let Some(parent) = parent {
-            mem::replace(&mut self.curr_scope, *parent);
+        if let Some(mut scope) = self.scopes.pop() {
+            let mut vars = scope.transfer_stack(gc_yield)?;
+            let mut parent: &mut Scope = self.scopes.last_mut().unwrap();
+            while let Some((var, _)) = vars.pop_front() {
+                parent.rebind_var(var);
+            }
             Ok(())
         } else {
             Err(GcError::Scope)
         }
+        /*if let Some(parent) = self.curr_scope.transfer_stack(&mut self.closures, gc_yield)? {
+            mem::replace(&mut self.curr_scope, *parent);
+            Ok(())
+        } else {
+            Err(GcError::Scope)
+        }*/
     }
 
     pub fn alloc(&mut self, bnd: Binding, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
-        self.curr_scope.push_var(bnd, var, ptr)
+        self.curr_scope_mut().push_var(bnd, var, ptr)
     }
 
     /// Try to load the variable behind a binding
     pub fn load(&self, bnd: &Binding) -> Result<(JsVar, Option<JsPtrEnum>)> {
-        self.curr_scope.get_var_copy(bnd)
+        self.curr_scope().get_var_copy(bnd)
                        // Binding lookup failed locally, so check the root
                        // scope (globals)
                        .or(self.globals.get_var_copy(bnd))
@@ -78,12 +100,14 @@ impl ScopeManager {
     }
 
     pub fn store(&mut self, bnd: Binding, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
-        let update = self.curr_scope.update_var(var, ptr);
-        if let Err(GcError::Store(var, ptr)) = update {
+        let update = self.curr_scope_mut().update_var(var, ptr);
+        update
+        // TODO globals weirdness
+        /*if let Err(GcError::Store(var, ptr)) = update {
             self.alloc(bnd, var, ptr)
         } else {
             update
-        }
+        }*/
     }
 }
 
