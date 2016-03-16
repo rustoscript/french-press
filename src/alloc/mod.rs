@@ -166,36 +166,33 @@ mod tests {
     #[test]
     fn test_alloc() {
         let mut ab = AllocBox::new();
-        let (_, x_ptr, x_bnd) = test_utils::make_str("x");
-        let (_, y_ptr, y_bnd) = test_utils::make_str("y");
-        assert!(ab.alloc(UniqueBinding::mangle(&x_bnd), x_ptr.clone()).is_ok());
-        assert!(ab.alloc(UniqueBinding::mangle(&y_bnd), y_ptr).is_ok());
+        let (x, x_ptr) = test_utils::make_str("x");
+        let (y, y_ptr) = test_utils::make_str("y");
+        assert!(ab.alloc(x.unique, x_ptr.clone()).is_ok());
+        assert!(ab.alloc(y.unique, y_ptr).is_ok());
     }
 
     #[test]
     fn test_alloc_fail() {
         let mut ab = AllocBox::new();
-        let (_, x_ptr, x_bnd) = test_utils::make_str("x");
-        let mangle = UniqueBinding::mangle(&x_bnd);
-        let mangle2 = mangle.clone();
-        assert!(ab.alloc(mangle, x_ptr.clone()).is_ok());
-        let res = ab.alloc(mangle2.clone(), x_ptr);
+        let (x, x_ptr) = test_utils::make_str("x");
+        assert!(ab.alloc(x.unique.clone(), x_ptr.clone()).is_ok());
+        let res = ab.alloc(x.unique.clone(), x_ptr);
         assert!(res.is_err());
         assert!(matches!(res, Err(GcError::Alloc(_))));
         if let Err(GcError::Alloc(bnd)) = res {
-            assert_eq!(mangle2, bnd);
+            assert_eq!(x.unique, bnd);
         }
     }
 
     #[test]
     fn test_update_ptr() {
         let mut ab = AllocBox::new();
-        let (_, x_ptr, x_bnd) = test_utils::make_str("x");
-        let mangle = UniqueBinding::mangle(&x_bnd);
-        assert!(ab.alloc(mangle.clone(), x_ptr.clone()).is_ok());
-        let (_, new_ptr, _) = test_utils::make_str("y");
-        assert!(ab.update_ptr(&mangle, new_ptr).is_ok());
-        let opt_ptr = ab.find_id(&mangle);
+        let (x, x_ptr) = test_utils::make_str("x");
+        assert!(ab.alloc(x.unique.clone(), x_ptr.clone()).is_ok());
+        let (_, new_ptr) = test_utils::make_str("y");
+        assert!(ab.update_ptr(&x.unique, new_ptr).is_ok());
+        let opt_ptr = ab.find_id(&x.unique);
         assert!(opt_ptr.is_some());
         // Hack to get around some borrowck failures I don't fully understand
         if let Some(ptr) = opt_ptr {
@@ -211,7 +208,7 @@ mod tests {
     #[test]
     fn test_update_ptr_fail() {
         let mut ab = AllocBox::new();
-        let (_, ptr, _) = test_utils::make_str("");
+        let (_, ptr) = test_utils::make_str("");
         let res = ab.update_ptr(&UniqueBinding::anon(), ptr);
         assert!(res.is_err());
         assert!(matches!(res, Err(GcError::HeapUpdate)));
@@ -220,20 +217,18 @@ mod tests {
     #[test]
     fn test_mark_roots() {
         let mut ab = AllocBox::new();
-        let (_, x_ptr, x_bnd) = test_utils::make_str("x");
-        let (_, y_ptr, y_bnd) = test_utils::make_str("y");
-        let x_bnd = UniqueBinding::mangle(&x_bnd);
-        let y_bnd = UniqueBinding::mangle(&y_bnd);
+        let (x, x_ptr) = test_utils::make_str("x");
+        let (y, y_ptr) = test_utils::make_str("y");
 
-        ab.alloc(x_bnd.clone(), x_ptr).unwrap();
-        ab.alloc(y_bnd.clone(), y_ptr).unwrap();
+        ab.alloc(x.unique.clone(), x_ptr).unwrap();
+        ab.alloc(y.unique.clone(), y_ptr).unwrap();
 
         let mut marks = HashSet::new();
-        marks.insert(x_bnd.clone());
-        marks.insert(y_bnd.clone());
+        marks.insert(x.unique.clone());
+        marks.insert(y.unique.clone());
 
         ab.mark_roots(&marks);
-        assert!(ab.black_set.contains_key(&x_bnd));
-        assert!(ab.black_set.contains_key(&y_bnd));
+        assert!(ab.black_set.contains_key(&x.unique));
+        assert!(ab.black_set.contains_key(&y.unique));
     }
 }
