@@ -52,26 +52,23 @@ impl Scope {
     }
 
     /// Push a new JsVar onto the stack, and maybe allocate a pointer in the heap.
-    pub fn push_var(&mut self, local: Binding, mut var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
-        // Mangle the local binding to create a globally-unique name for the variable,
-        // so that it can be safely allocated anywhere without name collisions.
-        var.binding = UniqueBinding::mangle(&local);
+    pub fn push_var(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
         // Maybe insert the variable's pointer data into the heap
         let res = match var.t {
             JsType::JsPtr(_) =>
                 if let Some(ptr) = ptr {
                     // Creating a new pointer creates a new root
-                    self.roots.insert(var.binding.clone());
-                    self.heap.borrow_mut().alloc(var.binding.clone(), ptr)
+                    self.roots.insert(var.unique.clone());
+                    self.heap.borrow_mut().alloc(var.unique.clone(), ptr)
                 } else {
                     return Err(GcError::PtrAlloc);
                 },
             _ => if let Some(_) = ptr { Err(GcError::PtrAlloc) } else { Ok(()) },
         };
         // Create a mapping from the local binding to the unique binding
-        self.locals.insert(local, var.binding.clone());
+        self.locals.insert(var.binding.clone(), var.unique.clone());
         // Push the unique binding onto the stack
-        self.stack.insert(var.binding.clone(), var);
+        self.stack.insert(var.unique.clone(), var);
         res
     }
 
@@ -120,16 +117,16 @@ impl Scope {
                     // A new root was potentially created
                     // If the pointer and its underlying type are not equal, return an error.
                     if !tag.eq_ptr_type(&ptr) { return Err(GcError::PtrAlloc); }
-                    self.roots.insert(var.binding.clone());
-                    self.heap.borrow_mut().update_ptr(&var.binding, ptr)
+                    self.roots.insert(var.unique.clone());
+                    self.heap.borrow_mut().update_ptr(&var.unique, ptr)
                 } else {
                     Err(GcError::PtrAlloc)
                 },
             _ => {
                 if let Some(_) = ptr { return Err(GcError::PtrAlloc); }
-                if let Entry::Occupied(mut view) = self.stack.entry(var.binding.clone()) {
+                if let Entry::Occupied(mut view) = self.stack.entry(var.unique.clone()) {
                     // A root was potentially removed
-                    self.roots.remove(&var.binding);
+                    self.roots.remove(&var.unique);
                     *view.get_mut() = var;
                     return Ok(());
                 } else {

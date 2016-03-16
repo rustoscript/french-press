@@ -64,8 +64,8 @@ impl ScopeManager {
         }
     }
 
-    pub fn alloc(&mut self, bnd: Binding, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
-        self.curr_scope.push_var(bnd, var, ptr)
+    pub fn alloc(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
+        self.curr_scope.push_var(var, ptr)
     }
 
     /// Try to load the variable behind a binding
@@ -77,10 +77,10 @@ impl ScopeManager {
                        .ok_or_else(|| GcError::Load(bnd.clone()))
     }
 
-    pub fn store(&mut self, bnd: Binding, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
+    pub fn store(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
         let update = self.curr_scope.update_var(var, ptr);
         if let Err(GcError::Store(var, ptr)) = update {
-            self.alloc(bnd, var, ptr)
+            self.alloc(var, ptr)
         } else {
             update
         }
