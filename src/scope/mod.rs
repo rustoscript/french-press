@@ -6,7 +6,7 @@ use std::rc::Rc;
 
 use alloc::AllocBox;
 use gc_error::{GcError, Result};
-use js_types::js_var::{JsPtrEnum, JsPtrTag, JsType, JsVar};
+use js_types::js_var::{JsPtrEnum, JsType, JsVar};
 use js_types::binding::{Binding, UniqueBinding};
 use js_types::allocator::Allocator;
 
@@ -142,7 +142,8 @@ impl Scope {
 
     /// Called when a scope exits. Transfers the stack of this scope to its parent,
     /// and returns the parent scope, which may be `None`.
-    pub fn transfer_stack(&mut self, closures: &mut Vec<Scope>, gc_yield: bool) -> Result<Option<Box<Scope>>> {
+    pub fn transfer_stack(&mut self, closures: &mut Vec<Scope>,
+                          returning_closure: bool, gc_yield: bool) -> Result<Option<Box<Scope>>> {
         if gc_yield {
             // The interpreter says we can GC now
             self.heap.borrow_mut().mark_roots(&self.roots);
@@ -156,9 +157,6 @@ impl Scope {
             }
         }
         if let Some(ref mut parent) = self.parent {
-            let returning_closure = self.stack.iter()
-                                              .any(|(_, v)|
-                                                   matches!(v.t, JsType::JsPtr(JsPtrTag::JsFn)));
             // If we're returning a closure, conservatively assume the closure takes ownership of
             // every binding defined in this scope, so it must all live into the parent scope.
             if returning_closure {
@@ -374,7 +372,7 @@ mod tests {
                             test_utils::make_num(1.), None)];
             let (var, ptr) = test_utils::make_obj(kvs, heap.clone());
             test_scope.push_var(var, Some(ptr)).unwrap();
-            parent_scope = *test_scope.transfer_stack(&mut closures, false).unwrap().unwrap();
+            parent_scope = *test_scope.transfer_stack(&mut closures, false, false).unwrap().unwrap();
         }
         assert_eq!(parent_scope.stack.len(), 1);
         assert_eq!(closures.len(), 0);
@@ -427,7 +425,7 @@ mod tests {
 
             // Kill the current scope & give its refs to the parent,
             // allowing the GC to kick in beforehand.
-            parent_scope = *test_scope.transfer_stack(&mut closures, true).unwrap().unwrap();
+            parent_scope = *test_scope.transfer_stack(&mut closures, false, true).unwrap().unwrap();
         }
         // The object we created above should still exist
         assert_eq!(parent_scope.stack.len(), 1);
@@ -450,7 +448,7 @@ mod tests {
             let (var, ptr) = test_utils::make_str("test");
             test_scope.push_var(var, Some(ptr)).unwrap();
             test_scope.get_var_copy(&fn_bnd).unwrap().0.binding;
-            parent_scope = *test_scope.transfer_stack(&mut closures, false).unwrap().unwrap();
+            parent_scope = *test_scope.transfer_stack(&mut closures, true, false).unwrap().unwrap();
             fn_unique
         };
         assert_eq!(parent_scope.stack.len(), 0);
