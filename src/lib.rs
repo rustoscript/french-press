@@ -136,7 +136,7 @@ mod tests {
     use super::*;
 
     use jsrs_common::ast::Exp;
-    use js_types::js_var::JsType;
+    use js_types::js_var::{JsKey, JsPtrEnum, JsType, JsVar};
     use js_types::binding::Binding;
 
     use gc_error::GcError;
@@ -217,7 +217,7 @@ mod tests {
     #[test]
     fn test_store_failed_store() {
         let alloc_box = test_utils::make_alloc_box();
-        let mut mgr = ScopeManager::new(alloc_box,);
+        let mut mgr = ScopeManager::new(alloc_box);
         let x = test_utils::make_num(1.);
         let x_bnd = x.binding.clone();
         assert!(mgr.store(x, None).is_ok());
@@ -230,4 +230,93 @@ mod tests {
         assert!(ptr.is_none());
     }
 
+    #[test]
+    fn test_load_from_parent_scope_across_fn_boundary() {
+        let heap = test_utils::make_alloc_box();
+        let mut mgr = ScopeManager::new(heap);
+
+        // Avoids having just the global scope available
+        mgr.push_scope(&Exp::Call(box Exp::Undefined, vec![]));
+        let (x, x_ptr) = test_utils::make_str("x");
+        let x_bnd = mgr.alloc(x, Some(x_ptr)).unwrap();
+
+        mgr.push_scope(&Exp::Call(box Exp::Undefined, vec![]));
+        let copy = mgr.load(&x_bnd);
+
+        assert!(copy.is_err());
+        assert!(matches!(copy, Err(GcError::Load(_))));
+    }
+
+    #[test]
+    fn test_load_from_parent_scope_no_fn_call() {
+        let heap = test_utils::make_alloc_box();
+        let mut mgr = ScopeManager::new(heap);
+
+        // Avoids having just the global scope available
+        mgr.push_scope(&Exp::Call(box Exp::Undefined, vec![]));
+        let (x, x_ptr) = test_utils::make_str("x");
+        let x_bnd = mgr.alloc(x, Some(x_ptr)).unwrap();
+
+        mgr.push_scope(&Exp::Undefined);
+        let copy = mgr.load(&x_bnd);
+
+        assert!(copy.is_ok());
+        let (var_copy, ptr_copy) = copy.unwrap();
+        assert!(matches!(var_copy, JsVar { t: JsType::JsPtr(_), .. }));
+        assert!(ptr_copy.is_some());
+    }
+
+    #[test]
+    fn test_transfer_stack_with_yield() {
+        let heap = test_utils::make_alloc_box();
+        let mut mgr = ScopeManager::new(heap);
+        // Make some scopes
+        mgr.push_scope(&Exp::Undefined);
+        {
+            // Push a child scope
+            mgr.push_scope(&Exp::Undefined);
+            // Allocate some non-root variables (numbers)
+            mgr.alloc(test_utils::make_num(0.), None).unwrap();
+            mgr.alloc(test_utils::make_num(1.), None).unwrap();
+            mgr.alloc(test_utils::make_num(2.), None).unwrap();
+
+            // Make a string to put into an object
+            // (so it's heap-allocated and we can lose its ref from the object)
+            let (var, ptr) = test_utils::make_str("test");
+
+            // Create an obj of { true: 1.0, false: heap("test") }
+            let kvs = vec![(JsKey::JsSym("true".to_string()),
+                            test_utils::make_num(1.), None),
+                           (JsKey::JsSym("false".to_string()),
+                            var, Some(ptr))];
+            let (var, ptr) = test_utils::make_obj(kvs, mgr.alloc_box.clone());
+
+            // Push the obj into the current scope
+            let bnd = mgr.alloc(var, Some(ptr)).unwrap();
+            // The heap should now have 2 things in it: an object and a string
+            assert_eq!(mgr.alloc_box.borrow().len(), 2);
+
+            // Replace the string in the object with something else so it's no longer live
+            let copy = mgr.load(&bnd);
+            let (var_cp, mut ptr_cp) = copy.unwrap();
+            let key = JsKey::JsSym("false".to_string());
+            match *&mut ptr_cp {
+                Some(JsPtrEnum::JsObj(ref mut obj)) => {
+                    obj.dict.insert(key, test_utils::make_num(-1.));
+                },
+                _ => unreachable!()
+            }
+            mgr.store(var_cp, ptr_cp).unwrap();
+            // The heap should still have 2 things in it: an object and a string
+            assert_eq!(mgr.alloc_box.borrow().len(), 2);
+
+            // Kill the current scope & give its refs to the parent,
+            // allowing the GC to kick in beforehand.
+            mgr.pop_scope(false, true).unwrap();
+        }
+        // The object we created above should still exist
+        assert_eq!(mgr.curr_scope().len(), 1);
+        // But the string it had allocated shouldn't, since we leaked it into the void
+        assert_eq!(mgr.alloc_box.borrow().len(), 1);
+    }
 }
