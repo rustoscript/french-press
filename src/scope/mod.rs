@@ -108,7 +108,7 @@ impl Scope {
     /// Try to update a variable that's been allocated.
     pub fn update_var(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
         match var.t {
-            JsType::JsPtr(tag) =>
+            JsType::JsPtr(ref tag) =>
                 if let Some(ref ptr) = ptr {
                     // A new root was potentially created
                     // If the pointer and its underlying type are not equal, return an error.
