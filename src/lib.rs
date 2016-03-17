@@ -62,24 +62,30 @@ impl ScopeManager {
 
     pub fn pop_scope(&mut self, returning_closure: bool, gc_yield: bool) -> Result<()> {
         if let Some(mut scope) = self.scopes.pop() {
-            // Potentially trigger the garbage collector
-            if gc_yield {
-                scope.trigger_gc();
-            }
             // Clean up the dying scope's stack and take ownership of its heap-allocated data for
             // later collection
-            if !self.scopes.is_empty() {
+            if self.scopes.is_empty() {
+                // The global scope was popped and the program is ending.
+                scope.trigger_gc();
+                return Err(GcError::Scope);
+            }
+            let globals =
                 if returning_closure {
                     let mut closure_scope = Scope::new(ScopeTag::Call, &self.alloc_box);
-                    scope.transfer_stack(&mut closure_scope, returning_closure)?;
+                    let res = scope.transfer_stack(&mut closure_scope, returning_closure)?;
                     self.closures.push(closure_scope);
+                    res 
                 } else {
-                    scope.transfer_stack(self.curr_scope_mut(), returning_closure)?;
-                }
-                Ok(())
-            } else {
-                Err(GcError::Scope)
+                    scope.transfer_stack(self.curr_scope_mut(), returning_closure)?
+                };
+            for global in globals {
+                self.push_global(global);
             }
+            // Potentially trigger the garbage collector
+            if gc_yield {
+                self.curr_scope_mut().trigger_gc();
+            }
+            Ok(())
         } else {
             Err(GcError::Scope)
         }
@@ -87,6 +93,17 @@ impl ScopeManager {
 
     pub fn alloc(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<Binding> {
         let binding = var.binding.clone();
+        self.curr_scope_mut().push_var(var, ptr)?;
+        Ok(binding)
+    }
+
+    fn push_global(&mut self, var: JsVar) {
+        self.scopes[0].bind_var(var);
+    }
+
+    fn alloc_maybe_global(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<Binding> {
+        let binding = var.binding.clone();
+        self.curr_scope_mut().mark_global(&binding);
         self.curr_scope_mut().push_var(var, ptr)?;
         Ok(binding)
     }
@@ -118,7 +135,9 @@ impl ScopeManager {
     pub fn store(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
         let update = self.curr_scope_mut().update_var(var, ptr);
         if let Err(GcError::Store(var, ptr)) = update {
-            self.alloc(var, ptr).map(|_| ())
+            // If a store fails, create a local variable for the stored
+            // variable, but mark it as _potentially_ global.
+            self.alloc_maybe_global(var, ptr).map(|_| ())
         } else {
             update
         }

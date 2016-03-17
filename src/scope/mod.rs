@@ -22,6 +22,7 @@ pub struct Scope {
     heap: Rc<RefCell<AllocBox>>,
     locals: HashMap<Binding, UniqueBinding>,
     stack: HashMap<UniqueBinding, JsVar>,
+    maybe_globals: HashSet<Binding>,
     tag: ScopeTag,
 }
 
@@ -46,6 +47,7 @@ impl Scope {
             heap: heap.clone(),
             locals: HashMap::new(),
             stack: HashMap::new(),
+            maybe_globals: HashSet::new(),
             tag: tag,
         }
     }
@@ -57,6 +59,12 @@ impl Scope {
 
     /// Push a new JsVar onto the stack, and maybe allocate a pointer in the heap.
     pub fn push_var(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
+        if self.locals.contains_key(&var.binding) {
+            // If the variable we're trying to create was already allocated,
+            // just update its value and mark it as non-global.
+            self.maybe_globals.remove(&var.binding);
+            return self.update_var(var, ptr);
+        }
         // Maybe insert the variable's pointer data into the heap
         let res = match var.t {
             JsType::JsPtr(_) =>
@@ -69,16 +77,25 @@ impl Scope {
                 },
             _ => if let Some(_) = ptr { Err(GcError::PtrAlloc) } else { Ok(()) },
         };
+        self.bind_var(var);
+        res
+    }
+
+    /// Push an already-allocated JsVar onto the stack.
+    pub fn bind_var(&mut self, var: JsVar) {
         // Create a mapping from the local binding to the unique binding
         self.locals.insert(var.binding.clone(), var.unique.clone());
         // Push the unique binding onto the stack
         self.stack.insert(var.unique.clone(), var);
-        res
     }
 
     fn rebind_var(&mut self, local: Binding, unique: UniqueBinding, var: JsVar) {
         self.locals.insert(local, unique.clone());
         self.stack.insert(unique, var);
+    }
+
+    pub fn mark_global(&mut self, binding: &Binding) {
+        self.maybe_globals.insert(binding.clone());
     }
 
     /// Return an optional copy of a variable and an optional pointer into the heap.
@@ -112,15 +129,19 @@ impl Scope {
 
     /// Try to update a variable that's been allocated.
     pub fn update_var(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
+        if !self.locals.contains_key(&var.binding) {
+            // Variable was not allocated.
+            return Err(GcError::Store(var, ptr));
+        }
         match var.t {
             JsType::JsPtr(ref tag) =>
                 if let Some(ref ptr) = ptr {
-                    // A new root was potentially created
                     // If the pointer and its underlying type are not equal, return an error.
                     if !tag.eq_ptr_type(&ptr) { return Err(GcError::PtrAlloc); }
-                    self.roots.insert(var.unique.clone());
                     // TODO FIXME? cloning ptr is potentially expensive
                     self.heap.borrow_mut().update_ptr(&var.unique, ptr.clone())?;
+                    // A new root was potentially created
+                    self.roots.insert(var.unique.clone());
                 } else {
                     return Err(GcError::PtrAlloc);
                 },
@@ -156,28 +177,35 @@ impl Scope {
 
     /// Called when a scope exits. Transfers the stack of this scope to its parent,
     /// and returns the parent scope, which may be `None`.
-    pub fn transfer_stack(&mut self, parent: &mut Scope, returning_closure: bool) -> Result<()> {
+    pub fn transfer_stack(&mut self, parent: &mut Scope, returning_closure: bool) -> Result<HashSet<JsVar>> {
+        let mut globals = HashSet::new();
         for (local, unique) in self.locals.drain() {
             let var = match self.stack.remove(&unique) {
                 Some(var) => var,
                 None => return Err(GcError::Scope),
             };
-            if returning_closure {
-                // If we're returning a closure, conservatively assume the
-                // closure takes ownership of every binding defined in this
-                // scope, so it must all live into the parent scope.
-                parent.rebind_var(local, unique, var);
+            if self.maybe_globals.contains(&local) {
+                // Don't give global variables to the parent scope. Return them
+                // so they may be properly stored.
+                globals.insert(var);
             } else {
-                // If not returning a closure, rebind all heap-allocated
-                // variables into the parent scope, so they may be GC'd at a
-                // later time.
-                if let JsType::JsPtr(_) = var.t {
+                if returning_closure {
+                    // If we're returning a closure, conservatively assume the
+                    // closure takes ownership of every binding defined in this
+                    // scope, so it must all live into the parent scope.
                     parent.rebind_var(local, unique, var);
+                } else {
+                    // If not returning a closure, rebind all heap-allocated
+                    // variables into the parent scope, so they may be GC'd at a
+                    // later time.
+                    if let JsType::JsPtr(_) = var.t {
+                        parent.rebind_var(local, unique, var);
+                    }
                 }
             }
         }
         parent.roots = parent.roots.union(&self.roots).cloned().collect();
-        Ok(())
+        Ok(globals)
     }
 }
 

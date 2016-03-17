@@ -24,7 +24,8 @@ impl Allocator for AllocBox {
             Ok(())
         } else {
             // If a binding already exists and we try to allocate it, this should
-            // be an unrecoverable error.
+            // be an unrecoverable error, as we may be clobbering data that someone
+            // else has reference to.
             Err(GcError::Alloc(binding))
         }
     }
@@ -39,10 +40,12 @@ impl AllocBox {
         }
     }
 
+    #[inline]
     pub fn len(&self) -> usize {
         self.black_set.len() + self.grey_set.len() + self.white_set.len()
     }
 
+    #[inline]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
