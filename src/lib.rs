@@ -54,10 +54,8 @@ impl ScopeManager {
         self.curr_scope.set_parent(parent);
     }
 
-    pub fn pop_scope(&mut self, returning_closure: bool, gc_yield: bool) -> Result<()> {
-        let parent = self.curr_scope.transfer_stack(&mut self.closures,
-                                                    returning_closure,
-                                                    gc_yield)?;
+    pub fn pop_scope(&mut self, gc_yield: bool) -> Result<()> {
+        let parent = try!(self.curr_scope.transfer_stack(&mut self.closures, gc_yield));
         if let Some(parent) = parent {
             mem::replace(&mut self.curr_scope, *parent);
             Ok(())
@@ -114,7 +112,7 @@ mod tests {
         let mut mgr = ScopeManager::new(alloc_box);
         mgr.push_scope(&Exp::Undefined);
         assert!(mgr.curr_scope.parent.is_some());
-        mgr.pop_scope(false, false).unwrap();
+        mgr.pop_scope(false).unwrap();
         assert!(mgr.curr_scope.parent.is_none());
     }
 
@@ -122,7 +120,7 @@ mod tests {
     fn test_pop_scope_fail() {
         let alloc_box = test_utils::make_alloc_box();
         let mut mgr = ScopeManager::new(alloc_box);
-        let res = mgr.pop_scope(false, false);
+        let res = mgr.pop_scope(false);
         assert!(res.is_err());
         assert!(matches!(res, Err(GcError::Scope)));
     }
