@@ -24,7 +24,7 @@ pub fn make_obj(kvs: Vec<(JsKey, JsVar, Option<JsPtrEnum>)>, heap: Rc<RefCell<Al
 }
 
 pub fn make_fn(name: &Option<String>, params: &Vec<String>) -> (JsVar, JsPtrEnum) {
-    let var = JsVar::new(JsType::JsPtr(JsPtrTag::JsFn));
+    let var = JsVar::new(JsType::JsPtr(JsPtrTag::JsFn { name: None }));
     (var, JsPtrEnum::JsFn(JsFnStruct::new(name, params, &Stmt::BareExp(Exp::Undefined))))
 }
 

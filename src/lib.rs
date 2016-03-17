@@ -42,10 +42,12 @@ impl ScopeManager {
         }
     }
 
+    #[inline]
     fn curr_scope(&self) -> &Scope {
         self.scopes.last().expect("Tried to access current scope, but none existed")
     }
 
+    #[inline]
     fn curr_scope_mut(&mut self) -> &mut Scope {
         self.scopes.last_mut().expect("Tried to access current scope, but none existed")
     }
