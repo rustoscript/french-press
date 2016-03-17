@@ -17,6 +17,7 @@ mod scope;
 mod test_utils;
 
 use std::cell::RefCell;
+use std::mem;
 use std::rc::Rc;
 
 use jsrs_common::ast::Exp;
@@ -25,10 +26,11 @@ use js_types::binding::Binding;
 
 use alloc::AllocBox;
 use gc_error::{GcError, Result};
-use scope::{LookupError, Scope, ScopeTag};
+use scope::{Scope, ScopeTag};
 
 pub struct ScopeManager {
-    scopes: Vec<Scope>,
+    globals: Scope,
+    curr_scope: Scope,
     closures: Vec<Scope>,
     alloc_box: Rc<RefCell<AllocBox>>,
 }
@@ -36,18 +38,11 @@ pub struct ScopeManager {
 impl ScopeManager {
     fn new(alloc_box: Rc<RefCell<AllocBox>>) -> ScopeManager {
         ScopeManager {
-            scopes: vec![Scope::new(ScopeTag::Call, &alloc_box)],
+            globals: Scope::new(ScopeTag::Call, &alloc_box),
+            curr_scope: Scope::new(ScopeTag::Call, &alloc_box),
             closures: Vec::new(),
             alloc_box: alloc_box,
         }
-    }
-
-    fn curr_scope(&self) -> &Scope {
-        self.scopes.last().expect("Tried to access current scope, but none existed")
-    }
-
-    fn curr_scope_mut(&mut self) -> &mut Scope {
-        self.scopes.last_mut().expect("Tried to access current scope, but none existed")
     }
 
     pub fn push_scope(&mut self, exp: &Exp) {
@@ -55,29 +50,17 @@ impl ScopeManager {
             Exp::Call(..) => ScopeTag::Call,
             _ => ScopeTag::Block,
         };
-        self.scopes.push(Scope::new(tag, &self.alloc_box));
+        let parent = mem::replace(&mut self.curr_scope, Scope::new(tag, &self.alloc_box));
+        self.curr_scope.set_parent(parent);
     }
 
     pub fn pop_scope(&mut self, returning_closure: bool, gc_yield: bool) -> Result<()> {
-        if let Some(mut scope) = self.scopes.pop() {
-            // Potentially trigger the garbage collector
-            if gc_yield {
-                scope.trigger_gc();
-            }
-            // Clean up the dying scope's stack and take ownership of its heap-allocated data for
-            // later collection
-            if !self.scopes.is_empty() {
-                if returning_closure {
-                    let mut closure_scope = Scope::new(ScopeTag::Call, &self.alloc_box);
-                    scope.transfer_stack(&mut closure_scope, returning_closure)?;
-                    self.closures.push(closure_scope);
-                } else {
-                    scope.transfer_stack(self.curr_scope_mut(), returning_closure)?;
-                }
-                Ok(())
-            } else {
-                Err(GcError::Scope)
-            }
+        let parent = self.curr_scope.transfer_stack(&mut self.closures,
+                                                    returning_closure,
+                                                    gc_yield)?;
+        if let Some(parent) = parent {
+            mem::replace(&mut self.curr_scope, *parent);
+            Ok(())
         } else {
             Err(GcError::Scope)
         }
@@ -85,36 +68,21 @@ impl ScopeManager {
 
     pub fn alloc(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<Binding> {
         let binding = var.binding.clone();
-        self.curr_scope_mut().push_var(var, ptr)?;
+        self.curr_scope.push_var(var, ptr)?;
         Ok(binding)
     }
 
     /// Try to load the variable behind a binding
     pub fn load(&self, bnd: &Binding) -> Result<(JsVar, Option<JsPtrEnum>)> {
-        let lookup = || {
-            for scope in self.scopes.iter().rev() {
-                match scope.get_var_copy(bnd) {
-                    Ok(v) => { return Ok(v); },
-                    Err(LookupError::FnBoundary) => {
-                        return Err(GcError::Load(bnd.clone()));
-                    },
-                    Err(LookupError::CheckParent) => {},
-                    Err(LookupError::Unreachable) => unreachable!(),
-                }
-            }
-            Err(GcError::Load(bnd.clone()))
-        };
-        match lookup() {
-            Ok(v) => Ok(v),
-            Err(GcError::Load(bnd)) =>
-                self.scopes[0].get_var_copy(&bnd)
-                .map_err(|_| GcError::Load(bnd.clone())),
-            _ => unreachable!(),
-        }
+        self.curr_scope.get_var_copy(bnd)
+                       // Binding lookup failed locally, so check the root
+                       // scope (globals)
+                       .or(self.globals.get_var_copy(bnd))
+                       .ok_or_else(|| GcError::Load(bnd.clone()))
     }
 
     pub fn store(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
-        let update = self.curr_scope_mut().update_var(var, ptr);
+        let update = self.curr_scope.update_var(var, ptr);
         if let Err(GcError::Store(var, ptr)) = update {
             self.alloc(var, ptr).map(|_| ())
         } else {
@@ -145,9 +113,9 @@ mod tests {
         let alloc_box = test_utils::make_alloc_box();
         let mut mgr = ScopeManager::new(alloc_box);
         mgr.push_scope(&Exp::Undefined);
-        assert_eq!(mgr.scopes.len(), 2);
+        assert!(mgr.curr_scope.parent.is_some());
         mgr.pop_scope(false, false).unwrap();
-        assert_eq!(mgr.scopes.len(), 1);
+        assert!(mgr.curr_scope.parent.is_none());
     }
 
     #[test]
