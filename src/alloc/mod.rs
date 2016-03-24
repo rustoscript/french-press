@@ -89,8 +89,9 @@ impl AllocBox {
 
     pub fn update_ptr(&mut self, binding: &UniqueBinding, ptr: JsPtrEnum) -> Result<()> {
         // Updating a pointer makes it definitely reachable
-        if self.remove_binding(binding).is_some() {
-            self.grey_set.insert(binding.clone(), Rc::new(RefCell::new(ptr)));
+        if let Some(alloc) = self.remove_binding(binding) {
+            *alloc.borrow_mut() = ptr;
+            self.grey_set.insert(binding.clone(), alloc);
             Ok(())
         } else {
             Err(GcError::HeapUpdate)
