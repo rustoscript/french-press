@@ -17,11 +17,12 @@ mod scope;
 mod test_utils;
 
 use std::cell::RefCell;
+use std::collections::hash_map::HashMap;
 use std::rc::Rc;
 
 use jsrs_common::ast::Exp;
 use js_types::js_var::{JsPtrEnum, JsVar};
-use js_types::binding::Binding;
+use js_types::binding::{Binding, UniqueBinding};
 
 use alloc::AllocBox;
 use gc_error::{GcError, Result};
@@ -29,7 +30,7 @@ use scope::{LookupError, Scope, ScopeTag};
 
 pub struct ScopeManager {
     scopes: Vec<Scope>,
-    closures: Vec<Scope>,
+    closures: HashMap<UniqueBinding, Scope>,
     alloc_box: Rc<RefCell<AllocBox>>,
 }
 
@@ -37,7 +38,7 @@ impl ScopeManager {
     fn new(alloc_box: Rc<RefCell<AllocBox>>) -> ScopeManager {
         ScopeManager {
             scopes: vec![Scope::new(ScopeTag::Call, &alloc_box)],
-            closures: Vec::new(),
+            closures: HashMap::new(),
             alloc_box: alloc_box,
         }
     }
@@ -52,9 +53,9 @@ impl ScopeManager {
         self.scopes.last_mut().expect("Tried to access current scope, but none existed")
     }
 
-    pub fn call_closure(&mut self, closure: &Binding) {
-        let (fn_var, _) = self.load(closure).unwrap(); // TODO errors
-        // look up fn_var.unique in closure scope list
+    pub fn push_closure_scope(&mut self, closure: &UniqueBinding) {
+        let closure_scope = self.closures.remove(closure).unwrap(); // TODO errors
+        self.scopes.push(closure_scope);
     }
 
     pub fn push_scope(&mut self, exp: &Exp) {
@@ -65,7 +66,7 @@ impl ScopeManager {
         self.scopes.push(Scope::new(tag, &self.alloc_box));
     }
 
-    pub fn pop_scope(&mut self, returning_closure: bool, gc_yield: bool) -> Result<()> {
+    pub fn pop_scope(&mut self, returning_closure: Option<UniqueBinding>, gc_yield: bool) -> Result<()> {
         if let Some(mut scope) = self.scopes.pop() {
             // Clean up the dying scope's stack and take ownership of its heap-allocated data for
             // later collection
@@ -75,13 +76,13 @@ impl ScopeManager {
                 return Err(GcError::Scope);
             }
             let globals =
-                if returning_closure {
-                    let mut closure_scope = Scope::new(ScopeTag::Call, &self.alloc_box);
-                    let res = scope.transfer_stack(&mut closure_scope, returning_closure)?;
-                    self.closures.push(closure_scope);
-                    res 
+                if let Some(unique) = returning_closure {
+                    let mut closure_scope = Scope::new(ScopeTag::Closure(unique.clone()), &self.alloc_box);
+                    let res = scope.transfer_stack(&mut closure_scope, true)?;
+                    self.closures.insert(unique, closure_scope);
+                    res
                 } else {
-                    scope.transfer_stack(self.curr_scope_mut(), returning_closure)?
+                    scope.transfer_stack(self.curr_scope_mut(), false)?
                 };
             for global in globals {
                 self.push_global(global);
@@ -89,6 +90,9 @@ impl ScopeManager {
             // Potentially trigger the garbage collector
             if gc_yield {
                 self.curr_scope_mut().trigger_gc();
+            }
+            if let ScopeTag::Closure(unique) = scope.tag.clone() {
+                self.closures.insert(unique.clone(), scope);
             }
             Ok(())
         } else {
@@ -167,12 +171,28 @@ mod tests {
     use test_utils;
 
     #[test]
+    fn test_push_closure_scope() {
+        let alloc_box = test_utils::make_alloc_box();
+        let mut mgr = ScopeManager::new(alloc_box);
+        mgr.push_scope(&Exp::Undefined);
+        let (fn_var, fn_ptr) = test_utils::make_fn(&None, &Vec::new());
+        let unique = fn_var.unique.clone();
+        mgr.alloc(fn_var, Some(fn_ptr)).unwrap();
+        mgr.pop_scope(Some(unique.clone()), false).unwrap();
+        assert_eq!(mgr.closures.len(), 1);
+        mgr.push_closure_scope(&unique);
+        assert_eq!(mgr.closures.len(), 0);
+        mgr.pop_scope(None, false).unwrap();
+        assert_eq!(mgr.closures.len(), 1);
+    }
+
+    #[test]
     fn test_pop_scope() {
         let alloc_box = test_utils::make_alloc_box();
         let mut mgr = ScopeManager::new(alloc_box);
         mgr.push_scope(&Exp::Undefined);
         assert_eq!(mgr.scopes.len(), 2);
-        mgr.pop_scope(false, false).unwrap();
+        mgr.pop_scope(None, false).unwrap();
         assert_eq!(mgr.scopes.len(), 1);
     }
 
@@ -180,7 +200,7 @@ mod tests {
     fn test_pop_scope_fail() {
         let alloc_box = test_utils::make_alloc_box();
         let mut mgr = ScopeManager::new(alloc_box);
-        let res = mgr.pop_scope(false, false);
+        let res = mgr.pop_scope(None, false);
         assert!(res.is_err());
         assert!(matches!(res, Err(GcError::Scope)));
     }
@@ -337,7 +357,7 @@ mod tests {
 
             // Kill the current scope & give its refs to the parent,
             // allowing the GC to kick in beforehand.
-            mgr.pop_scope(false, true).unwrap();
+            mgr.pop_scope(None, true).unwrap();
         }
         // The object we created above should still exist
         assert_eq!(mgr.curr_scope().len(), 1);

@@ -21,12 +21,13 @@ pub struct Scope {
     locals: HashMap<Binding, UniqueBinding>,
     stack: HashMap<UniqueBinding, JsVar>,
     maybe_globals: HashSet<Binding>,
-    tag: ScopeTag,
+    pub tag: ScopeTag,
 }
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ScopeTag {
     Call,
+    Closure(UniqueBinding),
     Block,
 }
 
@@ -111,7 +112,7 @@ impl Scope {
                     _ => Ok((var.clone(), None)),
                 }
             } else { Err(LookupError::Unreachable) }
-        } else if self.tag == ScopeTag::Call {
+        } else if self.tag == ScopeTag::Call || matches!(self.tag, ScopeTag::Closure(_)) {
             // A nonexistent binding in the current scope might require searching
             // the scope tree upwards for the binding. However, if the current
             // scope is a function call, it does not have access to anything from
