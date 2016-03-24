@@ -276,6 +276,40 @@ mod tests {
     }
 
     #[test]
+    fn test_globals() {
+        let alloc_box = test_utils::make_alloc_box();
+        let mut mgr = ScopeManager::new(alloc_box);
+        // Create a non-global scope
+        mgr.push_scope(&Exp::Call(box Exp::Undefined, vec![]));
+        // Create a potential global
+        let x = test_utils::make_num(1.);
+        let x_bnd = x.binding.clone();
+        assert!(mgr.store(x, None).is_ok());
+        let mut x = test_utils::make_num(1.);
+        x.binding = x_bnd.clone();
+        // Make the global local by trying to allocate it
+        assert!(mgr.alloc(x, None).is_ok());
+        // Create a real global
+        let y = test_utils::make_num(1.);
+        let y_bnd = y.binding.clone();
+        assert!(mgr.store(y, None).is_ok());
+        // Pop the current scope
+        assert!(mgr.pop_scope(None, false).is_ok());
+        // Load the real global
+        let res = mgr.load(&y_bnd);
+        assert!(res.is_ok());
+        let (var, ptr) = res.unwrap();
+        match var.t {
+            JsType::JsNum(n) => assert_eq!(n, 1.),
+            _ => unreachable!(),
+        }
+        assert!(ptr.is_none());
+        // Load the fake global
+        let res = mgr.load(&x_bnd);
+        assert!(res.is_err());
+    }
+
+    #[test]
     fn test_load_from_parent_scope_across_fn_boundary() {
         let heap = test_utils::make_alloc_box();
         let mut mgr = ScopeManager::new(heap);

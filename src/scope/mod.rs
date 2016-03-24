@@ -61,6 +61,9 @@ impl Scope {
             // If the variable we're trying to create was already allocated,
             // just update its value and mark it as non-global.
             self.maybe_globals.remove(&var.binding);
+            let mut var = var;
+            // Ensure the variable we're trying to store is identified correctly globally
+            var.unique = self.locals.get(&var.binding).unwrap().clone();
             return self.update_var(var, ptr);
         }
         // Maybe insert the variable's pointer data into the heap
