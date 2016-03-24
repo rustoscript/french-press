@@ -11,14 +11,12 @@ use js_types::binding::{Binding, UniqueBinding};
 use js_types::allocator::Allocator;
 
 /// A logical scope in the AST. Represents any scoped block of Javascript code.
-/// roots: A set of all root references into the heap
 /// parent: An optional parent scope, e.g. the caller of this function scope,
 ///         or the function that owns an `if` statement
 /// heap: A shared reference to the heap allocator.
 /// stack: The stack of the current scope, containing all variables allocated
 ///        by this scope.
 pub struct Scope {
-    roots: HashSet<UniqueBinding>,
     heap: Rc<RefCell<AllocBox>>,
     locals: HashMap<Binding, UniqueBinding>,
     stack: HashMap<UniqueBinding, JsVar>,
@@ -43,7 +41,6 @@ impl Scope {
     /// Create a new, parentless scope node.
     pub fn new(tag: ScopeTag, heap: &Rc<RefCell<AllocBox>>) -> Scope {
         Scope {
-            roots: HashSet::new(),
             heap: heap.clone(),
             locals: HashMap::new(),
             stack: HashMap::new(),
@@ -70,7 +67,6 @@ impl Scope {
             JsType::JsPtr(_) =>
                 if let Some(ptr) = ptr {
                     // Creating a new pointer creates a new root
-                    self.roots.insert(var.unique.clone());
                     self.heap.borrow_mut().alloc(var.unique.clone(), ptr)
                 } else {
                     return Err(GcError::PtrAlloc);
@@ -139,9 +135,8 @@ impl Scope {
                     // If the pointer and its underlying type are not equal, return an error.
                     if !tag.eq_ptr_type(&ptr) { return Err(GcError::PtrAlloc); }
                     // TODO FIXME? cloning ptr is potentially expensive
-                    self.heap.borrow_mut().update_ptr(&var.unique, ptr.clone())?;
                     // A new root was potentially created
-                    self.roots.insert(var.unique.clone());
+                    self.heap.borrow_mut().update_ptr(&var.unique, ptr.clone())?;
                 } else {
                     return Err(GcError::PtrAlloc);
                 },
@@ -149,8 +144,12 @@ impl Scope {
                 if let Some(_) = ptr {
                     return Err(GcError::PtrAlloc);
                 }
-                // A root was potentially removed
-                self.roots.remove(&var.unique);
+                // A root was potentially removed.
+                // Blindly accept this Result, since we have no information
+                // about the type we're overwriting, and if we fail to condemn
+                // a stack-allocated variable that's completely fine, since the
+                // heap doesn't store those anyway.
+                self.heap.borrow_mut().condemn(var.unique.clone()).ok();
             },
         }
         // Update the variable on the stack
@@ -164,13 +163,16 @@ impl Scope {
 
     pub fn trigger_gc(&mut self) {
         // The interpreter says we can GC now
-        self.heap.borrow_mut().mark_roots(&self.roots);
         self.heap.borrow_mut().mark_ptrs();
         self.heap.borrow_mut().sweep_ptrs();
-        // Pop any roots we just deleted
-        for bnd in &self.roots {
-            if let None = self.heap.borrow().find_id(bnd) {
-                self.stack.remove(bnd);
+        // Pop any variables we just deleted
+        // TODO rewrite this to not have to clone keys, if possible
+        let locals: Vec<_> = self.locals.keys().cloned().collect();
+        for bnd in &locals {
+            if let Some(unique) = self.locals.remove(bnd) {
+                if self.heap.borrow().find_id(&unique).is_none() {
+                    self.stack.remove(&unique);
+                }
             }
         }
     }
@@ -204,7 +206,6 @@ impl Scope {
                 }
             }
         }
-        parent.roots = parent.roots.union(&self.roots).cloned().collect();
         Ok(globals)
     }
 }

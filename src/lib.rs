@@ -229,6 +229,7 @@ mod tests {
         let alloc_box = test_utils::make_alloc_box();
         let mut mgr = ScopeManager::new(alloc_box,);
         mgr.push_scope(&Exp::Undefined);
+
         let x = test_utils::make_num(1.);
         let x_bnd = mgr.alloc(x, None).unwrap();
 
@@ -326,7 +327,7 @@ mod tests {
             let key = JsKey::JsSym("false".to_string());
             match *&mut ptr_cp {
                 Some(JsPtrEnum::JsObj(ref mut obj)) => {
-                    obj.dict.insert(key, test_utils::make_num(-1.));
+                    obj.add_key(key, test_utils::make_num(-1.), None, &mut *(mgr.alloc_box.borrow_mut()));
                 },
                 _ => unreachable!()
             }
