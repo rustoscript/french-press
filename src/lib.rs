@@ -53,6 +53,16 @@ impl ScopeManager {
         self.scopes.last_mut().expect("Tried to access current scope, but none existed")
     }
 
+    #[inline]
+    fn global_scope(&self) -> &Scope {
+        self.scopes.get(0).expect("Tried to access global scope, but none existed")
+    }
+
+    #[inline]
+    fn global_scope_mut(&mut self) -> &mut Scope {
+        self.scopes.get_mut(0).expect("Tried to access global scope, but none existed")
+    }
+
     pub fn push_closure_scope(&mut self, closure: &UniqueBinding) {
         let closure_scope = self.closures.remove(closure).unwrap(); // TODO errors
         self.scopes.push(closure_scope);
@@ -119,14 +129,19 @@ impl ScopeManager {
         match lookup() {
             Ok(v) => Ok(v),
             Err(GcError::Load(bnd)) =>
-                self.scopes[0].get_var_copy(&bnd)
+                self.global_scope().get_var_copy(&bnd)
                 .map_err(|_| GcError::Load(bnd.clone())),
             _ => unreachable!(),
         }
     }
 
     pub fn store(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
-        self.curr_scope_mut().update_var(var, ptr)
+        let res = self.curr_scope_mut().update_var(var, ptr);
+        if let Err(GcError::Store(var, ptr)) = res {
+            self.global_scope_mut().update_var(var, ptr)
+        } else {
+            res
+        }
     }
 }
 
