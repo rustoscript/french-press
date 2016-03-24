@@ -75,17 +75,12 @@ impl ScopeManager {
                 scope.trigger_gc();
                 return Err(GcError::Scope);
             }
-            let globals =
-                if let Some(unique) = returning_closure {
-                    let mut closure_scope = Scope::new(ScopeTag::Closure(unique.clone()), &self.alloc_box);
-                    let res = scope.transfer_stack(&mut closure_scope, true)?;
-                    self.closures.insert(unique, closure_scope);
-                    res
-                } else {
-                    scope.transfer_stack(self.curr_scope_mut(), false)?
-                };
-            for global in globals {
-                self.push_global(global);
+            if let Some(unique) = returning_closure {
+                let mut closure_scope = Scope::new(ScopeTag::Closure(unique.clone()), &self.alloc_box);
+                scope.transfer_stack(&mut closure_scope, true)?;
+                self.closures.insert(unique, closure_scope);
+            } else {
+                scope.transfer_stack(self.curr_scope_mut(), false)?
             }
             // Potentially trigger the garbage collector
             if gc_yield {
@@ -102,17 +97,6 @@ impl ScopeManager {
 
     pub fn alloc(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<Binding> {
         let binding = var.binding.clone();
-        self.curr_scope_mut().push_var(var, ptr)?;
-        Ok(binding)
-    }
-
-    fn push_global(&mut self, var: JsVar) {
-        self.scopes[0].bind_var(var);
-    }
-
-    fn alloc_maybe_global(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<Binding> {
-        let binding = var.binding.clone();
-        self.curr_scope_mut().mark_global(&binding);
         self.curr_scope_mut().push_var(var, ptr)?;
         Ok(binding)
     }
@@ -142,14 +126,7 @@ impl ScopeManager {
     }
 
     pub fn store(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
-        let update = self.curr_scope_mut().update_var(var, ptr);
-        if let Err(GcError::Store(var, ptr)) = update {
-            // If a store fails, create a local variable for the stored
-            // variable, but mark it as _potentially_ global.
-            self.alloc_maybe_global(var, ptr).map(|_| ())
-        } else {
-            update
-        }
+        self.curr_scope_mut().update_var(var, ptr)
     }
 }
 
@@ -260,53 +237,11 @@ mod tests {
     }
 
     #[test]
-    fn test_store_failed_store() {
+    fn test_store_fail() {
         let alloc_box = test_utils::make_alloc_box();
         let mut mgr = ScopeManager::new(alloc_box);
         let x = test_utils::make_num(1.);
-        let x_bnd = x.binding.clone();
-        assert!(mgr.store(x, None).is_ok());
-
-        let load = mgr.load(&x_bnd);
-        assert!(load.is_ok());
-        let (var, ptr) = load.unwrap();
-
-        assert!(matches!(var.t, JsType::JsNum(1.)));
-        assert!(ptr.is_none());
-    }
-
-    #[test]
-    fn test_globals() {
-        let alloc_box = test_utils::make_alloc_box();
-        let mut mgr = ScopeManager::new(alloc_box);
-        // Create a non-global scope
-        mgr.push_scope(&Exp::Call(box Exp::Undefined, vec![]));
-        // Create a potential global
-        let x = test_utils::make_num(1.);
-        let x_bnd = x.binding.clone();
-        assert!(mgr.store(x, None).is_ok());
-        let mut x = test_utils::make_num(1.);
-        x.binding = x_bnd.clone();
-        // Make the global local by trying to allocate it
-        assert!(mgr.alloc(x, None).is_ok());
-        // Create a real global
-        let y = test_utils::make_num(1.);
-        let y_bnd = y.binding.clone();
-        assert!(mgr.store(y, None).is_ok());
-        // Pop the current scope
-        assert!(mgr.pop_scope(None, false).is_ok());
-        // Load the real global
-        let res = mgr.load(&y_bnd);
-        assert!(res.is_ok());
-        let (var, ptr) = res.unwrap();
-        match var.t {
-            JsType::JsNum(n) => assert_eq!(n, 1.),
-            _ => unreachable!(),
-        }
-        assert!(ptr.is_none());
-        // Load the fake global
-        let res = mgr.load(&x_bnd);
-        assert!(res.is_err());
+        assert!(mgr.store(x, None).is_err());
     }
 
     #[test]

@@ -1,6 +1,5 @@
 use std::cell::RefCell;
 use std::collections::hash_map::{Entry, HashMap};
-use std::collections::hash_set::HashSet;
 use std::rc::Rc;
 use std::result;
 
@@ -20,7 +19,6 @@ pub struct Scope {
     heap: Rc<RefCell<AllocBox>>,
     locals: HashMap<Binding, UniqueBinding>,
     stack: HashMap<UniqueBinding, JsVar>,
-    maybe_globals: HashSet<Binding>,
     pub tag: ScopeTag,
 }
 
@@ -45,7 +43,6 @@ impl Scope {
             heap: heap.clone(),
             locals: HashMap::new(),
             stack: HashMap::new(),
-            maybe_globals: HashSet::new(),
             tag: tag,
         }
     }
@@ -57,15 +54,6 @@ impl Scope {
 
     /// Push a new JsVar onto the stack, and maybe allocate a pointer in the heap.
     pub fn push_var(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
-        if self.locals.contains_key(&var.binding) {
-            // If the variable we're trying to create was already allocated,
-            // just update its value and mark it as non-global.
-            self.maybe_globals.remove(&var.binding);
-            let mut var = var;
-            // Ensure the variable we're trying to store is identified correctly globally
-            var.unique = self.locals.get(&var.binding).unwrap().clone();
-            return self.update_var(var, ptr);
-        }
         // Maybe insert the variable's pointer data into the heap
         let res = match var.t {
             JsType::JsPtr(_) =>
@@ -92,10 +80,6 @@ impl Scope {
     fn rebind_var(&mut self, local: Binding, unique: UniqueBinding, var: JsVar) {
         self.locals.insert(local, unique.clone());
         self.stack.insert(unique, var);
-    }
-
-    pub fn mark_global(&mut self, binding: &Binding) {
-        self.maybe_globals.insert(binding.clone());
     }
 
     /// Return an optional copy of a variable and an optional pointer into the heap.
@@ -183,18 +167,13 @@ impl Scope {
 
     /// Called when a scope exits. Transfers the stack of this scope to its parent,
     /// and returns the parent scope, which may be `None`.
-    pub fn transfer_stack(&mut self, parent: &mut Scope, returning_closure: bool) -> Result<HashSet<JsVar>> {
-        let mut globals = HashSet::new();
+    pub fn transfer_stack(&mut self, parent: &mut Scope, returning_closure: bool) -> Result<()> {
         for (local, unique) in self.locals.drain() {
             let var = match self.stack.remove(&unique) {
                 Some(var) => var,
                 None => return Err(GcError::Scope),
             };
-            if self.maybe_globals.contains(&local) {
-                // Don't give global variables to the parent scope. Return them
-                // so they may be properly stored.
-                globals.insert(var);
-            } else if returning_closure {
+            if returning_closure {
                 // If we're returning a closure, conservatively assume the
                 // closure takes ownership of every binding defined in this
                 // scope, so it must all live into the parent scope.
@@ -208,7 +187,7 @@ impl Scope {
                 }
             }
         }
-        Ok(globals)
+        Ok(())
     }
 }
 
