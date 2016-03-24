@@ -167,7 +167,7 @@ impl Scope {
         self.heap.borrow_mut().mark_roots(&self.roots);
         self.heap.borrow_mut().mark_ptrs();
         self.heap.borrow_mut().sweep_ptrs();
-        // Pop all of the roots we just deleted
+        // Pop any roots we just deleted
         for bnd in &self.roots {
             if let None = self.heap.borrow().find_id(bnd) {
                 self.stack.remove(bnd);

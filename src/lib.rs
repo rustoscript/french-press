@@ -52,6 +52,11 @@ impl ScopeManager {
         self.scopes.last_mut().expect("Tried to access current scope, but none existed")
     }
 
+    pub fn call_closure(&mut self, closure: &Binding) {
+        let (fn_var, _) = self.load(closure).unwrap(); // TODO errors
+        // look up fn_var.unique in closure scope list
+    }
+
     pub fn push_scope(&mut self, exp: &Exp) {
         let tag = match *exp {
             Exp::Call(..) => ScopeTag::Call,
