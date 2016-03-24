@@ -35,4 +35,11 @@ debug = true
 rpath = false
 lto = false
 debug-assertions = true
+
+[profile.bench]
+opt-level = 3
+debug = false
+rpath = false
+lto = false
+debug-assertions = false
 codegen-units = 1
