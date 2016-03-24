@@ -190,19 +190,17 @@ impl Scope {
                 // Don't give global variables to the parent scope. Return them
                 // so they may be properly stored.
                 globals.insert(var);
+            } else if returning_closure {
+                // If we're returning a closure, conservatively assume the
+                // closure takes ownership of every binding defined in this
+                // scope, so it must all live into the parent scope.
+                parent.rebind_var(local, unique, var);
             } else {
-                if returning_closure {
-                    // If we're returning a closure, conservatively assume the
-                    // closure takes ownership of every binding defined in this
-                    // scope, so it must all live into the parent scope.
+                // If not returning a closure, rebind all heap-allocated
+                // variables into the parent scope, so they may be GC'd at a
+                // later time.
+                if let JsType::JsPtr(_) = var.t {
                     parent.rebind_var(local, unique, var);
-                } else {
-                    // If not returning a closure, rebind all heap-allocated
-                    // variables into the parent scope, so they may be GC'd at a
-                    // later time.
-                    if let JsType::JsPtr(_) = var.t {
-                        parent.rebind_var(local, unique, var);
-                    }
                 }
             }
         }
