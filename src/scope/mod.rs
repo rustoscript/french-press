@@ -5,10 +5,10 @@ use std::rc::Rc;
 use std::result;
 
 use alloc::AllocBox;
-use gc_error::{GcError, Result};
-use js_types::js_var::{JsPtrEnum, JsType, JsVar};
-use js_types::binding::{Binding, UniqueBinding};
-use js_types::allocator::Allocator;
+use jsrs_common::gc_error::{GcError, Result};
+use jsrs_common::types::js_var::{JsPtrEnum, JsType, JsVar};
+use jsrs_common::types::binding::{Binding, UniqueBinding};
+use jsrs_common::types::allocator::Allocator;
 
 /// A logical scope in the AST. Represents any scoped block of Javascript code.
 /// parent: An optional parent scope, e.g. the caller of this function scope,

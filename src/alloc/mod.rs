@@ -3,10 +3,10 @@ use std::collections::hash_map::HashMap;
 use std::collections::hash_set::HashSet;
 use std::rc::Rc;
 
-use gc_error::{GcError, Result};
-use js_types::js_var::JsPtrEnum;
-use js_types::allocator::Allocator;
-use js_types::binding::UniqueBinding;
+use jsrs_common::gc_error::{GcError, Result};
+use jsrs_common::types::js_var::JsPtrEnum;
+use jsrs_common::types::allocator::Allocator;
+use jsrs_common::types::binding::UniqueBinding;
 
 pub type Alloc<T> = Rc<RefCell<T>>;
 
