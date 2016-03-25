@@ -161,10 +161,11 @@ mod tests {
     use super::*;
 
     use jsrs_common::ast::Exp;
-    use js_types::js_var::{JsKey, JsPtrEnum, JsType, JsVar};
-    use js_types::binding::Binding;
+    use jsrs_common::types::native_fn::JsScope;
+    use jsrs_common::types::js_var::{JsKey, JsPtrEnum, JsType, JsVar};
+    use jsrs_common::types::binding::Binding;
 
-    use gc_error::GcError;
+    use jsrs_common::gc_error::GcError;
     use test_utils;
 
     #[test]

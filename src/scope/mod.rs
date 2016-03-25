@@ -213,10 +213,10 @@ impl Scope {
 mod tests {
     use super::*;
 
-    use gc_error::GcError;
-    use js_types::js_var::{JsVar, JsPtrEnum, JsKey, JsType};
-    use js_types::binding::Binding;
-    use js_types::js_str::JsStrStruct;
+    use jsrs_common::gc_error::GcError;
+    use jsrs_common::types::js_var::{JsVar, JsPtrEnum, JsKey, JsType};
+    use jsrs_common::types::binding::Binding;
+    use jsrs_common::types::js_str::JsStrStruct;
     use test_utils;
 
     #[test]
