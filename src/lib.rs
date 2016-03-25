@@ -7,12 +7,10 @@
 //#![plugin(clippy)]
 
 extern crate jsrs_common;
-extern crate js_types;
 
 #[macro_use] extern crate matches;
 
 pub mod alloc;
-mod gc_error;
 mod scope;
 mod test_utils;
 
@@ -20,11 +18,11 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use jsrs_common::ast::Exp;
-use js_types::js_var::{JsPtrEnum, JsVar};
-use js_types::binding::Binding;
+use jsrs_common::types::js_var::{JsPtrEnum, JsVar};
+use jsrs_common::types::binding::Binding;
 
 use alloc::AllocBox;
-use gc_error::{GcError, Result};
+use jsrs_common::gc_error::{GcError, Result};
 use scope::{LookupError, Scope, ScopeTag};
 
 pub struct ScopeManager {
@@ -79,7 +77,7 @@ impl ScopeManager {
                     let mut closure_scope = Scope::new(ScopeTag::Call, &self.alloc_box);
                     let res = scope.transfer_stack(&mut closure_scope, returning_closure)?;
                     self.closures.push(closure_scope);
-                    res 
+                    res
                 } else {
                     scope.transfer_stack(self.curr_scope_mut(), returning_closure)?
                 };
