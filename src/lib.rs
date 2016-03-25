@@ -18,7 +18,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use jsrs_common::ast::Exp;
-use jsrs_common::types::native_fn::JsScope;
+use jsrs_common::backend::Backend;
 use jsrs_common::types::js_var::{JsPtrEnum, JsVar};
 use jsrs_common::types::binding::Binding;
 
@@ -107,7 +107,7 @@ impl ScopeManager {
     }
 }
 
-impl JsScope for ScopeManager {
+impl Backend for ScopeManager {
     fn alloc(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<Binding> {
         let binding = var.binding.clone();
         self.curr_scope_mut().push_var(var, ptr)?;
@@ -161,7 +161,7 @@ mod tests {
     use super::*;
 
     use jsrs_common::ast::Exp;
-    use jsrs_common::types::native_fn::JsScope;
+    use jsrs_common::backend::Backend;
     use jsrs_common::types::js_var::{JsKey, JsPtrEnum, JsType, JsVar};
     use jsrs_common::types::binding::Binding;
 
