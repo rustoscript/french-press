@@ -21,6 +21,7 @@ mod test_utils;
 
 use std::cell::RefCell;
 use std::collections::hash_map::HashMap;
+use std::mem;
 use std::rc::Rc;
 
 use jsrs_common::ast::Exp;
@@ -38,7 +39,7 @@ const CACHE_CAP: usize = 64;
 pub struct ScopeManager {
     scopes: Vec<Scope>,
     closures: HashMap<UniqueBinding, Scope>,
-    binding_cache: LruCache<Binding, JsVar>,
+    binding_cache: LruCache<Binding, (JsVar, Option<JsPtrEnum>)>,
     alloc_box: Rc<RefCell<AllocBox>>,
 }
 
@@ -88,16 +89,21 @@ impl ScopeManager {
     pub fn pop_scope(&mut self, returning_closure: Option<UniqueBinding>, gc_yield: bool) -> Result<()> {
         if let Some(mut scope) = self.scopes.pop() {
             // Flush the cache of all bindings from the current scope
-            for (bnd, _) in &scope.locals.clone() {
-                if self.binding_cache.contains_key(bnd) {
-                    if let Some(wb) = self.binding_cache.remove(bnd) {
-                        if wb.is_dirty() {
-                            // TODO this can crash for the same reasons as in `store`
-                            scope.update_var(wb.into_inner(), None)?;
-                        }
+
+            // Swap out scope.locals for a blank hash map to a) avoid
+            // borrow conflicts and b) avoid cloning scope.locals,
+            // which is expensive
+            let mut locals = mem::replace(&mut scope.locals, HashMap::new());
+            for (bnd, _) in &locals {
+                if let Some(wb) = self.binding_cache.remove(bnd) {
+                    if wb.is_dirty() {
+                        let (var, ptr) = wb.into_inner();
+                        scope.update_var(var, ptr)?;
                     }
                 }
             }
+            mem::swap(&mut scope.locals, &mut locals);
+
             // Clean up the dying scope's stack and take ownership of its heap-allocated data for
             // later collection
             if self.scopes.is_empty() {
@@ -134,9 +140,8 @@ impl ScopeManager {
     /// Try to load the variable behind a binding
     pub fn load(&self, bnd: &Binding) -> Result<(JsVar, Option<JsPtrEnum>)> {
         // Check the cache
-        if let Some(var) = self.binding_cache.get(bnd) {
-            return Ok((var.clone(), self.alloc_box.borrow().find_id(&var.unique)
-                                        .map(|ptr| ptr.borrow().clone())));
+        if let Some(&(ref var, ref ptr)) = self.binding_cache.get(bnd) {
+            return Ok((var.clone(), ptr.clone()));
         }
         // Otherwise, check the scope stack
         let lookup = || {
@@ -163,10 +168,10 @@ impl ScopeManager {
 
     pub fn store(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
         if self.binding_cache.contains_key(&var.binding) {
-            if let Some((_, wb)) = self.binding_cache.insert(var.binding.clone(), var) {
+            if let Some((_, wb)) = self.binding_cache.insert(var.binding.clone(), (var, ptr)) {
                 if wb.is_dirty() {
-                    // TODO this could crash if wb is a pointer
-                    self.curr_scope_mut().update_var(wb.into_inner(), None)?;
+                    let (var, ptr) = wb.into_inner();
+                    self.curr_scope_mut().update_var(var, ptr)?;
                 }
             }
             return Ok(());
