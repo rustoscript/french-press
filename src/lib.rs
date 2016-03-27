@@ -87,6 +87,17 @@ impl ScopeManager {
 
     pub fn pop_scope(&mut self, returning_closure: Option<UniqueBinding>, gc_yield: bool) -> Result<()> {
         if let Some(mut scope) = self.scopes.pop() {
+            // Flush the cache of all bindings from the current scope
+            for (bnd, _) in &scope.locals.clone() {
+                if self.binding_cache.contains_key(bnd) {
+                    if let Some(wb) = self.binding_cache.remove(bnd) {
+                        if wb.is_dirty() {
+                            // TODO this can crash for the same reasons as in `store`
+                            scope.update_var(wb.into_inner(), None)?;
+                        }
+                    }
+                }
+            }
             // Clean up the dying scope's stack and take ownership of its heap-allocated data for
             // later collection
             if self.scopes.is_empty() {
@@ -122,6 +133,12 @@ impl ScopeManager {
 
     /// Try to load the variable behind a binding
     pub fn load(&self, bnd: &Binding) -> Result<(JsVar, Option<JsPtrEnum>)> {
+        // Check the cache
+        if let Some(var) = self.binding_cache.get(bnd) {
+            return Ok((var.clone(), self.alloc_box.borrow().find_id(&var.unique)
+                                        .map(|ptr| ptr.borrow().clone())));
+        }
+        // Otherwise, check the scope stack
         let lookup = || {
             for scope in self.scopes.iter().rev() {
                 match scope.get_var_copy(bnd) {
@@ -145,6 +162,15 @@ impl ScopeManager {
     }
 
     pub fn store(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
+        if self.binding_cache.contains_key(&var.binding) {
+            if let Some((_, wb)) = self.binding_cache.insert(var.binding.clone(), var) {
+                if wb.is_dirty() {
+                    // TODO this could crash if wb is a pointer
+                    self.curr_scope_mut().update_var(wb.into_inner(), None)?;
+                }
+            }
+            return Ok(());
+        }
         let res = self.curr_scope_mut().update_var(var, ptr);
         if let Err(GcError::Store(var, ptr)) = res {
             self.global_scope_mut().update_var(var, ptr)

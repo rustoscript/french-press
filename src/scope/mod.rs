@@ -17,7 +17,7 @@ use js_types::allocator::Allocator;
 ///        by this scope.
 pub struct Scope {
     heap: Rc<RefCell<AllocBox>>,
-    locals: HashMap<Binding, UniqueBinding>,
+    pub locals: HashMap<Binding, UniqueBinding>,
     stack: HashMap<UniqueBinding, JsVar>,
     pub tag: ScopeTag,
 }

@@ -22,6 +22,10 @@ impl<V> WriteBack<V> {
     pub fn into_inner(self) -> V {
         self.inner
     }
+
+    pub fn is_dirty(&self) -> bool {
+        self.dirty
+    }
 }
 
 impl<K: Eq + Hash, V> LruCache<K, V> {
@@ -40,11 +44,12 @@ impl<K: Eq + Hash, V> LruCache<K, V> {
         self.len() == 0
     }
 
-    pub fn insert(&mut self, k: K, mut v: WriteBack<V>) -> Option<(K, WriteBack<V>)> {
+    pub fn insert(&mut self, k: K, v: V) -> Option<(K, WriteBack<V>)> {
+        let mut wb = WriteBack::new(v);
         if self.inner.get(&k).is_some() {
-            v.dirty = true;
+            wb.dirty = true;
         }
-        self.inner.insert(k, v);
+        self.inner.insert(k, wb);
         if self.len() >= self.cap {
             self.inner.pop_front()
         } else {
@@ -53,7 +58,11 @@ impl<K: Eq + Hash, V> LruCache<K, V> {
     }
 
     pub fn get(&self, k: &K) -> Option<&V> {
-        self.inner.get(k)
+        self.inner.get(k).map(|v| &v.inner)
+    }
+
+    pub fn contains_key(&self, k: &K) -> bool {
+        self.inner.contains_key(k)
     }
 
     pub fn remove(&mut self, k: &K) -> Option<WriteBack<V>> {
