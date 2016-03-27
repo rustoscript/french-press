@@ -77,6 +77,7 @@ impl AllocBox {
     pub fn sweep_ptrs(&mut self) {
         // Delete all white pointers and reset the GC state.
         self.white_set.clear();
+        // TODO is it a good assumption to reset everything to grey?
         self.grey_set = self.black_set.drain().collect();
         self.black_set.clear();
     }
@@ -88,7 +89,7 @@ impl AllocBox {
     }
 
     pub fn update_ptr(&mut self, binding: &UniqueBinding, ptr: JsPtrEnum) -> Result<()> {
-        // Updating a pointer makes it definitely reachable
+        // Updating a pointer means it is definitely reachable
         if let Some(alloc) = self.remove_binding(binding) {
             *alloc.borrow_mut() = ptr;
             self.grey_set.insert(binding.clone(), alloc);

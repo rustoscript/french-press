@@ -63,9 +63,10 @@ impl ScopeManager {
         self.scopes.get_mut(0).expect("Tried to access global scope, but none existed")
     }
 
-    pub fn push_closure_scope(&mut self, closure: &UniqueBinding) {
-        let closure_scope = self.closures.remove(closure).unwrap(); // TODO errors
+    pub fn push_closure_scope(&mut self, closure: &UniqueBinding) -> Result<()> {
+        let closure_scope = self.closures.remove(closure).ok_or(GcError::Scope)?;
         self.scopes.push(closure_scope);
+        Ok(())
     }
 
     pub fn push_scope(&mut self, exp: &Exp) {
@@ -172,7 +173,7 @@ mod tests {
         mgr.alloc(fn_var, Some(fn_ptr)).unwrap();
         mgr.pop_scope(Some(unique.clone()), false).unwrap();
         assert_eq!(mgr.closures.len(), 1);
-        mgr.push_closure_scope(&unique);
+        mgr.push_closure_scope(&unique).unwrap();
         assert_eq!(mgr.closures.len(), 0);
         mgr.pop_scope(None, false).unwrap();
         assert_eq!(mgr.closures.len(), 1);
