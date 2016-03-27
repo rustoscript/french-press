@@ -190,6 +190,9 @@ impl Scope {
                 // variables into the parent scope, so they may be GC'd at a
                 // later time.
                 if let JsType::JsPtr(_) = var.t {
+                    let mut var = var;
+                    let local = Binding::mangle(&local);
+                    var.binding = local.clone();
                     parent.rebind_var(local, unique, var);
                 }
             }
