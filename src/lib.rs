@@ -107,7 +107,8 @@ impl ScopeManager {
 
     pub fn rename_closure(&mut self, old: &UniqueBinding, new: &UniqueBinding) -> bool {
         if self.closures.contains_key(old) {
-            let scope = self.closures.remove(old).unwrap();
+            let mut scope = self.closures.remove(old).unwrap();
+            scope.tag = ScopeTag::Closure(new.clone());
             self.closures.insert(new.clone(), scope);
             true
         } else {
