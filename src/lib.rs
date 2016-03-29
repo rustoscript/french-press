@@ -42,6 +42,7 @@ impl ScopeManager {
         }
     }
 
+    #[allow(dead_code)]
     #[inline]
     fn curr_scope(&self) -> &Scope {
         self.scopes.last().expect("Tried to access current scope, but none existed")
@@ -90,7 +91,9 @@ impl ScopeManager {
                 scope.transfer_stack(&mut closure_scope, true)?;
                 self.closures.insert(unique, closure_scope);
             } else {
-                scope.transfer_stack(self.curr_scope_mut(), false)?
+                if !matches!(scope.tag, ScopeTag::Closure(_)) {
+                    scope.transfer_stack(self.curr_scope_mut(), false)?
+                }
             }
             // Potentially trigger the garbage collector
             if gc_yield {

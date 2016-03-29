@@ -15,6 +15,7 @@ use jsrs_common::types::allocator::Allocator;
 /// heap: A shared reference to the heap allocator.
 /// stack: The stack of the current scope, containing all variables allocated
 ///        by this scope.
+#[derive(Debug)]
 pub struct Scope {
     heap: Rc<RefCell<AllocBox>>,
     locals: HashMap<Binding, UniqueBinding>,
@@ -47,6 +48,7 @@ impl Scope {
         }
     }
 
+    #[allow(dead_code)]
     #[inline]
     pub fn len(&self) -> usize {
         self.stack.len()

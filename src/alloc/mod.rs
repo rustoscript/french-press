@@ -10,6 +10,7 @@ use jsrs_common::types::binding::UniqueBinding;
 
 pub type Alloc<T> = Rc<RefCell<T>>;
 
+#[derive(Debug)]
 pub struct AllocBox {
     black_set: HashMap<UniqueBinding, Alloc<JsPtrEnum>>,
     grey_set: HashMap<UniqueBinding, Alloc<JsPtrEnum>>,
