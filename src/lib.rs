@@ -104,6 +104,16 @@ impl ScopeManager {
             Err(GcError::Scope)
         }
     }
+
+    pub fn rename_closure(&mut self, old: &UniqueBinding, new: &UniqueBinding) -> bool {
+        if self.closures.contains_key(old) {
+            let scope = self.closures.remove(old).unwrap();
+            self.closures.insert(new.clone(), scope);
+            true
+        } else {
+            false
+        }
+    }
 }
 
 impl Backend for ScopeManager {
