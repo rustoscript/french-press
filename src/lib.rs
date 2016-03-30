@@ -104,10 +104,6 @@ impl ScopeManager {
             Err(GcError::Scope)
         }
     }
-
-    fn push_global(&mut self, var: JsVar) {
-        self.scopes[0].bind_var(var);
-    }
 }
 
 impl Backend for ScopeManager {
