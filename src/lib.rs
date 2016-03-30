@@ -7,12 +7,10 @@
 //#![plugin(clippy)]
 
 extern crate jsrs_common;
-extern crate js_types;
 
 #[macro_use] extern crate matches;
 
 pub mod alloc;
-mod gc_error;
 mod scope;
 mod test_utils;
 
@@ -21,11 +19,12 @@ use std::collections::hash_map::HashMap;
 use std::rc::Rc;
 
 use jsrs_common::ast::Exp;
-use js_types::js_var::{JsPtrEnum, JsVar};
-use js_types::binding::{Binding, UniqueBinding};
+use jsrs_common::backend::Backend;
+use jsrs_common::types::js_var::{JsPtrEnum, JsVar};
+use jsrs_common::types::binding::{Binding, UniqueBinding};
 
 use alloc::AllocBox;
-use gc_error::{GcError, Result};
+use jsrs_common::gc_error::{GcError, Result};
 use scope::{LookupError, Scope, ScopeTag};
 
 pub struct ScopeManager {
@@ -106,14 +105,20 @@ impl ScopeManager {
         }
     }
 
-    pub fn alloc(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<Binding> {
+    fn push_global(&mut self, var: JsVar) {
+        self.scopes[0].bind_var(var);
+    }
+}
+
+impl Backend for ScopeManager {
+    fn alloc(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<Binding> {
         let binding = var.binding.clone();
         self.curr_scope_mut().push_var(var, ptr)?;
         Ok(binding)
     }
 
     /// Try to load the variable behind a binding
-    pub fn load(&self, bnd: &Binding) -> Result<(JsVar, Option<JsPtrEnum>)> {
+    fn load(&self, bnd: &Binding) -> Result<(JsVar, Option<JsPtrEnum>)> {
         let lookup = || {
             for scope in self.scopes.iter().rev() {
                 match scope.get_var_copy(bnd) {
@@ -136,7 +141,7 @@ impl ScopeManager {
         }
     }
 
-    pub fn store(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
+    fn store(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
         let res = self.curr_scope_mut().update_var(var, ptr);
         if let Err(GcError::Store(var, ptr)) = res {
             self.global_scope_mut().update_var(var, ptr)
@@ -157,10 +162,11 @@ mod tests {
     use super::*;
 
     use jsrs_common::ast::Exp;
-    use js_types::js_var::{JsKey, JsPtrEnum, JsType, JsVar};
-    use js_types::binding::Binding;
+    use jsrs_common::backend::Backend;
+    use jsrs_common::types::js_var::{JsKey, JsPtrEnum, JsType, JsVar};
+    use jsrs_common::types::binding::Binding;
 
-    use gc_error::GcError;
+    use jsrs_common::gc_error::GcError;
     use test_utils;
 
     #[test]
