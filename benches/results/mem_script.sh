@@ -9,6 +9,6 @@ workdir=/home/djmally/src/penn/masters/thesis/rustoscript/french-press
 for bench in "${benches[@]}"
 do
     mkdir -p ./space/$bench
-    (cd $workdir; valgrind --tool=massif --pages-as-heap=yes --time-unit=B --massif-out-file=$workdir/benches/results/space/$bench/$num cargo bench $bench)
+    (cd $workdir; valgrind --tool=massif --time-unit=B --massif-out-file=$workdir/benches/results/space/$bench/$num cargo bench $bench)
     ms_print ./space/$bench/$num > ./space/$bench/pp_${num}
 done
