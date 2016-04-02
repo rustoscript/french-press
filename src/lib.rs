@@ -30,7 +30,7 @@ use scope::{LookupError, Scope, ScopeTag};
 pub struct ScopeManager {
     scopes: Vec<Scope>,
     closures: HashMap<UniqueBinding, Scope>,
-    alloc_box: Rc<RefCell<AllocBox>>,
+    pub alloc_box: Rc<RefCell<AllocBox>>,
 }
 
 impl ScopeManager {
