@@ -33,7 +33,7 @@ use jsrs_common::gc_error::{GcError, Result};
 use scope::{LookupError, Scope, ScopeTag};
 
 // Totally arbitrary cache capacity
-const CACHE_CAP: usize = 64;
+const CACHE_CAP: usize = 16;
 
 pub struct ScopeManager {
     scopes: Vec<Scope>,
@@ -99,7 +99,7 @@ impl ScopeManager {
                 if let Some(wb) = self.binding_cache.remove(bnd) {
                     if wb.is_dirty() {
                         let (var, ptr) = wb.into_inner();
-                        scope.update_var(var, ptr)?;
+                        scope.write_back(var, ptr)?;
                     }
                 }
             }
@@ -153,35 +153,41 @@ impl Backend for ScopeManager {
 
         // If the ptr is already allocated in the heap, just push it onto the stack
         if is_allocated && ptr.is_some() {
-            self.curr_scope_mut().bind_var(var);
+            self.curr_scope_mut().bind_var(var.clone());
         } else {
-            self.curr_scope_mut().push_var(var, ptr)?;
+            self.curr_scope_mut().push_var(var.clone(), ptr.clone())?;
         }
+        //self.binding_cache.insert(var.binding.clone(), (var, ptr));
         Ok(binding)
     }
 
     /// Try to load the variable behind a binding
-    fn load(&self, bnd: &Binding) -> Result<(JsVar, Option<JsPtrEnum>)> {
+    fn load(&mut self, bnd: &Binding) -> Result<(JsVar, Option<JsPtrEnum>)> {
         // Check the cache
         if let Some(&(ref var, ref ptr)) = self.binding_cache.get(bnd) {
             return Ok((var.clone(), ptr.clone()));
         }
         // Otherwise, check the scope stack
-        let lookup = || {
+        let lookup = {
+            let mut res = Err(GcError::Load(bnd.clone()));
             for scope in self.scopes.iter().rev() {
                 match scope.get_var_copy(bnd) {
-                    Ok(v) => { return Ok(v); },
+                    Ok((v,p)) => { res = Ok((v,p)); break; },
                     Err(LookupError::FnBoundary) => {
-                        return Err(GcError::Load(bnd.clone()));
+                        res = Err(GcError::Load(bnd.clone()));
+                        break;
                     },
                     Err(LookupError::CheckParent) => {},
                     Err(LookupError::Unreachable) => unreachable!(),
                 }
             }
-            Err(GcError::Load(bnd.clone()))
+            res
         };
-        match lookup() {
-            Ok(v) => Ok(v),
+        match lookup {
+            Ok((v, p)) => {
+                self.binding_cache.insert(v.binding.clone(), (v.clone(), p.clone()));
+                Ok((v, p))
+            },
             Err(GcError::Load(bnd)) =>
                 self.global_scope().get_var_copy(&bnd)
                 .map_err(|_| GcError::Load(bnd.clone())),
@@ -290,7 +296,7 @@ mod tests {
     #[test]
     fn test_load_fail() {
         let alloc_box = test_utils::make_alloc_box();
-        let mgr = ScopeManager::new(alloc_box);
+        let mut mgr = ScopeManager::new(alloc_box);
         let bnd = Binding::new("".to_owned());
         let res = mgr.load(&bnd);
         assert!(res.is_err());
@@ -335,6 +341,7 @@ mod tests {
 
         mgr.push_scope(&Exp::Call(box Exp::Undefined, vec![]));
         let copy = mgr.load(&x_bnd);
+        println!("{:?}", copy);
 
         assert!(copy.is_err());
         assert!(matches!(copy, Err(GcError::Load(_))));

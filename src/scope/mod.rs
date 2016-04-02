@@ -79,6 +79,20 @@ impl Scope {
         self.stack.insert(var.unique.clone(), var);
     }
 
+    pub fn write_back(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
+        let unique = var.unique.clone();
+        let is_allocated = self.heap.borrow().is_allocated(&unique);
+        self.bind_var(var);
+        if let Some(ptr) = ptr {
+            if is_allocated {
+                self.heap.borrow_mut().update_ptr(&unique, ptr)?;
+            } else {
+                self.heap.borrow_mut().alloc(unique, ptr)?;
+            }
+        }
+        Ok(())
+    }
+
     fn rebind_var(&mut self, local: Binding, unique: UniqueBinding, var: JsVar) {
         self.locals.insert(local, unique.clone());
         self.stack.insert(unique, var);
