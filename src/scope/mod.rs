@@ -4,10 +4,10 @@ use std::rc::Rc;
 use std::result;
 
 use alloc::AllocBox;
-use gc_error::{GcError, Result};
-use js_types::js_var::{JsPtrEnum, JsType, JsVar};
-use js_types::binding::{Binding, UniqueBinding};
-use js_types::allocator::Allocator;
+use jsrs_common::gc_error::{GcError, Result};
+use jsrs_common::types::js_var::{JsPtrEnum, JsType, JsVar};
+use jsrs_common::types::binding::{Binding, UniqueBinding};
+use jsrs_common::types::allocator::Allocator;
 
 /// A logical scope in the AST. Represents any scoped block of Javascript code.
 /// parent: An optional parent scope, e.g. the caller of this function scope,
@@ -15,6 +15,7 @@ use js_types::allocator::Allocator;
 /// heap: A shared reference to the heap allocator.
 /// stack: The stack of the current scope, containing all variables allocated
 ///        by this scope.
+#[derive(Debug)]
 pub struct Scope {
     heap: Rc<RefCell<AllocBox>>,
     pub locals: HashMap<Binding, UniqueBinding>,
@@ -47,6 +48,7 @@ impl Scope {
         }
     }
 
+    #[allow(dead_code)]
     #[inline]
     pub fn len(&self) -> usize {
         self.stack.len()
@@ -122,8 +124,8 @@ impl Scope {
                 if let Some(ref ptr) = ptr {
                     // If the pointer and its underlying type are not equal, return an error.
                     if !tag.eq_ptr_type(&ptr) { return Err(GcError::PtrAlloc); }
-                    // TODO FIXME? cloning ptr is potentially expensive
                     // A new root was potentially created
+                    // TODO FIXME? Cloning ptr is potentially expensive
                     self.heap.borrow_mut().update_ptr(&var.unique, ptr.clone())?;
                 } else {
                     return Err(GcError::PtrAlloc);
@@ -153,14 +155,21 @@ impl Scope {
         // The interpreter says we can GC now
         self.heap.borrow_mut().mark_ptrs();
         self.heap.borrow_mut().sweep_ptrs();
-        // Pop any variables we just deleted
-        // TODO rewrite this to not have to clone keys, if possible
-        let locals: Vec<_> = self.locals.keys().cloned().collect();
-        for bnd in &locals {
-            if let Some(unique) = self.locals.remove(bnd) {
-                if self.heap.borrow().find_id(&unique).is_none() {
-                    self.stack.remove(&unique);
-                }
+        // Pop any heap-allocated variables we just deleted
+        let uniques = self.stack.clone();
+        for (unique, var) in uniques {
+            match var.t {
+                JsType::JsPtr(_) =>
+                    if self.heap.borrow().find_id(&unique).is_none() {
+                        self.stack.remove(&unique);
+                    },
+                _ => {},
+            }
+        }
+        let locals = self.locals.clone();
+        for (local, unique) in locals {
+            if !self.stack.contains_key(&unique) {
+                self.locals.remove(&local);
             }
         }
     }
@@ -183,6 +192,9 @@ impl Scope {
                 // variables into the parent scope, so they may be GC'd at a
                 // later time.
                 if let JsType::JsPtr(_) = var.t {
+                    let mut var = var;
+                    let local = Binding::mangle(&local);
+                    var.binding = local.clone();
                     parent.rebind_var(local, unique, var);
                 }
             }
@@ -196,10 +208,10 @@ impl Scope {
 mod tests {
     use super::*;
 
-    use gc_error::GcError;
-    use js_types::js_var::{JsVar, JsPtrEnum, JsKey, JsType};
-    use js_types::binding::Binding;
-    use js_types::js_str::JsStrStruct;
+    use jsrs_common::gc_error::GcError;
+    use jsrs_common::types::js_var::{JsVar, JsPtrEnum, JsKey, JsType};
+    use jsrs_common::types::binding::Binding;
+    use jsrs_common::types::js_str::JsStrStruct;
     use test_utils;
 
     #[test]

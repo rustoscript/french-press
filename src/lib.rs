@@ -7,7 +7,6 @@
 //#![plugin(clippy)]
 
 extern crate jsrs_common;
-extern crate js_types;
 extern crate linked_hash_map;
 extern crate uuid;
 
@@ -15,7 +14,6 @@ extern crate uuid;
 
 pub mod alloc;
 mod cache;
-mod gc_error;
 mod scope;
 mod test_utils;
 
@@ -25,12 +23,13 @@ use std::mem;
 use std::rc::Rc;
 
 use jsrs_common::ast::Exp;
-use js_types::js_var::{JsPtrEnum, JsVar};
-use js_types::binding::{Binding, UniqueBinding};
+use jsrs_common::backend::Backend;
+use jsrs_common::types::js_var::{JsPtrEnum, JsVar};
+use jsrs_common::types::binding::{Binding, UniqueBinding};
 
 use alloc::AllocBox;
 use cache::LruCache;
-use gc_error::{GcError, Result};
+use jsrs_common::gc_error::{GcError, Result};
 use scope::{LookupError, Scope, ScopeTag};
 
 // Totally arbitrary cache capacity
@@ -40,7 +39,7 @@ pub struct ScopeManager {
     scopes: Vec<Scope>,
     closures: HashMap<UniqueBinding, Scope>,
     binding_cache: LruCache<Binding, (JsVar, Option<JsPtrEnum>)>,
-    alloc_box: Rc<RefCell<AllocBox>>,
+    pub alloc_box: Rc<RefCell<AllocBox>>,
 }
 
 impl ScopeManager {
@@ -53,6 +52,7 @@ impl ScopeManager {
         }
     }
 
+    #[allow(dead_code)]
     #[inline]
     fn curr_scope(&self) -> &Scope {
         self.scopes.last().expect("Tried to access current scope, but none existed")
@@ -73,9 +73,10 @@ impl ScopeManager {
         self.scopes.get_mut(0).expect("Tried to access global scope, but none existed")
     }
 
-    pub fn push_closure_scope(&mut self, closure: &UniqueBinding) {
-        let closure_scope = self.closures.remove(closure).unwrap(); // TODO errors
+    pub fn push_closure_scope(&mut self, closure: &UniqueBinding) -> Result<()> {
+        let closure_scope = self.closures.remove(closure).ok_or(GcError::Scope)?;
         self.scopes.push(closure_scope);
+        Ok(())
     }
 
     pub fn push_scope(&mut self, exp: &Exp) {
@@ -116,7 +117,9 @@ impl ScopeManager {
                 scope.transfer_stack(&mut closure_scope, true)?;
                 self.closures.insert(unique, closure_scope);
             } else {
-                scope.transfer_stack(self.curr_scope_mut(), false)?
+                if !matches!(scope.tag, ScopeTag::Closure(_)) {
+                    scope.transfer_stack(self.curr_scope_mut(), false)?
+                }
             }
             // Potentially trigger the garbage collector
             if gc_yield {
@@ -131,14 +134,34 @@ impl ScopeManager {
         }
     }
 
-    pub fn alloc(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<Binding> {
+    pub fn rename_closure(&mut self, old: &UniqueBinding, new: &UniqueBinding) -> bool {
+        if self.closures.contains_key(old) {
+            let mut scope = self.closures.remove(old).unwrap();
+            scope.tag = ScopeTag::Closure(new.clone());
+            self.closures.insert(new.clone(), scope);
+            true
+        } else {
+            false
+        }
+    }
+}
+
+impl Backend for ScopeManager {
+    fn alloc(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<Binding> {
         let binding = var.binding.clone();
-        self.curr_scope_mut().push_var(var, ptr)?;
+        let is_allocated = self.alloc_box.borrow().is_allocated(&var.unique);
+
+        // If the ptr is already allocated in the heap, just push it onto the stack
+        if is_allocated && ptr.is_some() {
+            self.curr_scope_mut().bind_var(var);
+        } else {
+            self.curr_scope_mut().push_var(var, ptr)?;
+        }
         Ok(binding)
     }
 
     /// Try to load the variable behind a binding
-    pub fn load(&self, bnd: &Binding) -> Result<(JsVar, Option<JsPtrEnum>)> {
+    fn load(&self, bnd: &Binding) -> Result<(JsVar, Option<JsPtrEnum>)> {
         // Check the cache
         if let Some(&(ref var, ref ptr)) = self.binding_cache.get(bnd) {
             return Ok((var.clone(), ptr.clone()));
@@ -166,7 +189,7 @@ impl ScopeManager {
         }
     }
 
-    pub fn store(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
+    fn store(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
         if self.binding_cache.contains_key(&var.binding) {
             if let Some((_, wb)) = self.binding_cache.insert(var.binding.clone(), (var, ptr)) {
                 if wb.is_dirty() {
@@ -196,10 +219,11 @@ mod tests {
     use super::*;
 
     use jsrs_common::ast::Exp;
-    use js_types::js_var::{JsKey, JsPtrEnum, JsType, JsVar};
-    use js_types::binding::Binding;
+    use jsrs_common::backend::Backend;
+    use jsrs_common::types::js_var::{JsKey, JsPtrEnum, JsType, JsVar};
+    use jsrs_common::types::binding::Binding;
 
-    use gc_error::GcError;
+    use jsrs_common::gc_error::GcError;
     use test_utils;
 
     #[test]
@@ -212,7 +236,7 @@ mod tests {
         mgr.alloc(fn_var, Some(fn_ptr)).unwrap();
         mgr.pop_scope(Some(unique.clone()), false).unwrap();
         assert_eq!(mgr.closures.len(), 1);
-        mgr.push_closure_scope(&unique);
+        mgr.push_closure_scope(&unique).unwrap();
         assert_eq!(mgr.closures.len(), 0);
         mgr.pop_scope(None, false).unwrap();
         assert_eq!(mgr.closures.len(), 1);

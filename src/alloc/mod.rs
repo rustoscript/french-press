@@ -3,13 +3,14 @@ use std::collections::hash_map::HashMap;
 use std::collections::hash_set::HashSet;
 use std::rc::Rc;
 
-use gc_error::{GcError, Result};
-use js_types::js_var::JsPtrEnum;
-use js_types::allocator::Allocator;
-use js_types::binding::UniqueBinding;
+use jsrs_common::gc_error::{GcError, Result};
+use jsrs_common::types::js_var::JsPtrEnum;
+use jsrs_common::types::allocator::Allocator;
+use jsrs_common::types::binding::UniqueBinding;
 
 pub type Alloc<T> = Rc<RefCell<T>>;
 
+#[derive(Debug)]
 pub struct AllocBox {
     black_set: HashMap<UniqueBinding, Alloc<JsPtrEnum>>,
     grey_set: HashMap<UniqueBinding, Alloc<JsPtrEnum>>,
@@ -77,6 +78,7 @@ impl AllocBox {
     pub fn sweep_ptrs(&mut self) {
         // Delete all white pointers and reset the GC state.
         self.white_set.clear();
+        // TODO is it a good assumption to reset everything to grey?
         self.grey_set = self.black_set.drain().collect();
         self.black_set.clear();
     }
@@ -87,8 +89,14 @@ impl AllocBox {
                 self.black_set.get(bnd)))
     }
 
+    pub fn is_allocated(&self, bnd: &UniqueBinding) -> bool {
+        self.white_set.contains_key(bnd) ||
+        self.grey_set.contains_key(bnd)  ||
+        self.black_set.contains_key(bnd)
+    }
+
     pub fn update_ptr(&mut self, binding: &UniqueBinding, ptr: JsPtrEnum) -> Result<()> {
-        // Updating a pointer makes it definitely reachable
+        // Updating a pointer means it is definitely reachable
         if let Some(alloc) = self.remove_binding(binding) {
             *alloc.borrow_mut() = ptr;
             self.grey_set.insert(binding.clone(), alloc);
@@ -115,11 +123,11 @@ impl AllocBox {
 mod tests {
     use super::*;
 
-    use gc_error::GcError;
-    use js_types::allocator::Allocator;
-    use js_types::binding::UniqueBinding;
-    use js_types::js_var::JsPtrEnum;
-    use js_types::js_str::JsStrStruct;
+    use jsrs_common::gc_error::GcError;
+    use jsrs_common::types::allocator::Allocator;
+    use jsrs_common::types::binding::UniqueBinding;
+    use jsrs_common::types::js_var::JsPtrEnum;
+    use jsrs_common::types::js_str::JsStrStruct;
     use test_utils;
 
     #[test]

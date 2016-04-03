@@ -12,9 +12,6 @@ uuid = "0.1"
 [dependencies.jsrs-common]
 git = "https://github.com/rustoscript/js.rs-common.git"
 
-[dependencies.js-types]
-git = "https://github.com/rustoscript/js-types.git"
-
 [profile.dev]
 opt-level = 0
 debug = true
