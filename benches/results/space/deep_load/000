@@ -1,5 +1,5 @@
-desc: --pages-as-heap=yes --time-unit=B --massif-out-file=/home/djmally/src/penn/masters/thesis/rustoscript/french-press/benches/results/space/init_only/000
-cmd: /usr/local/bin/cargo bench init_only
+desc: --pages-as-heap=yes --time-unit=B --massif-out-file=/home/djmally/src/penn/masters/thesis/rustoscript/french-press/benches/results/space/deep_load/000
+cmd: /usr/local/bin/cargo bench deep_load
 time_unit: B
 #-----------
 snapshot=0

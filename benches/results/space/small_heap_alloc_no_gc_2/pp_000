@@ -1,7 +1,7 @@
 --------------------------------------------------------------------------------
-Command:            /usr/local/bin/cargo bench init_only
-Massif arguments:   --pages-as-heap=yes --time-unit=B --massif-out-file=/home/djmally/src/penn/masters/thesis/rustoscript/french-press/benches/results/space/init_only/000
-ms_print arguments: ./space/init_only/000
+Command:            /usr/local/bin/cargo bench small_heap_alloc_no_gc_2
+Massif arguments:   --pages-as-heap=yes --time-unit=B --massif-out-file=/home/djmally/src/penn/masters/thesis/rustoscript/french-press/benches/results/space/small_heap_alloc_no_gc_2/000
+ms_print arguments: ./space/small_heap_alloc_no_gc_2/000
 --------------------------------------------------------------------------------
 
 
@@ -83,10 +83,10 @@ Number of snapshots: 38
 | |   |         ->60.20% (4,943,872B) 0x4004D48: _dl_start (in /usr/lib/ld-2.23.so)
 | |   |           ->60.20% (4,943,872B) 0x4000D96: ??? (in /usr/lib/ld-2.23.so)
 | |   |             ->60.20% (4,943,872B) 0x2: ???
-| |   |               ->60.20% (4,943,872B) 0xFFF000BC5: ???
-| |   |                 ->60.20% (4,943,872B) 0xFFF000BCD: ???
-| |   |                   ->60.20% (4,943,872B) 0xFFF000BE2: ???
-| |   |                     ->60.20% (4,943,872B) 0xFFF000BE8: ???
+| |   |               ->60.20% (4,943,872B) 0xFFF000BB5: ???
+| |   |                 ->60.20% (4,943,872B) 0xFFF000BBD: ???
+| |   |                   ->60.20% (4,943,872B) 0xFFF000BD2: ???
+| |   |                     ->60.20% (4,943,872B) 0xFFF000BD8: ???
 | |   |                       
 | |   ->25.59% (2,101,248B) 0x4000F73: map_doit (in /usr/lib/ld-2.23.so)
 | |     ->25.59% (2,101,248B) 0x400F262: _dl_catch_error (in /usr/lib/ld-2.23.so)
@@ -96,10 +96,10 @@ Number of snapshots: 38
 | |             ->25.59% (2,101,248B) 0x4004D48: _dl_start (in /usr/lib/ld-2.23.so)
 | |               ->25.59% (2,101,248B) 0x4000D96: ??? (in /usr/lib/ld-2.23.so)
 | |                 ->25.59% (2,101,248B) 0x2: ???
-| |                   ->25.59% (2,101,248B) 0xFFF000BC5: ???
-| |                     ->25.59% (2,101,248B) 0xFFF000BCD: ???
-| |                       ->25.59% (2,101,248B) 0xFFF000BE2: ???
-| |                         ->25.59% (2,101,248B) 0xFFF000BE8: ???
+| |                   ->25.59% (2,101,248B) 0xFFF000BB5: ???
+| |                     ->25.59% (2,101,248B) 0xFFF000BBD: ???
+| |                       ->25.59% (2,101,248B) 0xFFF000BD2: ???
+| |                         ->25.59% (2,101,248B) 0xFFF000BD8: ???
 | |                           
 | ->01.30% (106,496B) 0x4010233: _dl_sysdep_read_whole_file (in /usr/lib/ld-2.23.so)
 | | ->01.30% (106,496B) 0x4016444: _dl_load_cache_lookup (in /usr/lib/ld-2.23.so)
@@ -112,10 +112,10 @@ Number of snapshots: 38
 | |               ->01.30% (106,496B) 0x4004D48: _dl_start (in /usr/lib/ld-2.23.so)
 | |                 ->01.30% (106,496B) 0x4000D96: ??? (in /usr/lib/ld-2.23.so)
 | |                   ->01.30% (106,496B) 0x2: ???
-| |                     ->01.30% (106,496B) 0xFFF000BC5: ???
-| |                       ->01.30% (106,496B) 0xFFF000BCD: ???
-| |                         ->01.30% (106,496B) 0xFFF000BE2: ???
-| |                           ->01.30% (106,496B) 0xFFF000BE8: ???
+| |                     ->01.30% (106,496B) 0xFFF000BB5: ???
+| |                       ->01.30% (106,496B) 0xFFF000BBD: ???
+| |                         ->01.30% (106,496B) 0xFFF000BD2: ???
+| |                           ->01.30% (106,496B) 0xFFF000BD8: ???
 | |                             
 | ->00.60% (49,152B) in 1+ places, all below ms_print's threshold (01.00%)
 | 
@@ -148,10 +148,10 @@ Number of snapshots: 38
 | |   |         ->76.96% (10,862,592B) 0x4004D48: _dl_start (in /usr/lib/ld-2.23.so)
 | |   |           ->76.96% (10,862,592B) 0x4000D96: ??? (in /usr/lib/ld-2.23.so)
 | |   |             ->76.96% (10,862,592B) 0x2: ???
-| |   |               ->76.96% (10,862,592B) 0xFFF000BC5: ???
-| |   |                 ->76.96% (10,862,592B) 0xFFF000BCD: ???
-| |   |                   ->76.96% (10,862,592B) 0xFFF000BE2: ???
-| |   |                     ->76.96% (10,862,592B) 0xFFF000BE8: ???
+| |   |               ->76.96% (10,862,592B) 0xFFF000BB5: ???
+| |   |                 ->76.96% (10,862,592B) 0xFFF000BBD: ???
+| |   |                   ->76.96% (10,862,592B) 0xFFF000BD2: ???
+| |   |                     ->76.96% (10,862,592B) 0xFFF000BD8: ???
 | |   |                       
 | |   ->14.89% (2,101,248B) 0x4000F73: map_doit (in /usr/lib/ld-2.23.so)
 | |     ->14.89% (2,101,248B) 0x400F262: _dl_catch_error (in /usr/lib/ld-2.23.so)
@@ -161,10 +161,10 @@ Number of snapshots: 38
 | |             ->14.89% (2,101,248B) 0x4004D48: _dl_start (in /usr/lib/ld-2.23.so)
 | |               ->14.89% (2,101,248B) 0x4000D96: ??? (in /usr/lib/ld-2.23.so)
 | |                 ->14.89% (2,101,248B) 0x2: ???
-| |                   ->14.89% (2,101,248B) 0xFFF000BC5: ???
-| |                     ->14.89% (2,101,248B) 0xFFF000BCD: ???
-| |                       ->14.89% (2,101,248B) 0xFFF000BE2: ???
-| |                         ->14.89% (2,101,248B) 0xFFF000BE8: ???
+| |                   ->14.89% (2,101,248B) 0xFFF000BB5: ???
+| |                     ->14.89% (2,101,248B) 0xFFF000BBD: ???
+| |                       ->14.89% (2,101,248B) 0xFFF000BD2: ???
+| |                         ->14.89% (2,101,248B) 0xFFF000BD8: ???
 | |                           
 | ->00.99% (139,264B) in 1+ places, all below ms_print's threshold (01.00%)
 | 
@@ -192,10 +192,10 @@ Number of snapshots: 38
 | |   |         ->75.51% (10,862,592B) 0x4004D48: _dl_start (in /usr/lib/ld-2.23.so)
 | |   |           ->75.51% (10,862,592B) 0x4000D96: ??? (in /usr/lib/ld-2.23.so)
 | |   |             ->75.51% (10,862,592B) 0x2: ???
-| |   |               ->75.51% (10,862,592B) 0xFFF000BC5: ???
-| |   |                 ->75.51% (10,862,592B) 0xFFF000BCD: ???
-| |   |                   ->75.51% (10,862,592B) 0xFFF000BE2: ???
-| |   |                     ->75.51% (10,862,592B) 0xFFF000BE8: ???
+| |   |               ->75.51% (10,862,592B) 0xFFF000BB5: ???
+| |   |                 ->75.51% (10,862,592B) 0xFFF000BBD: ???
+| |   |                   ->75.51% (10,862,592B) 0xFFF000BD2: ???
+| |   |                     ->75.51% (10,862,592B) 0xFFF000BD8: ???
 | |   |                       
 | |   ->14.61% (2,101,248B) 0x4000F73: map_doit (in /usr/lib/ld-2.23.so)
 | |     ->14.61% (2,101,248B) 0x400F262: _dl_catch_error (in /usr/lib/ld-2.23.so)
@@ -205,10 +205,10 @@ Number of snapshots: 38
 | |             ->14.61% (2,101,248B) 0x4004D48: _dl_start (in /usr/lib/ld-2.23.so)
 | |               ->14.61% (2,101,248B) 0x4000D96: ??? (in /usr/lib/ld-2.23.so)
 | |                 ->14.61% (2,101,248B) 0x2: ???
-| |                   ->14.61% (2,101,248B) 0xFFF000BC5: ???
-| |                     ->14.61% (2,101,248B) 0xFFF000BCD: ???
-| |                       ->14.61% (2,101,248B) 0xFFF000BE2: ???
-| |                         ->14.61% (2,101,248B) 0xFFF000BE8: ???
+| |                   ->14.61% (2,101,248B) 0xFFF000BB5: ???
+| |                     ->14.61% (2,101,248B) 0xFFF000BBD: ???
+| |                       ->14.61% (2,101,248B) 0xFFF000BD2: ???
+| |                         ->14.61% (2,101,248B) 0xFFF000BD8: ???
 | |                           
 | ->00.94% (135,168B) in 1+ places, all below ms_print's threshold (01.00%)
 | 

@@ -1,7 +1,7 @@
 --------------------------------------------------------------------------------
-Command:            /usr/local/bin/cargo bench init_only
-Massif arguments:   --pages-as-heap=yes --time-unit=B --massif-out-file=/home/djmally/src/penn/masters/thesis/rustoscript/french-press/benches/results/space/init_only/000
-ms_print arguments: ./space/init_only/000
+Command:            /usr/local/bin/cargo bench push_scope
+Massif arguments:   --pages-as-heap=yes --time-unit=B --massif-out-file=/home/djmally/src/penn/masters/thesis/rustoscript/french-press/benches/results/space/push_scope/000
+ms_print arguments: ./space/push_scope/000
 --------------------------------------------------------------------------------
 
 

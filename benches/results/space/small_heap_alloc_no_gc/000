@@ -1,5 +1,5 @@
-desc: --pages-as-heap=yes --time-unit=B --massif-out-file=/home/djmally/src/penn/masters/thesis/rustoscript/french-press/benches/results/space/init_only/000
-cmd: /usr/local/bin/cargo bench init_only
+desc: --pages-as-heap=yes --time-unit=B --massif-out-file=/home/djmally/src/penn/masters/thesis/rustoscript/french-press/benches/results/space/small_heap_alloc_no_gc/000
+cmd: /usr/local/bin/cargo bench small_heap_alloc_no_gc
 time_unit: B
 #-----------
 snapshot=0
@@ -194,10 +194,10 @@ n3: 8212480 (page allocation syscalls) mmap/mremap/brk, --alloc-fns, etc.
          n1: 4943872 0x4004D48: _dl_start (in /usr/lib/ld-2.23.so)
           n1: 4943872 0x4000D96: ??? (in /usr/lib/ld-2.23.so)
            n1: 4943872 0x2: ???
-            n1: 4943872 0xFFF000BC5: ???
-             n1: 4943872 0xFFF000BCD: ???
-              n1: 4943872 0xFFF000BE2: ???
-               n0: 4943872 0xFFF000BE8: ???
+            n1: 4943872 0xFFF000BB9: ???
+             n1: 4943872 0xFFF000BC1: ???
+              n1: 4943872 0xFFF000BD6: ???
+               n0: 4943872 0xFFF000BDC: ???
     n1: 2101248 0x4000F73: map_doit (in /usr/lib/ld-2.23.so)
      n1: 2101248 0x400F262: _dl_catch_error (in /usr/lib/ld-2.23.so)
       n1: 2101248 0x4000BDD: do_preload (in /usr/lib/ld-2.23.so)
@@ -206,10 +206,10 @@ n3: 8212480 (page allocation syscalls) mmap/mremap/brk, --alloc-fns, etc.
          n1: 2101248 0x4004D48: _dl_start (in /usr/lib/ld-2.23.so)
           n1: 2101248 0x4000D96: ??? (in /usr/lib/ld-2.23.so)
            n1: 2101248 0x2: ???
-            n1: 2101248 0xFFF000BC5: ???
-             n1: 2101248 0xFFF000BCD: ???
-              n1: 2101248 0xFFF000BE2: ???
-               n0: 2101248 0xFFF000BE8: ???
+            n1: 2101248 0xFFF000BB9: ???
+             n1: 2101248 0xFFF000BC1: ???
+              n1: 2101248 0xFFF000BD6: ???
+               n0: 2101248 0xFFF000BDC: ???
   n1: 106496 0x4010233: _dl_sysdep_read_whole_file (in /usr/lib/ld-2.23.so)
    n1: 106496 0x4016444: _dl_load_cache_lookup (in /usr/lib/ld-2.23.so)
     n1: 106496 0x40089B8: _dl_map_object (in /usr/lib/ld-2.23.so)
@@ -221,10 +221,10 @@ n3: 8212480 (page allocation syscalls) mmap/mremap/brk, --alloc-fns, etc.
           n1: 106496 0x4004D48: _dl_start (in /usr/lib/ld-2.23.so)
            n1: 106496 0x4000D96: ??? (in /usr/lib/ld-2.23.so)
             n1: 106496 0x2: ???
-             n1: 106496 0xFFF000BC5: ???
-              n1: 106496 0xFFF000BCD: ???
-               n1: 106496 0xFFF000BE2: ???
-                n0: 106496 0xFFF000BE8: ???
+             n1: 106496 0xFFF000BB9: ???
+              n1: 106496 0xFFF000BC1: ???
+               n1: 106496 0xFFF000BD6: ???
+                n0: 106496 0xFFF000BDC: ???
   n0: 49152 in 3 places, all below massif's threshold (1.00%)
  n0: 1011712 0xFFFFFFFFFFFFFFFF: ???
  n0: 0 in 1 place, below massif's threshold (1.00%)
@@ -320,10 +320,10 @@ n3: 14114816 (page allocation syscalls) mmap/mremap/brk, --alloc-fns, etc.
          n1: 10862592 0x4004D48: _dl_start (in /usr/lib/ld-2.23.so)
           n1: 10862592 0x4000D96: ??? (in /usr/lib/ld-2.23.so)
            n1: 10862592 0x2: ???
-            n1: 10862592 0xFFF000BC5: ???
-             n1: 10862592 0xFFF000BCD: ???
-              n1: 10862592 0xFFF000BE2: ???
-               n0: 10862592 0xFFF000BE8: ???
+            n1: 10862592 0xFFF000BB9: ???
+             n1: 10862592 0xFFF000BC1: ???
+              n1: 10862592 0xFFF000BD6: ???
+               n0: 10862592 0xFFF000BDC: ???
     n1: 2101248 0x4000F73: map_doit (in /usr/lib/ld-2.23.so)
      n1: 2101248 0x400F262: _dl_catch_error (in /usr/lib/ld-2.23.so)
       n1: 2101248 0x4000BDD: do_preload (in /usr/lib/ld-2.23.so)
@@ -332,10 +332,10 @@ n3: 14114816 (page allocation syscalls) mmap/mremap/brk, --alloc-fns, etc.
          n1: 2101248 0x4004D48: _dl_start (in /usr/lib/ld-2.23.so)
           n1: 2101248 0x4000D96: ??? (in /usr/lib/ld-2.23.so)
            n1: 2101248 0x2: ???
-            n1: 2101248 0xFFF000BC5: ???
-             n1: 2101248 0xFFF000BCD: ???
-              n1: 2101248 0xFFF000BE2: ???
-               n0: 2101248 0xFFF000BE8: ???
+            n1: 2101248 0xFFF000BB9: ???
+             n1: 2101248 0xFFF000BC1: ???
+              n1: 2101248 0xFFF000BD6: ???
+               n0: 2101248 0xFFF000BDC: ???
   n0: 139264 in 4 places, all below massif's threshold (1.00%)
  n0: 1011712 0xFFFFFFFFFFFFFFFF: ???
  n0: 0 in 1 place, below massif's threshold (1.00%)
@@ -391,10 +391,10 @@ n4: 14385152 (page allocation syscalls) mmap/mremap/brk, --alloc-fns, etc.
          n1: 10862592 0x4004D48: _dl_start (in /usr/lib/ld-2.23.so)
           n1: 10862592 0x4000D96: ??? (in /usr/lib/ld-2.23.so)
            n1: 10862592 0x2: ???
-            n1: 10862592 0xFFF000BC5: ???
-             n1: 10862592 0xFFF000BCD: ???
-              n1: 10862592 0xFFF000BE2: ???
-               n0: 10862592 0xFFF000BE8: ???
+            n1: 10862592 0xFFF000BB9: ???
+             n1: 10862592 0xFFF000BC1: ???
+              n1: 10862592 0xFFF000BD6: ???
+               n0: 10862592 0xFFF000BDC: ???
     n1: 2101248 0x4000F73: map_doit (in /usr/lib/ld-2.23.so)
      n1: 2101248 0x400F262: _dl_catch_error (in /usr/lib/ld-2.23.so)
       n1: 2101248 0x4000BDD: do_preload (in /usr/lib/ld-2.23.so)
@@ -403,10 +403,10 @@ n4: 14385152 (page allocation syscalls) mmap/mremap/brk, --alloc-fns, etc.
          n1: 2101248 0x4004D48: _dl_start (in /usr/lib/ld-2.23.so)
           n1: 2101248 0x4000D96: ??? (in /usr/lib/ld-2.23.so)
            n1: 2101248 0x2: ???
-            n1: 2101248 0xFFF000BC5: ???
-             n1: 2101248 0xFFF000BCD: ???
-              n1: 2101248 0xFFF000BE2: ???
-               n0: 2101248 0xFFF000BE8: ???
+            n1: 2101248 0xFFF000BB9: ???
+             n1: 2101248 0xFFF000BC1: ???
+              n1: 2101248 0xFFF000BD6: ???
+               n0: 2101248 0xFFF000BDC: ???
   n0: 135168 in 4 places, all below massif's threshold (1.00%)
  n0: 1011712 0xFFFFFFFFFFFFFFFF: ???
  n1: 270336 0x53C2148: brk (in /usr/lib/libc-2.23.so)
