@@ -1,0 +1,571 @@
+desc: --pages-as-heap=yes --time-unit=B
+cmd: ./target/release/mod-ca874f5d3b1bc3ea --bench init_only
+time_unit: B
+#-----------
+snapshot=0
+#-----------
+time=937984
+mem_heap_B=937984
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=1
+#-----------
+time=978944
+mem_heap_B=978944
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=2
+#-----------
+time=983040
+mem_heap_B=983040
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=3
+#-----------
+time=1126400
+mem_heap_B=1126400
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=4
+#-----------
+time=1134592
+mem_heap_B=1134592
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=5
+#-----------
+time=1138688
+mem_heap_B=1138688
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=6
+#-----------
+time=1142784
+mem_heap_B=1142784
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=7
+#-----------
+time=1146880
+mem_heap_B=1146880
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=8
+#-----------
+time=1155072
+mem_heap_B=1155072
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=9
+#-----------
+time=1159168
+mem_heap_B=1159168
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=detailed
+n1: 1159168 (page allocation syscalls) mmap/mremap/brk, --alloc-fns, etc.
+ n0: 1159168 0xFFFFFFFFFFFFFFFF: ???
+#-----------
+snapshot=10
+#-----------
+time=1163264
+mem_heap_B=1163264
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=11
+#-----------
+time=1163264
+mem_heap_B=1163264
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=detailed
+n2: 1163264 (page allocation syscalls) mmap/mremap/brk, --alloc-fns, etc.
+ n0: 1159168 0xFFFFFFFFFFFFFFFF: ???
+ n0: 4096 in 1 place, below massif's threshold (1.00%)
+#-----------
+snapshot=12
+#-----------
+time=1167360
+mem_heap_B=1159168
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=13
+#-----------
+time=1167360
+mem_heap_B=1159168
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=14
+#-----------
+time=1171456
+mem_heap_B=1163264
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=15
+#-----------
+time=3272704
+mem_heap_B=3264512
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=16
+#-----------
+time=3276800
+mem_heap_B=3268608
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=17
+#-----------
+time=3383296
+mem_heap_B=3375104
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=18
+#-----------
+time=5496832
+mem_heap_B=5488640
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=19
+#-----------
+time=5505024
+mem_heap_B=5496832
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=20
+#-----------
+time=7720960
+mem_heap_B=7712768
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=21
+#-----------
+time=7729152
+mem_heap_B=7720960
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=detailed
+n3: 7720960 (page allocation syscalls) mmap/mremap/brk, --alloc-fns, etc.
+ n3: 6561792 0x4018E59: mmap (in /usr/lib/ld-2.23.so)
+  n1: 6430720 0x40059CB: _dl_map_object_from_fd (in /usr/lib/ld-2.23.so)
+   n2: 6430720 0x4008593: _dl_map_object (in /usr/lib/ld-2.23.so)
+    n1: 4329472 0x400CCB0: openaux (in /usr/lib/ld-2.23.so)
+     n1: 4329472 0x400F262: _dl_catch_error (in /usr/lib/ld-2.23.so)
+      n1: 4329472 0x400CF21: _dl_map_object_deps (in /usr/lib/ld-2.23.so)
+       n1: 4329472 0x4003031: dl_main (in /usr/lib/ld-2.23.so)
+        n1: 4329472 0x401729A: _dl_sysdep_start (in /usr/lib/ld-2.23.so)
+         n1: 4329472 0x4004D48: _dl_start (in /usr/lib/ld-2.23.so)
+          n1: 4329472 0x4000D96: ??? (in /usr/lib/ld-2.23.so)
+           n1: 4329472 0x1: ???
+            n1: 4329472 0xFFF000BB1: ???
+             n1: 4329472 0xFFF000BD7: ???
+              n0: 4329472 0xFFF000BDF: ???
+    n1: 2101248 0x4000F73: map_doit (in /usr/lib/ld-2.23.so)
+     n1: 2101248 0x400F262: _dl_catch_error (in /usr/lib/ld-2.23.so)
+      n1: 2101248 0x4000BDD: do_preload (in /usr/lib/ld-2.23.so)
+       n1: 2101248 0x40048C4: dl_main (in /usr/lib/ld-2.23.so)
+        n1: 2101248 0x401729A: _dl_sysdep_start (in /usr/lib/ld-2.23.so)
+         n1: 2101248 0x4004D48: _dl_start (in /usr/lib/ld-2.23.so)
+          n1: 2101248 0x4000D96: ??? (in /usr/lib/ld-2.23.so)
+           n1: 2101248 0x1: ???
+            n1: 2101248 0xFFF000BB1: ???
+             n1: 2101248 0xFFF000BD7: ???
+              n0: 2101248 0xFFF000BDF: ???
+  n1: 106496 0x4010233: _dl_sysdep_read_whole_file (in /usr/lib/ld-2.23.so)
+   n1: 106496 0x4016444: _dl_load_cache_lookup (in /usr/lib/ld-2.23.so)
+    n1: 106496 0x40089B8: _dl_map_object (in /usr/lib/ld-2.23.so)
+     n1: 106496 0x400CCB0: openaux (in /usr/lib/ld-2.23.so)
+      n1: 106496 0x400F262: _dl_catch_error (in /usr/lib/ld-2.23.so)
+       n1: 106496 0x400CF21: _dl_map_object_deps (in /usr/lib/ld-2.23.so)
+        n1: 106496 0x4003031: dl_main (in /usr/lib/ld-2.23.so)
+         n1: 106496 0x401729A: _dl_sysdep_start (in /usr/lib/ld-2.23.so)
+          n1: 106496 0x4004D48: _dl_start (in /usr/lib/ld-2.23.so)
+           n1: 106496 0x4000D96: ??? (in /usr/lib/ld-2.23.so)
+            n1: 106496 0x1: ???
+             n1: 106496 0xFFF000BB1: ???
+              n1: 106496 0xFFF000BD7: ???
+               n0: 106496 0xFFF000BDF: ???
+  n0: 24576 in 2 places, all below massif's threshold (1.00%)
+ n0: 1159168 0xFFFFFFFFFFFFFFFF: ???
+ n0: 0 in 1 place, below massif's threshold (1.00%)
+#-----------
+snapshot=22
+#-----------
+time=7745536
+mem_heap_B=7737344
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=23
+#-----------
+time=7749632
+mem_heap_B=7741440
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=24
+#-----------
+time=9936896
+mem_heap_B=9928704
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=25
+#-----------
+time=9940992
+mem_heap_B=9932800
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=26
+#-----------
+time=13746176
+mem_heap_B=13737984
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=27
+#-----------
+time=13770752
+mem_heap_B=13762560
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=28
+#-----------
+time=13787136
+mem_heap_B=13778944
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=29
+#-----------
+time=16953344
+mem_heap_B=16945152
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=30
+#-----------
+time=16961536
+mem_heap_B=16953344
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=31
+#-----------
+time=16965632
+mem_heap_B=16957440
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=detailed
+n3: 16957440 (page allocation syscalls) mmap/mremap/brk, --alloc-fns, etc.
+ n2: 15798272 0x4018E59: mmap (in /usr/lib/ld-2.23.so)
+  n1: 15589376 0x40059CB: _dl_map_object_from_fd (in /usr/lib/ld-2.23.so)
+   n2: 15589376 0x4008593: _dl_map_object (in /usr/lib/ld-2.23.so)
+    n1: 13488128 0x400CCB0: openaux (in /usr/lib/ld-2.23.so)
+     n1: 13488128 0x400F262: _dl_catch_error (in /usr/lib/ld-2.23.so)
+      n1: 13488128 0x400CF21: _dl_map_object_deps (in /usr/lib/ld-2.23.so)
+       n1: 13488128 0x4003031: dl_main (in /usr/lib/ld-2.23.so)
+        n1: 13488128 0x401729A: _dl_sysdep_start (in /usr/lib/ld-2.23.so)
+         n1: 13488128 0x4004D48: _dl_start (in /usr/lib/ld-2.23.so)
+          n1: 13488128 0x4000D96: ??? (in /usr/lib/ld-2.23.so)
+           n1: 13488128 0x1: ???
+            n1: 13488128 0xFFF000BB1: ???
+             n1: 13488128 0xFFF000BD7: ???
+              n0: 13488128 0xFFF000BDF: ???
+    n1: 2101248 0x4000F73: map_doit (in /usr/lib/ld-2.23.so)
+     n1: 2101248 0x400F262: _dl_catch_error (in /usr/lib/ld-2.23.so)
+      n1: 2101248 0x4000BDD: do_preload (in /usr/lib/ld-2.23.so)
+       n1: 2101248 0x40048C4: dl_main (in /usr/lib/ld-2.23.so)
+        n1: 2101248 0x401729A: _dl_sysdep_start (in /usr/lib/ld-2.23.so)
+         n1: 2101248 0x4004D48: _dl_start (in /usr/lib/ld-2.23.so)
+          n1: 2101248 0x4000D96: ??? (in /usr/lib/ld-2.23.so)
+           n1: 2101248 0x1: ???
+            n1: 2101248 0xFFF000BB1: ???
+             n1: 2101248 0xFFF000BD7: ???
+              n0: 2101248 0xFFF000BDF: ???
+  n0: 208896 in 4 places, all below massif's threshold (1.00%)
+ n0: 1159168 0xFFFFFFFFFFFFFFFF: ???
+ n0: 0 in 1 place, below massif's threshold (1.00%)
+#-----------
+snapshot=32
+#-----------
+time=16973824
+mem_heap_B=16965632
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=33
+#-----------
+time=17076224
+mem_heap_B=16863232
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=detailed
+n3: 16863232 (page allocation syscalls) mmap/mremap/brk, --alloc-fns, etc.
+ n2: 15704064 0x4018E59: mmap (in /usr/lib/ld-2.23.so)
+  n1: 15589376 0x40059CB: _dl_map_object_from_fd (in /usr/lib/ld-2.23.so)
+   n2: 15589376 0x4008593: _dl_map_object (in /usr/lib/ld-2.23.so)
+    n1: 13488128 0x400CCB0: openaux (in /usr/lib/ld-2.23.so)
+     n1: 13488128 0x400F262: _dl_catch_error (in /usr/lib/ld-2.23.so)
+      n1: 13488128 0x400CF21: _dl_map_object_deps (in /usr/lib/ld-2.23.so)
+       n1: 13488128 0x4003031: dl_main (in /usr/lib/ld-2.23.so)
+        n1: 13488128 0x401729A: _dl_sysdep_start (in /usr/lib/ld-2.23.so)
+         n1: 13488128 0x4004D48: _dl_start (in /usr/lib/ld-2.23.so)
+          n1: 13488128 0x4000D96: ??? (in /usr/lib/ld-2.23.so)
+           n1: 13488128 0x1: ???
+            n1: 13488128 0xFFF000BB1: ???
+             n1: 13488128 0xFFF000BD7: ???
+              n0: 13488128 0xFFF000BDF: ???
+    n1: 2101248 0x4000F73: map_doit (in /usr/lib/ld-2.23.so)
+     n1: 2101248 0x400F262: _dl_catch_error (in /usr/lib/ld-2.23.so)
+      n1: 2101248 0x4000BDD: do_preload (in /usr/lib/ld-2.23.so)
+       n1: 2101248 0x40048C4: dl_main (in /usr/lib/ld-2.23.so)
+        n1: 2101248 0x401729A: _dl_sysdep_start (in /usr/lib/ld-2.23.so)
+         n1: 2101248 0x4004D48: _dl_start (in /usr/lib/ld-2.23.so)
+          n1: 2101248 0x4000D96: ??? (in /usr/lib/ld-2.23.so)
+           n1: 2101248 0x1: ???
+            n1: 2101248 0xFFF000BB1: ???
+             n1: 2101248 0xFFF000BD7: ???
+              n0: 2101248 0xFFF000BDF: ???
+  n0: 114688 in 4 places, all below massif's threshold (1.00%)
+ n0: 1159168 0xFFFFFFFFFFFFFFFF: ???
+ n0: 0 in 1 place, below massif's threshold (1.00%)
+#-----------
+snapshot=34
+#-----------
+time=17080320
+mem_heap_B=16859136
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=35
+#-----------
+time=19177472
+mem_heap_B=18956288
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=36
+#-----------
+time=21274624
+mem_heap_B=16859136
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=37
+#-----------
+time=25464832
+mem_heap_B=21049344
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=38
+#-----------
+time=26492928
+mem_heap_B=20021248
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=detailed
+n4: 20021248 (page allocation syscalls) mmap/mremap/brk, --alloc-fns, etc.
+ n2: 15699968 0x4018E59: mmap (in /usr/lib/ld-2.23.so)
+  n1: 15589376 0x40059CB: _dl_map_object_from_fd (in /usr/lib/ld-2.23.so)
+   n2: 15589376 0x4008593: _dl_map_object (in /usr/lib/ld-2.23.so)
+    n1: 13488128 0x400CCB0: openaux (in /usr/lib/ld-2.23.so)
+     n1: 13488128 0x400F262: _dl_catch_error (in /usr/lib/ld-2.23.so)
+      n1: 13488128 0x400CF21: _dl_map_object_deps (in /usr/lib/ld-2.23.so)
+       n1: 13488128 0x4003031: dl_main (in /usr/lib/ld-2.23.so)
+        n1: 13488128 0x401729A: _dl_sysdep_start (in /usr/lib/ld-2.23.so)
+         n1: 13488128 0x4004D48: _dl_start (in /usr/lib/ld-2.23.so)
+          n1: 13488128 0x4000D96: ??? (in /usr/lib/ld-2.23.so)
+           n1: 13488128 0x1: ???
+            n1: 13488128 0xFFF000BB1: ???
+             n1: 13488128 0xFFF000BD7: ???
+              n0: 13488128 0xFFF000BDF: ???
+    n1: 2101248 0x4000F73: map_doit (in /usr/lib/ld-2.23.so)
+     n1: 2101248 0x400F262: _dl_catch_error (in /usr/lib/ld-2.23.so)
+      n1: 2101248 0x4000BDD: do_preload (in /usr/lib/ld-2.23.so)
+       n1: 2101248 0x40048C4: dl_main (in /usr/lib/ld-2.23.so)
+        n1: 2101248 0x401729A: _dl_sysdep_start (in /usr/lib/ld-2.23.so)
+         n1: 2101248 0x4004D48: _dl_start (in /usr/lib/ld-2.23.so)
+          n1: 2101248 0x4000D96: ??? (in /usr/lib/ld-2.23.so)
+           n1: 2101248 0x1: ???
+            n1: 2101248 0xFFF000BB1: ???
+             n1: 2101248 0xFFF000BD7: ???
+              n0: 2101248 0xFFF000BDF: ???
+  n0: 110592 in 4 places, all below massif's threshold (1.00%)
+ n1: 3162112 0x53419D9: mmap (in /usr/lib/libc-2.23.so)
+  n2: 3162112 0x1B190A: je_pages_map (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+   n1: 3162112 0x1A4F48: je_chunk_alloc_mmap (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+    n1: 3162112 0x1A4347: je_chunk_alloc_base (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+     n1: 3162112 0x1A30FD: je_base_alloc (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+      n1: 3162112 0x1A252B: je_arena_boot (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+       n1: 3162112 0x192619: malloc_init_hard_a0_locked (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+        n1: 3162112 0x1926F1: malloc_init_hard (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+         n1: 3162112 0x198030: jemalloc_constructor (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+          n1: 3162112 0x1C57AB: __libc_csu_init (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+           n0: 3162112 0x527E69D: (below main) (in /usr/lib/libc-2.23.so)
+   n0: 0 in 1 place, below massif's threshold (1.00%)
+ n0: 1159168 0xFFFFFFFFFFFFFFFF: ???
+ n0: 0 in 1 place, below massif's threshold (1.00%)
+#-----------
+snapshot=39
+#-----------
+time=26497024
+mem_heap_B=20017152
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=40
+#-----------
+time=27557888
+mem_heap_B=18956288
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=41
+#-----------
+time=29655040
+mem_heap_B=21053440
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=42
+#-----------
+time=29659136
+mem_heap_B=21057536
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=43
+#-----------
+time=29667328
+mem_heap_B=21065728
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=44
+#-----------
+time=29671424
+mem_heap_B=21061632
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=peak
+n4: 21061632 (page allocation syscalls) mmap/mremap/brk, --alloc-fns, etc.
+ n2: 15699968 0x4018E59: mmap (in /usr/lib/ld-2.23.so)
+  n1: 15589376 0x40059CB: _dl_map_object_from_fd (in /usr/lib/ld-2.23.so)
+   n2: 15589376 0x4008593: _dl_map_object (in /usr/lib/ld-2.23.so)
+    n1: 13488128 0x400CCB0: openaux (in /usr/lib/ld-2.23.so)
+     n1: 13488128 0x400F262: _dl_catch_error (in /usr/lib/ld-2.23.so)
+      n1: 13488128 0x400CF21: _dl_map_object_deps (in /usr/lib/ld-2.23.so)
+       n1: 13488128 0x4003031: dl_main (in /usr/lib/ld-2.23.so)
+        n1: 13488128 0x401729A: _dl_sysdep_start (in /usr/lib/ld-2.23.so)
+         n1: 13488128 0x4004D48: _dl_start (in /usr/lib/ld-2.23.so)
+          n1: 13488128 0x4000D96: ??? (in /usr/lib/ld-2.23.so)
+           n1: 13488128 0x1: ???
+            n1: 13488128 0xFFF000BB1: ???
+             n1: 13488128 0xFFF000BD7: ???
+              n0: 13488128 0xFFF000BDF: ???
+    n1: 2101248 0x4000F73: map_doit (in /usr/lib/ld-2.23.so)
+     n1: 2101248 0x400F262: _dl_catch_error (in /usr/lib/ld-2.23.so)
+      n1: 2101248 0x4000BDD: do_preload (in /usr/lib/ld-2.23.so)
+       n1: 2101248 0x40048C4: dl_main (in /usr/lib/ld-2.23.so)
+        n1: 2101248 0x401729A: _dl_sysdep_start (in /usr/lib/ld-2.23.so)
+         n1: 2101248 0x4004D48: _dl_start (in /usr/lib/ld-2.23.so)
+          n1: 2101248 0x4000D96: ??? (in /usr/lib/ld-2.23.so)
+           n1: 2101248 0x1: ???
+            n1: 2101248 0xFFF000BB1: ???
+             n1: 2101248 0xFFF000BD7: ???
+              n0: 2101248 0xFFF000BDF: ???
+  n0: 110592 in 4 places, all below massif's threshold (1.00%)
+ n2: 4202496 0x53419D9: mmap (in /usr/lib/libc-2.23.so)
+  n2: 4194304 0x1B190A: je_pages_map (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+   n2: 2097152 0x1A4EB4: je_chunk_alloc_mmap (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+    n1: 2097152 0x1A33F2: chunk_alloc_default (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+     n1: 2097152 0x19A3CC: arena_chunk_init_hard (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+      n1: 2097152 0x19E702: je_arena_malloc_large (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+       n1: 2097152 0x19F411: je_arena_palloc (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+        n1: 2097152 0x1B91EC: je_tcache_create (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+         n1: 2097152 0x195251: malloc (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+          n1: 2097152 0x52C42AB: __fopen_internal (in /usr/lib/libc-2.23.so)
+           n1: 2097152 0x4E340B8: pthread_getattr_np (in /usr/lib/libpthread-2.23.so)
+            n1: 2097152 0x18545F: rt::lang_start::h4635f5e25185af68zgA (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+             n0: 2097152 0x527E70E: (below main) (in /usr/lib/libc-2.23.so)
+    n0: 0 in 1 place, below massif's threshold (1.00%)
+   n1: 2097152 0x1A4F48: je_chunk_alloc_mmap (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+    n1: 2097152 0x1A4347: je_chunk_alloc_base (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+     n1: 2097152 0x1A30FD: je_base_alloc (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+      n1: 2097152 0x1A252B: je_arena_boot (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+       n1: 2097152 0x192619: malloc_init_hard_a0_locked (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+        n1: 2097152 0x1926F1: malloc_init_hard (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+         n1: 2097152 0x198030: jemalloc_constructor (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+          n1: 2097152 0x1C57AB: __libc_csu_init (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+           n0: 2097152 0x527E69D: (below main) (in /usr/lib/libc-2.23.so)
+  n0: 8192 in 2 places, all below massif's threshold (1.00%)
+ n0: 1159168 0xFFFFFFFFFFFFFFFF: ???
+ n0: 0 in 1 place, below massif's threshold (1.00%)
+#-----------
+snapshot=45
+#-----------
+time=29675520
+mem_heap_B=21057536
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty

@@ -1,0 +1,339 @@
+--------------------------------------------------------------------------------
+Command:            ./target/release/mod-ca874f5d3b1bc3ea --bench init_only
+Massif arguments:   --pages-as-heap=yes --time-unit=B
+ms_print arguments: massif.out.22150
+--------------------------------------------------------------------------------
+
+
+    MB
+20.09^                                                                       :
+     |                                                             :::@:     #
+     |                                                             :  @      #
+     |                                              :::::          :  @ :::::#
+     |                                         @:::::    :::::::::::  @ :    #
+     |                                         @    :    :         :  @ :    #
+     |                                         @    :    :         :  @ :    #
+     |                                 ::::::::@    :    :         :  @ :    #
+     |                                 :       @    :    :         :  @ :    #
+     |                                 :       @    :    :         :  @ :    #
+     |                                 :       @    :    :         :  @ :    #
+     |                        ::::::::::       @    :    :         :  @ :    #
+     |                        :        :       @    :    :         :  @ :    #
+     |                  @::::::        :       @    :    :         :  @ :    #
+     |                  @     :        :       @    :    :         :  @ :    #
+     |             :::::@     :        :       @    :    :         :  @ :    #
+     |             :    @     :        :       @    :    :         :  @ :    #
+     |       :::::::    @     :        :       @    :    :         :  @ :    #
+     |       ::    :    @     :        :       @    :    :         :  @ :    #
+     |  @::::::    :    @     :        :       @    :    :         :  @ :    #
+   0 +----------------------------------------------------------------------->MB
+     0                                                                   28.30
+
+Number of snapshots: 46
+ Detailed snapshots: [9, 11, 21, 31, 33, 38, 44 (peak)]
+
+--------------------------------------------------------------------------------
+  n        time(B)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+  0        937,984          937,984          937,984             0            0
+  1        978,944          978,944          978,944             0            0
+  2        983,040          983,040          983,040             0            0
+  3      1,126,400        1,126,400        1,126,400             0            0
+  4      1,134,592        1,134,592        1,134,592             0            0
+  5      1,138,688        1,138,688        1,138,688             0            0
+  6      1,142,784        1,142,784        1,142,784             0            0
+  7      1,146,880        1,146,880        1,146,880             0            0
+  8      1,155,072        1,155,072        1,155,072             0            0
+  9      1,159,168        1,159,168        1,159,168             0            0
+100.00% (1,159,168B) (page allocation syscalls) mmap/mremap/brk, --alloc-fns, etc.
+->100.00% (1,159,168B) 0xFFFFFFFFFFFFFFFF: ???
+  
+--------------------------------------------------------------------------------
+  n        time(B)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 10      1,163,264        1,163,264        1,163,264             0            0
+ 11      1,163,264        1,163,264        1,163,264             0            0
+100.00% (1,163,264B) (page allocation syscalls) mmap/mremap/brk, --alloc-fns, etc.
+->99.65% (1,159,168B) 0xFFFFFFFFFFFFFFFF: ???
+| 
+->00.35% (4,096B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n        time(B)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 12      1,167,360        1,159,168        1,159,168             0            0
+ 13      1,167,360        1,159,168        1,159,168             0            0
+ 14      1,171,456        1,163,264        1,163,264             0            0
+ 15      3,272,704        3,264,512        3,264,512             0            0
+ 16      3,276,800        3,268,608        3,268,608             0            0
+ 17      3,383,296        3,375,104        3,375,104             0            0
+ 18      5,496,832        5,488,640        5,488,640             0            0
+ 19      5,505,024        5,496,832        5,496,832             0            0
+ 20      7,720,960        7,712,768        7,712,768             0            0
+ 21      7,729,152        7,720,960        7,720,960             0            0
+100.00% (7,720,960B) (page allocation syscalls) mmap/mremap/brk, --alloc-fns, etc.
+->84.99% (6,561,792B) 0x4018E59: mmap (in /usr/lib/ld-2.23.so)
+| ->83.29% (6,430,720B) 0x40059CB: _dl_map_object_from_fd (in /usr/lib/ld-2.23.so)
+| | ->83.29% (6,430,720B) 0x4008593: _dl_map_object (in /usr/lib/ld-2.23.so)
+| |   ->56.07% (4,329,472B) 0x400CCB0: openaux (in /usr/lib/ld-2.23.so)
+| |   | ->56.07% (4,329,472B) 0x400F262: _dl_catch_error (in /usr/lib/ld-2.23.so)
+| |   |   ->56.07% (4,329,472B) 0x400CF21: _dl_map_object_deps (in /usr/lib/ld-2.23.so)
+| |   |     ->56.07% (4,329,472B) 0x4003031: dl_main (in /usr/lib/ld-2.23.so)
+| |   |       ->56.07% (4,329,472B) 0x401729A: _dl_sysdep_start (in /usr/lib/ld-2.23.so)
+| |   |         ->56.07% (4,329,472B) 0x4004D48: _dl_start (in /usr/lib/ld-2.23.so)
+| |   |           ->56.07% (4,329,472B) 0x4000D96: ??? (in /usr/lib/ld-2.23.so)
+| |   |             ->56.07% (4,329,472B) 0x1: ???
+| |   |               ->56.07% (4,329,472B) 0xFFF000BB1: ???
+| |   |                 ->56.07% (4,329,472B) 0xFFF000BD7: ???
+| |   |                   ->56.07% (4,329,472B) 0xFFF000BDF: ???
+| |   |                     
+| |   ->27.21% (2,101,248B) 0x4000F73: map_doit (in /usr/lib/ld-2.23.so)
+| |     ->27.21% (2,101,248B) 0x400F262: _dl_catch_error (in /usr/lib/ld-2.23.so)
+| |       ->27.21% (2,101,248B) 0x4000BDD: do_preload (in /usr/lib/ld-2.23.so)
+| |         ->27.21% (2,101,248B) 0x40048C4: dl_main (in /usr/lib/ld-2.23.so)
+| |           ->27.21% (2,101,248B) 0x401729A: _dl_sysdep_start (in /usr/lib/ld-2.23.so)
+| |             ->27.21% (2,101,248B) 0x4004D48: _dl_start (in /usr/lib/ld-2.23.so)
+| |               ->27.21% (2,101,248B) 0x4000D96: ??? (in /usr/lib/ld-2.23.so)
+| |                 ->27.21% (2,101,248B) 0x1: ???
+| |                   ->27.21% (2,101,248B) 0xFFF000BB1: ???
+| |                     ->27.21% (2,101,248B) 0xFFF000BD7: ???
+| |                       ->27.21% (2,101,248B) 0xFFF000BDF: ???
+| |                         
+| ->01.38% (106,496B) 0x4010233: _dl_sysdep_read_whole_file (in /usr/lib/ld-2.23.so)
+| | ->01.38% (106,496B) 0x4016444: _dl_load_cache_lookup (in /usr/lib/ld-2.23.so)
+| |   ->01.38% (106,496B) 0x40089B8: _dl_map_object (in /usr/lib/ld-2.23.so)
+| |     ->01.38% (106,496B) 0x400CCB0: openaux (in /usr/lib/ld-2.23.so)
+| |       ->01.38% (106,496B) 0x400F262: _dl_catch_error (in /usr/lib/ld-2.23.so)
+| |         ->01.38% (106,496B) 0x400CF21: _dl_map_object_deps (in /usr/lib/ld-2.23.so)
+| |           ->01.38% (106,496B) 0x4003031: dl_main (in /usr/lib/ld-2.23.so)
+| |             ->01.38% (106,496B) 0x401729A: _dl_sysdep_start (in /usr/lib/ld-2.23.so)
+| |               ->01.38% (106,496B) 0x4004D48: _dl_start (in /usr/lib/ld-2.23.so)
+| |                 ->01.38% (106,496B) 0x4000D96: ??? (in /usr/lib/ld-2.23.so)
+| |                   ->01.38% (106,496B) 0x1: ???
+| |                     ->01.38% (106,496B) 0xFFF000BB1: ???
+| |                       ->01.38% (106,496B) 0xFFF000BD7: ???
+| |                         ->01.38% (106,496B) 0xFFF000BDF: ???
+| |                           
+| ->00.32% (24,576B) in 1+ places, all below ms_print's threshold (01.00%)
+| 
+->15.01% (1,159,168B) 0xFFFFFFFFFFFFFFFF: ???
+| 
+->00.00% (0B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n        time(B)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 22      7,745,536        7,737,344        7,737,344             0            0
+ 23      7,749,632        7,741,440        7,741,440             0            0
+ 24      9,936,896        9,928,704        9,928,704             0            0
+ 25      9,940,992        9,932,800        9,932,800             0            0
+ 26     13,746,176       13,737,984       13,737,984             0            0
+ 27     13,770,752       13,762,560       13,762,560             0            0
+ 28     13,787,136       13,778,944       13,778,944             0            0
+ 29     16,953,344       16,945,152       16,945,152             0            0
+ 30     16,961,536       16,953,344       16,953,344             0            0
+ 31     16,965,632       16,957,440       16,957,440             0            0
+100.00% (16,957,440B) (page allocation syscalls) mmap/mremap/brk, --alloc-fns, etc.
+->93.16% (15,798,272B) 0x4018E59: mmap (in /usr/lib/ld-2.23.so)
+| ->91.93% (15,589,376B) 0x40059CB: _dl_map_object_from_fd (in /usr/lib/ld-2.23.so)
+| | ->91.93% (15,589,376B) 0x4008593: _dl_map_object (in /usr/lib/ld-2.23.so)
+| |   ->79.54% (13,488,128B) 0x400CCB0: openaux (in /usr/lib/ld-2.23.so)
+| |   | ->79.54% (13,488,128B) 0x400F262: _dl_catch_error (in /usr/lib/ld-2.23.so)
+| |   |   ->79.54% (13,488,128B) 0x400CF21: _dl_map_object_deps (in /usr/lib/ld-2.23.so)
+| |   |     ->79.54% (13,488,128B) 0x4003031: dl_main (in /usr/lib/ld-2.23.so)
+| |   |       ->79.54% (13,488,128B) 0x401729A: _dl_sysdep_start (in /usr/lib/ld-2.23.so)
+| |   |         ->79.54% (13,488,128B) 0x4004D48: _dl_start (in /usr/lib/ld-2.23.so)
+| |   |           ->79.54% (13,488,128B) 0x4000D96: ??? (in /usr/lib/ld-2.23.so)
+| |   |             ->79.54% (13,488,128B) 0x1: ???
+| |   |               ->79.54% (13,488,128B) 0xFFF000BB1: ???
+| |   |                 ->79.54% (13,488,128B) 0xFFF000BD7: ???
+| |   |                   ->79.54% (13,488,128B) 0xFFF000BDF: ???
+| |   |                     
+| |   ->12.39% (2,101,248B) 0x4000F73: map_doit (in /usr/lib/ld-2.23.so)
+| |     ->12.39% (2,101,248B) 0x400F262: _dl_catch_error (in /usr/lib/ld-2.23.so)
+| |       ->12.39% (2,101,248B) 0x4000BDD: do_preload (in /usr/lib/ld-2.23.so)
+| |         ->12.39% (2,101,248B) 0x40048C4: dl_main (in /usr/lib/ld-2.23.so)
+| |           ->12.39% (2,101,248B) 0x401729A: _dl_sysdep_start (in /usr/lib/ld-2.23.so)
+| |             ->12.39% (2,101,248B) 0x4004D48: _dl_start (in /usr/lib/ld-2.23.so)
+| |               ->12.39% (2,101,248B) 0x4000D96: ??? (in /usr/lib/ld-2.23.so)
+| |                 ->12.39% (2,101,248B) 0x1: ???
+| |                   ->12.39% (2,101,248B) 0xFFF000BB1: ???
+| |                     ->12.39% (2,101,248B) 0xFFF000BD7: ???
+| |                       ->12.39% (2,101,248B) 0xFFF000BDF: ???
+| |                         
+| ->01.23% (208,896B) in 4 places, all below massif's threshold (1.00%)
+|   
+->06.84% (1,159,168B) 0xFFFFFFFFFFFFFFFF: ???
+| 
+->00.00% (0B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n        time(B)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 32     16,973,824       16,965,632       16,965,632             0            0
+ 33     17,076,224       16,863,232       16,863,232             0            0
+100.00% (16,863,232B) (page allocation syscalls) mmap/mremap/brk, --alloc-fns, etc.
+->93.13% (15,704,064B) 0x4018E59: mmap (in /usr/lib/ld-2.23.so)
+| ->92.45% (15,589,376B) 0x40059CB: _dl_map_object_from_fd (in /usr/lib/ld-2.23.so)
+| | ->92.45% (15,589,376B) 0x4008593: _dl_map_object (in /usr/lib/ld-2.23.so)
+| |   ->79.99% (13,488,128B) 0x400CCB0: openaux (in /usr/lib/ld-2.23.so)
+| |   | ->79.99% (13,488,128B) 0x400F262: _dl_catch_error (in /usr/lib/ld-2.23.so)
+| |   |   ->79.99% (13,488,128B) 0x400CF21: _dl_map_object_deps (in /usr/lib/ld-2.23.so)
+| |   |     ->79.99% (13,488,128B) 0x4003031: dl_main (in /usr/lib/ld-2.23.so)
+| |   |       ->79.99% (13,488,128B) 0x401729A: _dl_sysdep_start (in /usr/lib/ld-2.23.so)
+| |   |         ->79.99% (13,488,128B) 0x4004D48: _dl_start (in /usr/lib/ld-2.23.so)
+| |   |           ->79.99% (13,488,128B) 0x4000D96: ??? (in /usr/lib/ld-2.23.so)
+| |   |             ->79.99% (13,488,128B) 0x1: ???
+| |   |               ->79.99% (13,488,128B) 0xFFF000BB1: ???
+| |   |                 ->79.99% (13,488,128B) 0xFFF000BD7: ???
+| |   |                   ->79.99% (13,488,128B) 0xFFF000BDF: ???
+| |   |                     
+| |   ->12.46% (2,101,248B) 0x4000F73: map_doit (in /usr/lib/ld-2.23.so)
+| |     ->12.46% (2,101,248B) 0x400F262: _dl_catch_error (in /usr/lib/ld-2.23.so)
+| |       ->12.46% (2,101,248B) 0x4000BDD: do_preload (in /usr/lib/ld-2.23.so)
+| |         ->12.46% (2,101,248B) 0x40048C4: dl_main (in /usr/lib/ld-2.23.so)
+| |           ->12.46% (2,101,248B) 0x401729A: _dl_sysdep_start (in /usr/lib/ld-2.23.so)
+| |             ->12.46% (2,101,248B) 0x4004D48: _dl_start (in /usr/lib/ld-2.23.so)
+| |               ->12.46% (2,101,248B) 0x4000D96: ??? (in /usr/lib/ld-2.23.so)
+| |                 ->12.46% (2,101,248B) 0x1: ???
+| |                   ->12.46% (2,101,248B) 0xFFF000BB1: ???
+| |                     ->12.46% (2,101,248B) 0xFFF000BD7: ???
+| |                       ->12.46% (2,101,248B) 0xFFF000BDF: ???
+| |                         
+| ->00.68% (114,688B) in 1+ places, all below ms_print's threshold (01.00%)
+| 
+->06.87% (1,159,168B) 0xFFFFFFFFFFFFFFFF: ???
+| 
+->00.00% (0B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n        time(B)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 34     17,080,320       16,859,136       16,859,136             0            0
+ 35     19,177,472       18,956,288       18,956,288             0            0
+ 36     21,274,624       16,859,136       16,859,136             0            0
+ 37     25,464,832       21,049,344       21,049,344             0            0
+ 38     26,492,928       20,021,248       20,021,248             0            0
+100.00% (20,021,248B) (page allocation syscalls) mmap/mremap/brk, --alloc-fns, etc.
+->78.42% (15,699,968B) 0x4018E59: mmap (in /usr/lib/ld-2.23.so)
+| ->77.86% (15,589,376B) 0x40059CB: _dl_map_object_from_fd (in /usr/lib/ld-2.23.so)
+| | ->77.86% (15,589,376B) 0x4008593: _dl_map_object (in /usr/lib/ld-2.23.so)
+| |   ->67.37% (13,488,128B) 0x400CCB0: openaux (in /usr/lib/ld-2.23.so)
+| |   | ->67.37% (13,488,128B) 0x400F262: _dl_catch_error (in /usr/lib/ld-2.23.so)
+| |   |   ->67.37% (13,488,128B) 0x400CF21: _dl_map_object_deps (in /usr/lib/ld-2.23.so)
+| |   |     ->67.37% (13,488,128B) 0x4003031: dl_main (in /usr/lib/ld-2.23.so)
+| |   |       ->67.37% (13,488,128B) 0x401729A: _dl_sysdep_start (in /usr/lib/ld-2.23.so)
+| |   |         ->67.37% (13,488,128B) 0x4004D48: _dl_start (in /usr/lib/ld-2.23.so)
+| |   |           ->67.37% (13,488,128B) 0x4000D96: ??? (in /usr/lib/ld-2.23.so)
+| |   |             ->67.37% (13,488,128B) 0x1: ???
+| |   |               ->67.37% (13,488,128B) 0xFFF000BB1: ???
+| |   |                 ->67.37% (13,488,128B) 0xFFF000BD7: ???
+| |   |                   ->67.37% (13,488,128B) 0xFFF000BDF: ???
+| |   |                     
+| |   ->10.50% (2,101,248B) 0x4000F73: map_doit (in /usr/lib/ld-2.23.so)
+| |     ->10.50% (2,101,248B) 0x400F262: _dl_catch_error (in /usr/lib/ld-2.23.so)
+| |       ->10.50% (2,101,248B) 0x4000BDD: do_preload (in /usr/lib/ld-2.23.so)
+| |         ->10.50% (2,101,248B) 0x40048C4: dl_main (in /usr/lib/ld-2.23.so)
+| |           ->10.50% (2,101,248B) 0x401729A: _dl_sysdep_start (in /usr/lib/ld-2.23.so)
+| |             ->10.50% (2,101,248B) 0x4004D48: _dl_start (in /usr/lib/ld-2.23.so)
+| |               ->10.50% (2,101,248B) 0x4000D96: ??? (in /usr/lib/ld-2.23.so)
+| |                 ->10.50% (2,101,248B) 0x1: ???
+| |                   ->10.50% (2,101,248B) 0xFFF000BB1: ???
+| |                     ->10.50% (2,101,248B) 0xFFF000BD7: ???
+| |                       ->10.50% (2,101,248B) 0xFFF000BDF: ???
+| |                         
+| ->00.55% (110,592B) in 1+ places, all below ms_print's threshold (01.00%)
+| 
+->15.79% (3,162,112B) 0x53419D9: mmap (in /usr/lib/libc-2.23.so)
+| ->15.79% (3,162,112B) 0x1B190A: je_pages_map (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+|   ->15.79% (3,162,112B) 0x1A4F48: je_chunk_alloc_mmap (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+|   | ->15.79% (3,162,112B) 0x1A4347: je_chunk_alloc_base (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+|   |   ->15.79% (3,162,112B) 0x1A30FD: je_base_alloc (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+|   |     ->15.79% (3,162,112B) 0x1A252B: je_arena_boot (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+|   |       ->15.79% (3,162,112B) 0x192619: malloc_init_hard_a0_locked (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+|   |         ->15.79% (3,162,112B) 0x1926F1: malloc_init_hard (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+|   |           ->15.79% (3,162,112B) 0x198030: jemalloc_constructor (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+|   |             ->15.79% (3,162,112B) 0x1C57AB: __libc_csu_init (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+|   |               ->15.79% (3,162,112B) 0x527E69D: (below main) (in /usr/lib/libc-2.23.so)
+|   |                 
+|   ->00.00% (0B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.79% (1,159,168B) 0xFFFFFFFFFFFFFFFF: ???
+| 
+->00.00% (0B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n        time(B)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 39     26,497,024       20,017,152       20,017,152             0            0
+ 40     27,557,888       18,956,288       18,956,288             0            0
+ 41     29,655,040       21,053,440       21,053,440             0            0
+ 42     29,659,136       21,057,536       21,057,536             0            0
+ 43     29,667,328       21,065,728       21,065,728             0            0
+ 44     29,671,424       21,061,632       21,061,632             0            0
+100.00% (21,061,632B) (page allocation syscalls) mmap/mremap/brk, --alloc-fns, etc.
+->74.54% (15,699,968B) 0x4018E59: mmap (in /usr/lib/ld-2.23.so)
+| ->74.02% (15,589,376B) 0x40059CB: _dl_map_object_from_fd (in /usr/lib/ld-2.23.so)
+| | ->74.02% (15,589,376B) 0x4008593: _dl_map_object (in /usr/lib/ld-2.23.so)
+| |   ->64.04% (13,488,128B) 0x400CCB0: openaux (in /usr/lib/ld-2.23.so)
+| |   | ->64.04% (13,488,128B) 0x400F262: _dl_catch_error (in /usr/lib/ld-2.23.so)
+| |   |   ->64.04% (13,488,128B) 0x400CF21: _dl_map_object_deps (in /usr/lib/ld-2.23.so)
+| |   |     ->64.04% (13,488,128B) 0x4003031: dl_main (in /usr/lib/ld-2.23.so)
+| |   |       ->64.04% (13,488,128B) 0x401729A: _dl_sysdep_start (in /usr/lib/ld-2.23.so)
+| |   |         ->64.04% (13,488,128B) 0x4004D48: _dl_start (in /usr/lib/ld-2.23.so)
+| |   |           ->64.04% (13,488,128B) 0x4000D96: ??? (in /usr/lib/ld-2.23.so)
+| |   |             ->64.04% (13,488,128B) 0x1: ???
+| |   |               ->64.04% (13,488,128B) 0xFFF000BB1: ???
+| |   |                 ->64.04% (13,488,128B) 0xFFF000BD7: ???
+| |   |                   ->64.04% (13,488,128B) 0xFFF000BDF: ???
+| |   |                     
+| |   ->09.98% (2,101,248B) 0x4000F73: map_doit (in /usr/lib/ld-2.23.so)
+| |     ->09.98% (2,101,248B) 0x400F262: _dl_catch_error (in /usr/lib/ld-2.23.so)
+| |       ->09.98% (2,101,248B) 0x4000BDD: do_preload (in /usr/lib/ld-2.23.so)
+| |         ->09.98% (2,101,248B) 0x40048C4: dl_main (in /usr/lib/ld-2.23.so)
+| |           ->09.98% (2,101,248B) 0x401729A: _dl_sysdep_start (in /usr/lib/ld-2.23.so)
+| |             ->09.98% (2,101,248B) 0x4004D48: _dl_start (in /usr/lib/ld-2.23.so)
+| |               ->09.98% (2,101,248B) 0x4000D96: ??? (in /usr/lib/ld-2.23.so)
+| |                 ->09.98% (2,101,248B) 0x1: ???
+| |                   ->09.98% (2,101,248B) 0xFFF000BB1: ???
+| |                     ->09.98% (2,101,248B) 0xFFF000BD7: ???
+| |                       ->09.98% (2,101,248B) 0xFFF000BDF: ???
+| |                         
+| ->00.53% (110,592B) in 1+ places, all below ms_print's threshold (01.00%)
+| 
+->19.95% (4,202,496B) 0x53419D9: mmap (in /usr/lib/libc-2.23.so)
+| ->19.91% (4,194,304B) 0x1B190A: je_pages_map (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+| | ->09.96% (2,097,152B) 0x1A4EB4: je_chunk_alloc_mmap (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+| | | ->09.96% (2,097,152B) 0x1A33F2: chunk_alloc_default (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+| | | | ->09.96% (2,097,152B) 0x19A3CC: arena_chunk_init_hard (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+| | | |   ->09.96% (2,097,152B) 0x19E702: je_arena_malloc_large (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+| | | |     ->09.96% (2,097,152B) 0x19F411: je_arena_palloc (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+| | | |       ->09.96% (2,097,152B) 0x1B91EC: je_tcache_create (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+| | | |         ->09.96% (2,097,152B) 0x195251: malloc (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+| | | |           ->09.96% (2,097,152B) 0x52C42AB: __fopen_internal (in /usr/lib/libc-2.23.so)
+| | | |             ->09.96% (2,097,152B) 0x4E340B8: pthread_getattr_np (in /usr/lib/libpthread-2.23.so)
+| | | |               ->09.96% (2,097,152B) 0x18545F: rt::lang_start::h4635f5e25185af68zgA (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+| | | |                 ->09.96% (2,097,152B) 0x527E70E: (below main) (in /usr/lib/libc-2.23.so)
+| | | |                   
+| | | ->00.00% (0B) in 1+ places, all below ms_print's threshold (01.00%)
+| | | 
+| | ->09.96% (2,097,152B) 0x1A4F48: je_chunk_alloc_mmap (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+| |   ->09.96% (2,097,152B) 0x1A4347: je_chunk_alloc_base (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+| |     ->09.96% (2,097,152B) 0x1A30FD: je_base_alloc (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+| |       ->09.96% (2,097,152B) 0x1A252B: je_arena_boot (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+| |         ->09.96% (2,097,152B) 0x192619: malloc_init_hard_a0_locked (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+| |           ->09.96% (2,097,152B) 0x1926F1: malloc_init_hard (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+| |             ->09.96% (2,097,152B) 0x198030: jemalloc_constructor (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+| |               ->09.96% (2,097,152B) 0x1C57AB: __libc_csu_init (in /home/djmally/src/penn/masters/thesis/rustoscript/french-press/target/release/mod-ca874f5d3b1bc3ea)
+| |                 ->09.96% (2,097,152B) 0x527E69D: (below main) (in /usr/lib/libc-2.23.so)
+| |                   
+| ->00.04% (8,192B) in 1+ places, all below ms_print's threshold (01.00%)
+| 
+->05.50% (1,159,168B) 0xFFFFFFFFFFFFFFFF: ???
+| 
+->00.00% (0B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n        time(B)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 45     29,675,520       21,057,536       21,057,536             0            0
