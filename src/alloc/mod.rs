@@ -89,6 +89,12 @@ impl AllocBox {
                 self.black_set.get(bnd)))
     }
 
+    pub fn is_allocated(&self, bnd: &UniqueBinding) -> bool {
+        self.white_set.contains_key(bnd) ||
+        self.grey_set.contains_key(bnd)  ||
+        self.black_set.contains_key(bnd)
+    }
+
     pub fn update_ptr(&mut self, binding: &UniqueBinding, ptr: JsPtrEnum) -> Result<()> {
         // Updating a pointer means it is definitely reachable
         if let Some(alloc) = self.remove_binding(binding) {

@@ -123,7 +123,14 @@ impl ScopeManager {
 impl Backend for ScopeManager {
     fn alloc(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<Binding> {
         let binding = var.binding.clone();
-        self.curr_scope_mut().push_var(var, ptr)?;
+        let is_allocated = self.alloc_box.borrow().is_allocated(&var.unique);
+
+        // If the ptr is already allocated in the heap, just push it onto the stack
+        if is_allocated && ptr.is_some() {
+            self.curr_scope_mut().bind_var(var);
+        } else {
+            self.curr_scope_mut().push_var(var, ptr)?;
+        }
         Ok(binding)
     }
 
