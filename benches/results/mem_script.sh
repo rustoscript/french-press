@@ -4,11 +4,13 @@ benches=( init_only push_scope push_pop_no_gc push_pop_gc small_stack_no_gc smal
 
 num=000
 
-workdir=/home/djmally/src/penn/masters/thesis/rustoscript/french-press
+workdir=/home/djmally/src/penn/masters/thesis/rustoscript/french_press/
 
 for bench in "${benches[@]}"
 do
-    mkdir -p ./space/$bench
-    (cd $workdir; valgrind --tool=massif --time-unit=B --massif-out-file=$workdir/benches/results/space/$bench/$num cargo bench $bench)
+    mkdir -p $workdir/benches/results/space/$bench
+    (cd $workdir/benches/mem &&
+     cargo build --release &&
+     valgrind --tool=massif --time-unit=B --massif-out-file=$workdir/benches/results/space/$bench/$num cargo run)
     ms_print ./space/$bench/$num > ./space/$bench/pp_${num}
 done
