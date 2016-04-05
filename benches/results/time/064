@@ -1,0 +1,18 @@
+64-Entry Cache:
+
+test deep_load                  ... bench:         144 ns/iter (+/- 88)
+test init_only                  ... bench:         925 ns/iter (+/- 321)
+test large_alloc_no_gc_flat_obj ... bench:   1,177,967 ns/iter (+/- 178,975)
+test large_flat_alloc_gc        ... bench:   3,572,276 ns/iter (+/- 890,064)
+test leak_many                  ... bench:   5,081,714 ns/iter (+/- 1,127,215)
+test push_pop_gc                ... bench:         849 ns/iter (+/- 135)
+test push_pop_no_gc             ... bench:         464 ns/iter (+/- 72)
+test push_scope                 ... bench:         299 ns/iter (+/- 59)
+test shallow_load               ... bench:         144 ns/iter (+/- 49)
+test small_alloc_gc             ... bench:     165,659 ns/iter (+/- 187,433)
+test small_flat_heap_alloc_gc   ... bench:     297,776 ns/iter (+/- 91,547)
+test small_heap_alloc_no_gc     ... bench:       5,920 ns/iter (+/- 2,418)
+test small_heap_alloc_no_gc_2   ... bench:       5,932 ns/iter (+/- 1,982)
+test small_local_store          ... bench:         425 ns/iter (+/- 170)
+test small_stack_alloc_no_gc    ... bench:       5,976 ns/iter (+/- 2,654)
+

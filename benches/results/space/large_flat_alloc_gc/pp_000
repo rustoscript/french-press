@@ -1,0 +1,1368 @@
+--------------------------------------------------------------------------------
+Command:            /usr/local/bin/cargo run -- large_flat_alloc_gc
+Massif arguments:   --time-unit=B --massif-out-file=/home/djmally/src/penn/masters/thesis/rustoscript/french_press//benches/results/space/large_flat_alloc_gc/000
+ms_print arguments: ./space/large_flat_alloc_gc/000
+--------------------------------------------------------------------------------
+
+
+    KB
+208.5^                                           :                            
+     |                                  :::@::#:::@:::::::@:                  
+     |                          ::@:::::: :@::#:::@:::::::@:::                
+     |                       :@@::@:: ::: :@::#:::@:::::::@::::               
+     |                     :::@@::@:: ::: :@::#:::@:::::::@:::::              
+     |                   ::: :@@::@:: ::: :@::#:::@:::::::@:::::@             
+     |                 ::::: :@@::@:: ::: :@::#:::@:::::::@:::::@:            
+     |                :: ::: :@@::@:: ::: :@::#:::@:::::::@:::::@:::          
+     |               ::: ::: :@@::@:: ::: :@::#:::@:::::::@:::::@::::         
+     |              :::: ::: :@@::@:: ::: :@::#:::@:::::::@:::::@:::::        
+     |             ::::: ::: :@@::@:: ::: :@::#:::@:::::::@:::::@:::::@       
+     |            :::::: ::: :@@::@:: ::: :@::#:::@:::::::@:::::@:::::@::     
+     |           ::::::: ::: :@@::@:: ::: :@::#:::@:::::::@:::::@:::::@:::    
+     |         ::::::::: ::: :@@::@:: ::: :@::#:::@:::::::@:::::@:::::@::::   
+     |        :::::::::: ::: :@@::@:: ::: :@::#:::@:::::::@:::::@:::::@:::::  
+     |       ::::::::::: ::: :@@::@:: ::: :@::#:::@:::::::@:::::@:::::@::::::@
+     |     ::::::::::::: ::: :@@::@:: ::: :@::#:::@:::::::@:::::@:::::@::::::@
+     |    :::::::::::::: ::: :@@::@:: ::: :@::#:::@:::::::@:::::@:::::@::::::@
+     |   ::::::::::::::: ::: :@@::@:: ::: :@::#:::@:::::::@:::::@:::::@::::::@
+     | ::::::::::::::::: ::: :@@::@:: ::: :@::#:::@:::::::@:::::@:::::@::::::@
+   0 +----------------------------------------------------------------------->KB
+     0                                                                   603.1
+
+Number of snapshots: 83
+ Detailed snapshots: [1, 23, 24, 27, 35, 38 (peak), 42, 51, 61, 71, 81]
+
+--------------------------------------------------------------------------------
+  n        time(B)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+  0              0                0                0             0            0
+  1          8,432            5,840            5,323           517            0
+91.15% (5,323B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->57.26% (3,344B) 0x551275B: _nl_intern_locale_data (in /usr/lib/libc-2.23.so)
+| ->57.26% (3,344B) 0x5513042: _nl_load_locale_from_archive (in /usr/lib/libc-2.23.so)
+|   ->57.26% (3,344B) 0x5512489: _nl_find_locale (in /usr/lib/libc-2.23.so)
+|     ->57.26% (3,344B) 0x5511CED: setlocale (in /usr/lib/libc-2.23.so)
+|       ->57.26% (3,344B) 0x46595E: set_default_locale (in /usr/bin/bash)
+|         ->57.26% (3,344B) 0x41864F: main (in /usr/bin/bash)
+|           
+->28.17% (1,645B) 0x46B9E9: xmalloc (in /usr/bin/bash)
+| ->08.77% (512B) 0x451FDD: hash_create (in /usr/bin/bash)
+| | ->08.77% (512B) 0x435C66: ??? (in /usr/bin/bash)
+| |   ->08.77% (512B) 0x437D1A: initialize_shell_variables (in /usr/bin/bash)
+| |     ->08.77% (512B) 0x417CA5: ??? (in /usr/bin/bash)
+| |       ->08.77% (512B) 0x418DE7: main (in /usr/bin/bash)
+| |         
+| ->08.22% (480B) 0x42774C: cmd_init (in /usr/bin/bash)
+| | ->08.22% (480B) 0x418CF3: main (in /usr/bin/bash)
+| |   
+| ->08.22% (480B) 0x427771: cmd_init (in /usr/bin/bash)
+| | ->08.22% (480B) 0x418CF3: main (in /usr/bin/bash)
+| |   
+| ->02.96% (173B) in 8 places, all below massif's threshold (1.00%)
+|   
+->02.76% (161B) 0x5566368: strdup (in /usr/lib/libc-2.23.so)
+| ->02.47% (144B) 0x5511D45: setlocale (in /usr/lib/libc-2.23.so)
+| | ->02.47% (144B) 0x46595E: set_default_locale (in /usr/bin/bash)
+| |   ->02.47% (144B) 0x41864F: main (in /usr/bin/bash)
+| |     
+| ->00.29% (17B) in 1+ places, all below ms_print's threshold (01.00%)
+| 
+->02.05% (120B) 0x5512FD1: _nl_load_locale_from_archive (in /usr/lib/libc-2.23.so)
+| ->02.05% (120B) 0x5512489: _nl_find_locale (in /usr/lib/libc-2.23.so)
+|   ->02.05% (120B) 0x5511CED: setlocale (in /usr/lib/libc-2.23.so)
+|     ->02.05% (120B) 0x46595E: set_default_locale (in /usr/bin/bash)
+|       ->02.05% (120B) 0x41864F: main (in /usr/bin/bash)
+|         
+->00.91% (53B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n        time(B)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+  2         13,784           11,192            9,296         1,896            0
+  3         22,680           19,704           16,473         3,231            0
+  4         32,968           29,992           24,684         5,308            0
+  5         38,936           35,960           29,428         6,532            0
+  6         48,464           45,488           36,873         8,615            0
+  7         55,184           52,208           42,191        10,017            0
+  8         63,280           60,304           48,694        11,610            0
+  9         71,536           68,560           55,331        13,229            0
+ 10         77,992           75,016           60,238        14,778            0
+ 11         87,632           84,656           67,613        17,043            0
+ 12         98,992           96,016           76,262        19,754            0
+ 13        108,744          105,768           83,831        21,937            0
+ 14        115,536          112,560           89,154        23,406            0
+ 15        125,528          122,552           97,300        25,252            0
+ 16        133,792          130,816          103,949        26,867            0
+ 17        144,568          141,592          112,743        28,849            0
+ 18        152,728          149,752          119,033        30,719            0
+ 19        165,024          162,048          128,541        33,507            0
+ 20        175,128          163,672          129,112        34,560            0
+ 21        188,496          175,376          137,881        37,495            0
+ 22        200,552          184,360          145,729        38,631            0
+ 23        208,728          187,560          147,716        39,844            0
+78.76% (147,716B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->29.76% (55,824B) 0x550AB8E: add_module.isra.0 (in /usr/lib/libc-2.23.so)
+| ->29.76% (55,824B) 0x550B401: __gconv_read_conf (in /usr/lib/libc-2.23.so)
+|   ->29.76% (55,824B) 0x550A683: __gconv_find_transform (in /usr/lib/libc-2.23.so)
+|     ->29.76% (55,824B) 0x558E866: __wcsmbs_getfct (in /usr/lib/libc-2.23.so)
+|       ->29.76% (55,824B) 0x558EA0A: __wcsmbs_load_conv (in /usr/lib/libc-2.23.so)
+|         ->29.76% (55,824B) 0x5583912: mbrtowc (in /usr/lib/libc-2.23.so)
+|           ->29.76% (55,824B) 0x551E28D: mblen (in /usr/lib/libc-2.23.so)
+|             ->29.76% (55,824B) 0x449D6B: setifs (in /usr/bin/bash)
+|               ->29.76% (55,824B) 0x437DD1: initialize_shell_variables (in /usr/bin/bash)
+|                 ->29.76% (55,824B) 0x417CA5: ??? (in /usr/bin/bash)
+|                   ->29.76% (55,824B) 0x418DE7: main (in /usr/bin/bash)
+|                     
+->18.69% (35,053B) 0x550ACBD: add_alias2.isra.1.part.2 (in /usr/lib/libc-2.23.so)
+| ->17.85% (33,479B) 0x550B544: __gconv_read_conf (in /usr/lib/libc-2.23.so)
+| | ->17.85% (33,479B) 0x550A683: __gconv_find_transform (in /usr/lib/libc-2.23.so)
+| |   ->17.85% (33,479B) 0x558E866: __wcsmbs_getfct (in /usr/lib/libc-2.23.so)
+| |     ->17.85% (33,479B) 0x558EA0A: __wcsmbs_load_conv (in /usr/lib/libc-2.23.so)
+| |       ->17.85% (33,479B) 0x5583912: mbrtowc (in /usr/lib/libc-2.23.so)
+| |         ->17.85% (33,479B) 0x551E28D: mblen (in /usr/lib/libc-2.23.so)
+| |           ->17.85% (33,479B) 0x449D6B: setifs (in /usr/bin/bash)
+| |             ->17.85% (33,479B) 0x437DD1: initialize_shell_variables (in /usr/bin/bash)
+| |               ->17.85% (33,479B) 0x417CA5: ??? (in /usr/bin/bash)
+| |                 ->17.85% (33,479B) 0x418DE7: main (in /usr/bin/bash)
+| |                   
+| ->00.84% (1,574B) in 1+ places, all below ms_print's threshold (01.00%)
+| 
+->15.30% (28,704B) 0x55CCDDF: tsearch (in /usr/lib/libc-2.23.so)
+| ->15.29% (28,672B) 0x550ACF7: add_alias2.isra.1.part.2 (in /usr/lib/libc-2.23.so)
+| | ->14.67% (27,520B) 0x550B544: __gconv_read_conf (in /usr/lib/libc-2.23.so)
+| | | ->14.67% (27,520B) 0x550A683: __gconv_find_transform (in /usr/lib/libc-2.23.so)
+| | |   ->14.67% (27,520B) 0x558E866: __wcsmbs_getfct (in /usr/lib/libc-2.23.so)
+| | |     ->14.67% (27,520B) 0x558EA0A: __wcsmbs_load_conv (in /usr/lib/libc-2.23.so)
+| | |       ->14.67% (27,520B) 0x5583912: mbrtowc (in /usr/lib/libc-2.23.so)
+| | |         ->14.67% (27,520B) 0x551E28D: mblen (in /usr/lib/libc-2.23.so)
+| | |           ->14.67% (27,520B) 0x449D6B: setifs (in /usr/bin/bash)
+| | |             ->14.67% (27,520B) 0x437DD1: initialize_shell_variables (in /usr/bin/bash)
+| | |               ->14.67% (27,520B) 0x417CA5: ??? (in /usr/bin/bash)
+| | |                 ->14.67% (27,520B) 0x418DE7: main (in /usr/bin/bash)
+| | |                   
+| | ->00.61% (1,152B) in 1+ places, all below ms_print's threshold (01.00%)
+| | 
+| ->00.02% (32B) in 1+ places, all below ms_print's threshold (01.00%)
+| 
+->10.91% (20,459B) 0x46B9E9: xmalloc (in /usr/bin/bash)
+| ->04.86% (9,118B) in 71 places, all below massif's threshold (1.00%)
+| | 
+| ->01.75% (3,277B) 0x454BA9: fd_to_buffered_stream (in /usr/bin/bash)
+| | ->01.75% (3,277B) 0x45510E: with_input_from_buffered_stream (in /usr/bin/bash)
+| |   ->01.75% (3,277B) 0x4193BD: main (in /usr/bin/bash)
+| |     
+| ->01.74% (3,264B) 0x432C71: ??? (in /usr/bin/bash)
+| | ->01.69% (3,168B) 0x435C8D: ??? (in /usr/bin/bash)
+| | | ->01.41% (2,640B) 0x436192: ??? (in /usr/bin/bash)
+| | | | ->01.41% (2,640B) in 25 places, all below massif's threshold (1.00%)
+| | | |   
+| | | ->00.28% (528B) in 1+ places, all below ms_print's threshold (01.00%)
+| | | 
+| | ->00.05% (96B) in 1+ places, all below ms_print's threshold (01.00%)
+| | 
+| ->01.36% (2,560B) 0x451FDD: hash_create (in /usr/bin/bash)
+| | ->01.36% (2,560B) in 4 places, all below massif's threshold (1.00%)
+| |   
+| ->01.19% (2,240B) 0x45246E: hash_insert (in /usr/bin/bash)
+|   ->01.13% (2,112B) 0x435CC6: ??? (in /usr/bin/bash)
+|   | ->01.13% (2,112B) in 3 places, all below massif's threshold (1.00%)
+|   |   
+|   ->00.07% (128B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->01.86% (3,482B) 0x46BAB3: xrealloc (in /usr/bin/bash)
+| ->01.17% (2,200B) 0x454745: ??? (in /usr/bin/bash)
+| | ->01.17% (2,200B) 0x454C30: fd_to_buffered_stream (in /usr/bin/bash)
+| |   ->01.17% (2,200B) 0x45510E: with_input_from_buffered_stream (in /usr/bin/bash)
+| |     ->01.17% (2,200B) 0x4193BD: main (in /usr/bin/bash)
+| |       
+| ->00.68% (1,282B) in 1+ places, all below ms_print's threshold (01.00%)
+| 
+->01.78% (3,344B) 0x551275B: _nl_intern_locale_data (in /usr/lib/libc-2.23.so)
+| ->01.78% (3,344B) 0x5513042: _nl_load_locale_from_archive (in /usr/lib/libc-2.23.so)
+|   ->01.78% (3,344B) 0x5512489: _nl_find_locale (in /usr/lib/libc-2.23.so)
+|     ->01.78% (3,344B) 0x5511CED: setlocale (in /usr/lib/libc-2.23.so)
+|       ->01.78% (3,344B) 0x46595E: set_default_locale (in /usr/bin/bash)
+|         ->01.78% (3,344B) 0x41864F: main (in /usr/bin/bash)
+|           
+->00.45% (850B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n        time(B)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 24        218,360          191,704          150,209        41,495            0
+78.35% (150,209B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->29.12% (55,824B) 0x550AB8E: add_module.isra.0 (in /usr/lib/libc-2.23.so)
+| ->29.12% (55,824B) 0x550B401: __gconv_read_conf (in /usr/lib/libc-2.23.so)
+|   ->29.12% (55,824B) 0x550A683: __gconv_find_transform (in /usr/lib/libc-2.23.so)
+|     ->29.12% (55,824B) 0x558E866: __wcsmbs_getfct (in /usr/lib/libc-2.23.so)
+|       ->29.12% (55,824B) 0x558EA0A: __wcsmbs_load_conv (in /usr/lib/libc-2.23.so)
+|         ->29.12% (55,824B) 0x5583912: mbrtowc (in /usr/lib/libc-2.23.so)
+|           ->29.12% (55,824B) 0x551E28D: mblen (in /usr/lib/libc-2.23.so)
+|             ->29.12% (55,824B) 0x449D6B: setifs (in /usr/bin/bash)
+|               ->29.12% (55,824B) 0x437DD1: initialize_shell_variables (in /usr/bin/bash)
+|                 ->29.12% (55,824B) 0x417CA5: ??? (in /usr/bin/bash)
+|                   ->29.12% (55,824B) 0x418DE7: main (in /usr/bin/bash)
+|                     
+->18.28% (35,053B) 0x550ACBD: add_alias2.isra.1.part.2 (in /usr/lib/libc-2.23.so)
+| ->17.46% (33,479B) 0x550B544: __gconv_read_conf (in /usr/lib/libc-2.23.so)
+| | ->17.46% (33,479B) 0x550A683: __gconv_find_transform (in /usr/lib/libc-2.23.so)
+| |   ->17.46% (33,479B) 0x558E866: __wcsmbs_getfct (in /usr/lib/libc-2.23.so)
+| |     ->17.46% (33,479B) 0x558EA0A: __wcsmbs_load_conv (in /usr/lib/libc-2.23.so)
+| |       ->17.46% (33,479B) 0x5583912: mbrtowc (in /usr/lib/libc-2.23.so)
+| |         ->17.46% (33,479B) 0x551E28D: mblen (in /usr/lib/libc-2.23.so)
+| |           ->17.46% (33,479B) 0x449D6B: setifs (in /usr/bin/bash)
+| |             ->17.46% (33,479B) 0x437DD1: initialize_shell_variables (in /usr/bin/bash)
+| |               ->17.46% (33,479B) 0x417CA5: ??? (in /usr/bin/bash)
+| |                 ->17.46% (33,479B) 0x418DE7: main (in /usr/bin/bash)
+| |                   
+| ->00.82% (1,574B) in 1+ places, all below ms_print's threshold (01.00%)
+| 
+->14.97% (28,704B) 0x55CCDDF: tsearch (in /usr/lib/libc-2.23.so)
+| ->14.96% (28,672B) 0x550ACF7: add_alias2.isra.1.part.2 (in /usr/lib/libc-2.23.so)
+| | ->14.36% (27,520B) 0x550B544: __gconv_read_conf (in /usr/lib/libc-2.23.so)
+| | | ->14.36% (27,520B) 0x550A683: __gconv_find_transform (in /usr/lib/libc-2.23.so)
+| | |   ->14.36% (27,520B) 0x558E866: __wcsmbs_getfct (in /usr/lib/libc-2.23.so)
+| | |     ->14.36% (27,520B) 0x558EA0A: __wcsmbs_load_conv (in /usr/lib/libc-2.23.so)
+| | |       ->14.36% (27,520B) 0x5583912: mbrtowc (in /usr/lib/libc-2.23.so)
+| | |         ->14.36% (27,520B) 0x551E28D: mblen (in /usr/lib/libc-2.23.so)
+| | |           ->14.36% (27,520B) 0x449D6B: setifs (in /usr/bin/bash)
+| | |             ->14.36% (27,520B) 0x437DD1: initialize_shell_variables (in /usr/bin/bash)
+| | |               ->14.36% (27,520B) 0x417CA5: ??? (in /usr/bin/bash)
+| | |                 ->14.36% (27,520B) 0x418DE7: main (in /usr/bin/bash)
+| | |                   
+| | ->00.60% (1,152B) in 1+ places, all below ms_print's threshold (01.00%)
+| | 
+| ->00.02% (32B) in 1+ places, all below ms_print's threshold (01.00%)
+| 
+->11.97% (22,952B) 0x46B9E9: xmalloc (in /usr/bin/bash)
+| ->05.94% (11,387B) in 74 places, all below massif's threshold (1.00%)
+| | 
+| ->01.75% (3,360B) 0x432C71: ??? (in /usr/bin/bash)
+| | ->01.65% (3,168B) 0x435C8D: ??? (in /usr/bin/bash)
+| | | ->01.38% (2,640B) 0x436192: ??? (in /usr/bin/bash)
+| | | | ->01.38% (2,640B) in 25 places, all below massif's threshold (1.00%)
+| | | |   
+| | | ->00.28% (528B) in 1+ places, all below ms_print's threshold (01.00%)
+| | | 
+| | ->00.10% (192B) in 1+ places, all below ms_print's threshold (01.00%)
+| | 
+| ->01.71% (3,277B) 0x454BA9: fd_to_buffered_stream (in /usr/bin/bash)
+| | ->01.71% (3,277B) 0x45510E: with_input_from_buffered_stream (in /usr/bin/bash)
+| |   ->01.71% (3,277B) 0x4193BD: main (in /usr/bin/bash)
+| |     
+| ->01.34% (2,560B) 0x451FDD: hash_create (in /usr/bin/bash)
+| | ->01.34% (2,560B) in 4 places, all below massif's threshold (1.00%)
+| |   
+| ->01.24% (2,368B) 0x45246E: hash_insert (in /usr/bin/bash)
+|   ->01.10% (2,112B) 0x435CC6: ??? (in /usr/bin/bash)
+|   | ->01.10% (2,112B) in 3 places, all below massif's threshold (1.00%)
+|   |   
+|   ->00.13% (256B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->01.82% (3,482B) 0x46BAB3: xrealloc (in /usr/bin/bash)
+| ->01.15% (2,200B) 0x454745: ??? (in /usr/bin/bash)
+| | ->01.15% (2,200B) 0x454C30: fd_to_buffered_stream (in /usr/bin/bash)
+| |   ->01.15% (2,200B) 0x45510E: with_input_from_buffered_stream (in /usr/bin/bash)
+| |     ->01.15% (2,200B) 0x4193BD: main (in /usr/bin/bash)
+| |       
+| ->00.67% (1,282B) in 1+ places, all below ms_print's threshold (01.00%)
+| 
+->01.74% (3,344B) 0x551275B: _nl_intern_locale_data (in /usr/lib/libc-2.23.so)
+| ->01.74% (3,344B) 0x5513042: _nl_load_locale_from_archive (in /usr/lib/libc-2.23.so)
+|   ->01.74% (3,344B) 0x5512489: _nl_find_locale (in /usr/lib/libc-2.23.so)
+|     ->01.74% (3,344B) 0x5511CED: setlocale (in /usr/lib/libc-2.23.so)
+|       ->01.74% (3,344B) 0x46595E: set_default_locale (in /usr/bin/bash)
+|         ->01.74% (3,344B) 0x41864F: main (in /usr/bin/bash)
+|           
+->00.44% (850B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n        time(B)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 25        223,592          192,872          150,975        41,897            0
+ 26        234,344          197,320          153,991        43,329            0
+ 27        241,984          202,048          158,562        43,486            0
+78.48% (158,562B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->27.63% (55,824B) 0x550AB8E: add_module.isra.0 (in /usr/lib/libc-2.23.so)
+| ->27.63% (55,824B) 0x550B401: __gconv_read_conf (in /usr/lib/libc-2.23.so)
+|   ->27.63% (55,824B) 0x550A683: __gconv_find_transform (in /usr/lib/libc-2.23.so)
+|     ->27.63% (55,824B) 0x558E866: __wcsmbs_getfct (in /usr/lib/libc-2.23.so)
+|       ->27.63% (55,824B) 0x558EA0A: __wcsmbs_load_conv (in /usr/lib/libc-2.23.so)
+|         ->27.63% (55,824B) 0x5583912: mbrtowc (in /usr/lib/libc-2.23.so)
+|           ->27.63% (55,824B) 0x551E28D: mblen (in /usr/lib/libc-2.23.so)
+|             ->27.63% (55,824B) 0x449D6B: setifs (in /usr/bin/bash)
+|               ->27.63% (55,824B) 0x437DD1: initialize_shell_variables (in /usr/bin/bash)
+|                 ->27.63% (55,824B) 0x417CA5: ??? (in /usr/bin/bash)
+|                   ->27.63% (55,824B) 0x418DE7: main (in /usr/bin/bash)
+|                     
+->17.35% (35,053B) 0x550ACBD: add_alias2.isra.1.part.2 (in /usr/lib/libc-2.23.so)
+| ->16.57% (33,479B) 0x550B544: __gconv_read_conf (in /usr/lib/libc-2.23.so)
+| | ->16.57% (33,479B) 0x550A683: __gconv_find_transform (in /usr/lib/libc-2.23.so)
+| |   ->16.57% (33,479B) 0x558E866: __wcsmbs_getfct (in /usr/lib/libc-2.23.so)
+| |     ->16.57% (33,479B) 0x558EA0A: __wcsmbs_load_conv (in /usr/lib/libc-2.23.so)
+| |       ->16.57% (33,479B) 0x5583912: mbrtowc (in /usr/lib/libc-2.23.so)
+| |         ->16.57% (33,479B) 0x551E28D: mblen (in /usr/lib/libc-2.23.so)
+| |           ->16.57% (33,479B) 0x449D6B: setifs (in /usr/bin/bash)
+| |             ->16.57% (33,479B) 0x437DD1: initialize_shell_variables (in /usr/bin/bash)
+| |               ->16.57% (33,479B) 0x417CA5: ??? (in /usr/bin/bash)
+| |                 ->16.57% (33,479B) 0x418DE7: main (in /usr/bin/bash)
+| |                   
+| ->00.78% (1,574B) in 1+ places, all below ms_print's threshold (01.00%)
+| 
+->14.21% (28,704B) 0x55CCDDF: tsearch (in /usr/lib/libc-2.23.so)
+| ->14.19% (28,672B) 0x550ACF7: add_alias2.isra.1.part.2 (in /usr/lib/libc-2.23.so)
+| | ->13.62% (27,520B) 0x550B544: __gconv_read_conf (in /usr/lib/libc-2.23.so)
+| | | ->13.62% (27,520B) 0x550A683: __gconv_find_transform (in /usr/lib/libc-2.23.so)
+| | |   ->13.62% (27,520B) 0x558E866: __wcsmbs_getfct (in /usr/lib/libc-2.23.so)
+| | |     ->13.62% (27,520B) 0x558EA0A: __wcsmbs_load_conv (in /usr/lib/libc-2.23.so)
+| | |       ->13.62% (27,520B) 0x5583912: mbrtowc (in /usr/lib/libc-2.23.so)
+| | |         ->13.62% (27,520B) 0x551E28D: mblen (in /usr/lib/libc-2.23.so)
+| | |           ->13.62% (27,520B) 0x449D6B: setifs (in /usr/bin/bash)
+| | |             ->13.62% (27,520B) 0x437DD1: initialize_shell_variables (in /usr/bin/bash)
+| | |               ->13.62% (27,520B) 0x417CA5: ??? (in /usr/bin/bash)
+| | |                 ->13.62% (27,520B) 0x418DE7: main (in /usr/bin/bash)
+| | |                   
+| | ->00.57% (1,152B) in 1+ places, all below ms_print's threshold (01.00%)
+| | 
+| ->00.02% (32B) in 1+ places, all below ms_print's threshold (01.00%)
+| 
+->13.43% (27,129B) 0x46B9E9: xmalloc (in /usr/bin/bash)
+| ->07.59% (15,340B) in 79 places, all below massif's threshold (1.00%)
+| | 
+| ->01.71% (3,456B) 0x432C71: ??? (in /usr/bin/bash)
+| | ->01.57% (3,168B) 0x435C8D: ??? (in /usr/bin/bash)
+| | | ->01.31% (2,640B) 0x436192: ??? (in /usr/bin/bash)
+| | | | ->01.31% (2,640B) in 25 places, all below massif's threshold (1.00%)
+| | | |   
+| | | ->00.26% (528B) in 1+ places, all below ms_print's threshold (01.00%)
+| | | 
+| | ->00.14% (288B) in 1+ places, all below ms_print's threshold (01.00%)
+| | 
+| ->01.62% (3,277B) 0x454BA9: fd_to_buffered_stream (in /usr/bin/bash)
+| | ->01.62% (3,277B) 0x45510E: with_input_from_buffered_stream (in /usr/bin/bash)
+| |   ->01.62% (3,277B) 0x4193BD: main (in /usr/bin/bash)
+| |     
+| ->01.27% (2,560B) 0x451FDD: hash_create (in /usr/bin/bash)
+| | ->01.27% (2,560B) in 4 places, all below massif's threshold (1.00%)
+| |   
+| ->01.24% (2,496B) 0x45246E: hash_insert (in /usr/bin/bash)
+|   ->01.05% (2,112B) 0x435CC6: ??? (in /usr/bin/bash)
+|   | ->01.05% (2,112B) in 3 places, all below massif's threshold (1.00%)
+|   |   
+|   ->00.19% (384B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->02.03% (4,096B) 0x554D863: _IO_file_doallocate (in /usr/lib/libc-2.23.so)
+| ->02.03% (4,096B) 0x555A942: _IO_doallocbuf (in /usr/lib/libc-2.23.so)
+|   ->02.03% (4,096B) 0x5559DC6: _IO_file_overflow@@GLIBC_2.2.5 (in /usr/lib/libc-2.23.so)
+|   | ->02.03% (4,096B) 0x5558F78: _IO_file_xsputn@@GLIBC_2.2.5 (in /usr/lib/libc-2.23.so)
+|   |   ->02.03% (4,096B) 0x554FC96: puts (in /usr/lib/libc-2.23.so)
+|   |     ->02.03% (4,096B) 0x47A8BE: describe_command (in /usr/bin/bash)
+|   |       ->02.03% (4,096B) 0x46D2E4: command_builtin (in /usr/bin/bash)
+|   |         ->02.03% (4,096B) 0x42C09C: ??? (in /usr/bin/bash)
+|   |           ->02.03% (4,096B) 0x42E12B: ??? (in /usr/bin/bash)
+|   |             ->02.03% (4,096B) 0x42F15E: execute_command_internal (in /usr/bin/bash)
+|   |               ->02.03% (4,096B) 0x430C1C: execute_command (in /usr/bin/bash)
+|   |                 ->02.03% (4,096B) 0x42F261: execute_command_internal (in /usr/bin/bash)
+|   |                   ->02.03% (4,096B) 0x42EF76: execute_command_internal (in /usr/bin/bash)
+|   |                     ->02.03% (4,096B) 0x43217F: ??? (in /usr/bin/bash)
+|   |                       ->02.03% (4,096B) 0x42E436: ??? (in /usr/bin/bash)
+|   |                         ->02.03% (4,096B) 0x42F15E: execute_command_internal (in /usr/bin/bash)
+|   |                           ->02.03% (4,096B) 0x430C1C: execute_command (in /usr/bin/bash)
+|   |                             ->02.03% (4,096B) 0x41A9AC: reader_loop (in /usr/bin/bash)
+|   |                               ->02.03% (4,096B) 0x419444: main (in /usr/bin/bash)
+|   |                                 
+|   ->00.00% (0B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->01.76% (3,562B) 0x46BAB3: xrealloc (in /usr/bin/bash)
+| ->01.09% (2,200B) 0x454745: ??? (in /usr/bin/bash)
+| | ->01.09% (2,200B) 0x454C30: fd_to_buffered_stream (in /usr/bin/bash)
+| |   ->01.09% (2,200B) 0x45510E: with_input_from_buffered_stream (in /usr/bin/bash)
+| |     ->01.09% (2,200B) 0x4193BD: main (in /usr/bin/bash)
+| |       
+| ->00.67% (1,362B) in 1+ places, all below ms_print's threshold (01.00%)
+| 
+->01.66% (3,344B) 0x551275B: _nl_intern_locale_data (in /usr/lib/libc-2.23.so)
+| ->01.66% (3,344B) 0x5513042: _nl_load_locale_from_archive (in /usr/lib/libc-2.23.so)
+|   ->01.66% (3,344B) 0x5512489: _nl_find_locale (in /usr/lib/libc-2.23.so)
+|     ->01.66% (3,344B) 0x5511CED: setlocale (in /usr/lib/libc-2.23.so)
+|       ->01.66% (3,344B) 0x46595E: set_default_locale (in /usr/bin/bash)
+|         ->01.66% (3,344B) 0x41864F: main (in /usr/bin/bash)
+|           
+->00.42% (850B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n        time(B)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 28        250,720          201,632          158,192        43,440            0
+ 29        262,880          200,496          157,374        43,122            0
+ 30        275,512          200,040          157,130        42,910            0
+ 31        282,608          200,464          157,373        43,091            0
+ 32        289,280          201,152          157,758        43,394            0
+ 33        296,008          204,840          160,380        44,460            0
+ 34        308,904          208,264          162,592        45,672            0
+ 35        319,872          210,048          163,785        46,263            0
+77.98% (163,785B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->26.58% (55,824B) 0x550AB8E: add_module.isra.0 (in /usr/lib/libc-2.23.so)
+| ->26.58% (55,824B) 0x550B401: __gconv_read_conf (in /usr/lib/libc-2.23.so)
+|   ->26.58% (55,824B) 0x550A683: __gconv_find_transform (in /usr/lib/libc-2.23.so)
+|     ->26.58% (55,824B) 0x558E866: __wcsmbs_getfct (in /usr/lib/libc-2.23.so)
+|       ->26.58% (55,824B) 0x558EA0A: __wcsmbs_load_conv (in /usr/lib/libc-2.23.so)
+|         ->26.58% (55,824B) 0x5583912: mbrtowc (in /usr/lib/libc-2.23.so)
+|           ->26.58% (55,824B) 0x551E28D: mblen (in /usr/lib/libc-2.23.so)
+|             ->26.58% (55,824B) 0x449D6B: setifs (in /usr/bin/bash)
+|               ->26.58% (55,824B) 0x437DD1: initialize_shell_variables (in /usr/bin/bash)
+|                 ->26.58% (55,824B) 0x417CA5: ??? (in /usr/bin/bash)
+|                   ->26.58% (55,824B) 0x418DE7: main (in /usr/bin/bash)
+|                     
+->16.69% (35,053B) 0x550ACBD: add_alias2.isra.1.part.2 (in /usr/lib/libc-2.23.so)
+| ->15.94% (33,479B) 0x550B544: __gconv_read_conf (in /usr/lib/libc-2.23.so)
+| | ->15.94% (33,479B) 0x550A683: __gconv_find_transform (in /usr/lib/libc-2.23.so)
+| |   ->15.94% (33,479B) 0x558E866: __wcsmbs_getfct (in /usr/lib/libc-2.23.so)
+| |     ->15.94% (33,479B) 0x558EA0A: __wcsmbs_load_conv (in /usr/lib/libc-2.23.so)
+| |       ->15.94% (33,479B) 0x5583912: mbrtowc (in /usr/lib/libc-2.23.so)
+| |         ->15.94% (33,479B) 0x551E28D: mblen (in /usr/lib/libc-2.23.so)
+| |           ->15.94% (33,479B) 0x449D6B: setifs (in /usr/bin/bash)
+| |             ->15.94% (33,479B) 0x437DD1: initialize_shell_variables (in /usr/bin/bash)
+| |               ->15.94% (33,479B) 0x417CA5: ??? (in /usr/bin/bash)
+| |                 ->15.94% (33,479B) 0x418DE7: main (in /usr/bin/bash)
+| |                   
+| ->00.75% (1,574B) in 1+ places, all below ms_print's threshold (01.00%)
+| 
+->15.37% (32,288B) 0x46B9E9: xmalloc (in /usr/bin/bash)
+| ->08.08% (16,963B) in 98 places, all below massif's threshold (1.00%)
+| | 
+| ->01.76% (3,696B) 0x432C71: ??? (in /usr/bin/bash)
+| | ->01.58% (3,312B) 0x435C8D: ??? (in /usr/bin/bash)
+| | | ->01.33% (2,784B) 0x436192: ??? (in /usr/bin/bash)
+| | | | ->01.33% (2,784B) in 26 places, all below massif's threshold (1.00%)
+| | | |   
+| | | ->00.25% (528B) in 1+ places, all below ms_print's threshold (01.00%)
+| | | 
+| | ->00.18% (384B) in 1+ places, all below ms_print's threshold (01.00%)
+| | 
+| ->01.56% (3,277B) 0x454BA9: fd_to_buffered_stream (in /usr/bin/bash)
+| | ->01.56% (3,277B) 0x45510E: with_input_from_buffered_stream (in /usr/bin/bash)
+| |   ->01.56% (3,277B) 0x4193BD: main (in /usr/bin/bash)
+| |     
+| ->01.46% (3,072B) 0x4391CE: copy_command (in /usr/bin/bash)
+| | ->01.46% (3,072B) in 8 places, all below massif's threshold (1.00%)
+| |   
+| ->01.29% (2,720B) 0x45246E: hash_insert (in /usr/bin/bash)
+| | ->01.05% (2,208B) 0x435CC6: ??? (in /usr/bin/bash)
+| | | ->01.05% (2,208B) in 3 places, all below massif's threshold (1.00%)
+| | |   
+| | ->00.24% (512B) in 1+ places, all below ms_print's threshold (01.00%)
+| | 
+| ->01.22% (2,560B) 0x451FDD: hash_create (in /usr/bin/bash)
+|   ->01.22% (2,560B) in 4 places, all below massif's threshold (1.00%)
+|     
+->13.67% (28,704B) 0x55CCDDF: tsearch (in /usr/lib/libc-2.23.so)
+| ->13.65% (28,672B) 0x550ACF7: add_alias2.isra.1.part.2 (in /usr/lib/libc-2.23.so)
+| | ->13.10% (27,520B) 0x550B544: __gconv_read_conf (in /usr/lib/libc-2.23.so)
+| | | ->13.10% (27,520B) 0x550A683: __gconv_find_transform (in /usr/lib/libc-2.23.so)
+| | |   ->13.10% (27,520B) 0x558E866: __wcsmbs_getfct (in /usr/lib/libc-2.23.so)
+| | |     ->13.10% (27,520B) 0x558EA0A: __wcsmbs_load_conv (in /usr/lib/libc-2.23.so)
+| | |       ->13.10% (27,520B) 0x5583912: mbrtowc (in /usr/lib/libc-2.23.so)
+| | |         ->13.10% (27,520B) 0x551E28D: mblen (in /usr/lib/libc-2.23.so)
+| | |           ->13.10% (27,520B) 0x449D6B: setifs (in /usr/bin/bash)
+| | |             ->13.10% (27,520B) 0x437DD1: initialize_shell_variables (in /usr/bin/bash)
+| | |               ->13.10% (27,520B) 0x417CA5: ??? (in /usr/bin/bash)
+| | |                 ->13.10% (27,520B) 0x418DE7: main (in /usr/bin/bash)
+| | |                   
+| | ->00.55% (1,152B) in 1+ places, all below ms_print's threshold (01.00%)
+| | 
+| ->00.02% (32B) in 1+ places, all below ms_print's threshold (01.00%)
+| 
+->01.95% (4,096B) 0x554D863: _IO_file_doallocate (in /usr/lib/libc-2.23.so)
+| ->01.95% (4,096B) 0x555A942: _IO_doallocbuf (in /usr/lib/libc-2.23.so)
+|   ->01.95% (4,096B) 0x5559DC6: _IO_file_overflow@@GLIBC_2.2.5 (in /usr/lib/libc-2.23.so)
+|   | ->01.95% (4,096B) 0x5558F78: _IO_file_xsputn@@GLIBC_2.2.5 (in /usr/lib/libc-2.23.so)
+|   |   ->01.95% (4,096B) 0x554FC96: puts (in /usr/lib/libc-2.23.so)
+|   |     ->01.95% (4,096B) 0x47A8BE: describe_command (in /usr/bin/bash)
+|   |       ->01.95% (4,096B) 0x46D2E4: command_builtin (in /usr/bin/bash)
+|   |         ->01.95% (4,096B) 0x42C09C: ??? (in /usr/bin/bash)
+|   |           ->01.95% (4,096B) 0x42E12B: ??? (in /usr/bin/bash)
+|   |             ->01.95% (4,096B) 0x42F15E: execute_command_internal (in /usr/bin/bash)
+|   |               ->01.95% (4,096B) 0x430C1C: execute_command (in /usr/bin/bash)
+|   |                 ->01.95% (4,096B) 0x42F261: execute_command_internal (in /usr/bin/bash)
+|   |                   ->01.95% (4,096B) 0x42EF76: execute_command_internal (in /usr/bin/bash)
+|   |                     ->01.95% (4,096B) 0x43217F: ??? (in /usr/bin/bash)
+|   |                       ->01.95% (4,096B) 0x42E436: ??? (in /usr/bin/bash)
+|   |                         ->01.95% (4,096B) 0x42F15E: execute_command_internal (in /usr/bin/bash)
+|   |                           ->01.95% (4,096B) 0x430C1C: execute_command (in /usr/bin/bash)
+|   |                             ->01.95% (4,096B) 0x41A9AC: reader_loop (in /usr/bin/bash)
+|   |                               ->01.95% (4,096B) 0x419444: main (in /usr/bin/bash)
+|   |                                 
+|   ->00.00% (0B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->01.59% (3,344B) 0x551275B: _nl_intern_locale_data (in /usr/lib/libc-2.23.so)
+| ->01.59% (3,344B) 0x5513042: _nl_load_locale_from_archive (in /usr/lib/libc-2.23.so)
+|   ->01.59% (3,344B) 0x5512489: _nl_find_locale (in /usr/lib/libc-2.23.so)
+|     ->01.59% (3,344B) 0x5511CED: setlocale (in /usr/lib/libc-2.23.so)
+|       ->01.59% (3,344B) 0x46595E: set_default_locale (in /usr/bin/bash)
+|         ->01.59% (3,344B) 0x41864F: main (in /usr/bin/bash)
+|           
+->01.45% (3,042B) 0x46BAB3: xrealloc (in /usr/bin/bash)
+| ->01.05% (2,200B) 0x454745: ??? (in /usr/bin/bash)
+| | ->01.05% (2,200B) 0x454C30: fd_to_buffered_stream (in /usr/bin/bash)
+| |   ->01.05% (2,200B) 0x45510E: with_input_from_buffered_stream (in /usr/bin/bash)
+| |     ->01.05% (2,200B) 0x4193BD: main (in /usr/bin/bash)
+| |       
+| ->00.40% (842B) in 1+ places, all below ms_print's threshold (01.00%)
+| 
+->00.68% (1,434B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n        time(B)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 36        326,608          209,056          163,139        45,917            0
+ 37        336,656          209,712          163,576        46,136            0
+ 38        346,200          212,872          165,937        46,935            0
+77.95% (165,937B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->26.22% (55,824B) 0x550AB8E: add_module.isra.0 (in /usr/lib/libc-2.23.so)
+| ->26.22% (55,824B) 0x550B401: __gconv_read_conf (in /usr/lib/libc-2.23.so)
+|   ->26.22% (55,824B) 0x550A683: __gconv_find_transform (in /usr/lib/libc-2.23.so)
+|     ->26.22% (55,824B) 0x558E866: __wcsmbs_getfct (in /usr/lib/libc-2.23.so)
+|       ->26.22% (55,824B) 0x558EA0A: __wcsmbs_load_conv (in /usr/lib/libc-2.23.so)
+|         ->26.22% (55,824B) 0x5583912: mbrtowc (in /usr/lib/libc-2.23.so)
+|           ->26.22% (55,824B) 0x551E28D: mblen (in /usr/lib/libc-2.23.so)
+|             ->26.22% (55,824B) 0x449D6B: setifs (in /usr/bin/bash)
+|               ->26.22% (55,824B) 0x437DD1: initialize_shell_variables (in /usr/bin/bash)
+|                 ->26.22% (55,824B) 0x417CA5: ??? (in /usr/bin/bash)
+|                   ->26.22% (55,824B) 0x418DE7: main (in /usr/bin/bash)
+|                     
+->16.47% (35,053B) 0x550ACBD: add_alias2.isra.1.part.2 (in /usr/lib/libc-2.23.so)
+| ->15.73% (33,479B) 0x550B544: __gconv_read_conf (in /usr/lib/libc-2.23.so)
+| | ->15.73% (33,479B) 0x550A683: __gconv_find_transform (in /usr/lib/libc-2.23.so)
+| |   ->15.73% (33,479B) 0x558E866: __wcsmbs_getfct (in /usr/lib/libc-2.23.so)
+| |     ->15.73% (33,479B) 0x558EA0A: __wcsmbs_load_conv (in /usr/lib/libc-2.23.so)
+| |       ->15.73% (33,479B) 0x5583912: mbrtowc (in /usr/lib/libc-2.23.so)
+| |         ->15.73% (33,479B) 0x551E28D: mblen (in /usr/lib/libc-2.23.so)
+| |           ->15.73% (33,479B) 0x449D6B: setifs (in /usr/bin/bash)
+| |             ->15.73% (33,479B) 0x437DD1: initialize_shell_variables (in /usr/bin/bash)
+| |               ->15.73% (33,479B) 0x417CA5: ??? (in /usr/bin/bash)
+| |                 ->15.73% (33,479B) 0x418DE7: main (in /usr/bin/bash)
+| |                   
+| ->00.74% (1,574B) in 1+ places, all below ms_print's threshold (01.00%)
+| 
+->16.06% (34,184B) 0x46B9E9: xmalloc (in /usr/bin/bash)
+| ->08.75% (18,619B) in 100 places, all below massif's threshold (1.00%)
+| | 
+| ->01.80% (3,840B) 0x432C71: ??? (in /usr/bin/bash)
+| | ->01.62% (3,456B) 0x435C8D: ??? (in /usr/bin/bash)
+| | | ->01.38% (2,928B) 0x436192: ??? (in /usr/bin/bash)
+| | | | ->01.38% (2,928B) in 26 places, all below massif's threshold (1.00%)
+| | | |   
+| | | ->00.25% (528B) in 1+ places, all below ms_print's threshold (01.00%)
+| | | 
+| | ->00.18% (384B) in 1+ places, all below ms_print's threshold (01.00%)
+| | 
+| ->01.54% (3,277B) 0x454BA9: fd_to_buffered_stream (in /usr/bin/bash)
+| | ->01.54% (3,277B) 0x45510E: with_input_from_buffered_stream (in /usr/bin/bash)
+| |   ->01.54% (3,277B) 0x4193BD: main (in /usr/bin/bash)
+| |     
+| ->01.44% (3,072B) 0x4391CE: copy_command (in /usr/bin/bash)
+| | ->01.44% (3,072B) in 8 places, all below massif's threshold (1.00%)
+| |   
+| ->01.32% (2,816B) 0x45246E: hash_insert (in /usr/bin/bash)
+| | ->01.08% (2,304B) 0x435CC6: ??? (in /usr/bin/bash)
+| | | ->01.08% (2,304B) in 3 places, all below massif's threshold (1.00%)
+| | |   
+| | ->00.24% (512B) in 1+ places, all below ms_print's threshold (01.00%)
+| | 
+| ->01.20% (2,560B) 0x451FDD: hash_create (in /usr/bin/bash)
+|   ->01.20% (2,560B) in 4 places, all below massif's threshold (1.00%)
+|     
+->13.48% (28,704B) 0x55CCDDF: tsearch (in /usr/lib/libc-2.23.so)
+| ->13.47% (28,672B) 0x550ACF7: add_alias2.isra.1.part.2 (in /usr/lib/libc-2.23.so)
+| | ->12.93% (27,520B) 0x550B544: __gconv_read_conf (in /usr/lib/libc-2.23.so)
+| | | ->12.93% (27,520B) 0x550A683: __gconv_find_transform (in /usr/lib/libc-2.23.so)
+| | |   ->12.93% (27,520B) 0x558E866: __wcsmbs_getfct (in /usr/lib/libc-2.23.so)
+| | |     ->12.93% (27,520B) 0x558EA0A: __wcsmbs_load_conv (in /usr/lib/libc-2.23.so)
+| | |       ->12.93% (27,520B) 0x5583912: mbrtowc (in /usr/lib/libc-2.23.so)
+| | |         ->12.93% (27,520B) 0x551E28D: mblen (in /usr/lib/libc-2.23.so)
+| | |           ->12.93% (27,520B) 0x449D6B: setifs (in /usr/bin/bash)
+| | |             ->12.93% (27,520B) 0x437DD1: initialize_shell_variables (in /usr/bin/bash)
+| | |               ->12.93% (27,520B) 0x417CA5: ??? (in /usr/bin/bash)
+| | |                 ->12.93% (27,520B) 0x418DE7: main (in /usr/bin/bash)
+| | |                   
+| | ->00.54% (1,152B) in 1+ places, all below ms_print's threshold (01.00%)
+| | 
+| ->00.02% (32B) in 1+ places, all below ms_print's threshold (01.00%)
+| 
+->01.92% (4,096B) 0x554D863: _IO_file_doallocate (in /usr/lib/libc-2.23.so)
+| ->01.92% (4,096B) 0x555A942: _IO_doallocbuf (in /usr/lib/libc-2.23.so)
+|   ->01.92% (4,096B) 0x5559DC6: _IO_file_overflow@@GLIBC_2.2.5 (in /usr/lib/libc-2.23.so)
+|   | ->01.92% (4,096B) 0x5558F78: _IO_file_xsputn@@GLIBC_2.2.5 (in /usr/lib/libc-2.23.so)
+|   |   ->01.92% (4,096B) 0x554FC96: puts (in /usr/lib/libc-2.23.so)
+|   |     ->01.92% (4,096B) 0x47A8BE: describe_command (in /usr/bin/bash)
+|   |       ->01.92% (4,096B) 0x46D2E4: command_builtin (in /usr/bin/bash)
+|   |         ->01.92% (4,096B) 0x42C09C: ??? (in /usr/bin/bash)
+|   |           ->01.92% (4,096B) 0x42E12B: ??? (in /usr/bin/bash)
+|   |             ->01.92% (4,096B) 0x42F15E: execute_command_internal (in /usr/bin/bash)
+|   |               ->01.92% (4,096B) 0x430C1C: execute_command (in /usr/bin/bash)
+|   |                 ->01.92% (4,096B) 0x42F261: execute_command_internal (in /usr/bin/bash)
+|   |                   ->01.92% (4,096B) 0x42EF76: execute_command_internal (in /usr/bin/bash)
+|   |                     ->01.92% (4,096B) 0x43217F: ??? (in /usr/bin/bash)
+|   |                       ->01.92% (4,096B) 0x42E436: ??? (in /usr/bin/bash)
+|   |                         ->01.92% (4,096B) 0x42F15E: execute_command_internal (in /usr/bin/bash)
+|   |                           ->01.92% (4,096B) 0x430C1C: execute_command (in /usr/bin/bash)
+|   |                             ->01.92% (4,096B) 0x41A9AC: reader_loop (in /usr/bin/bash)
+|   |                               ->01.92% (4,096B) 0x419444: main (in /usr/bin/bash)
+|   |                                 
+|   ->00.00% (0B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->01.57% (3,344B) 0x551275B: _nl_intern_locale_data (in /usr/lib/libc-2.23.so)
+| ->01.57% (3,344B) 0x5513042: _nl_load_locale_from_archive (in /usr/lib/libc-2.23.so)
+|   ->01.57% (3,344B) 0x5512489: _nl_find_locale (in /usr/lib/libc-2.23.so)
+|     ->01.57% (3,344B) 0x5511CED: setlocale (in /usr/lib/libc-2.23.so)
+|       ->01.57% (3,344B) 0x46595E: set_default_locale (in /usr/bin/bash)
+|         ->01.57% (3,344B) 0x41864F: main (in /usr/bin/bash)
+|           
+->01.55% (3,298B) 0x46BAB3: xrealloc (in /usr/bin/bash)
+| ->01.03% (2,200B) 0x454745: ??? (in /usr/bin/bash)
+| | ->01.03% (2,200B) 0x454C30: fd_to_buffered_stream (in /usr/bin/bash)
+| |   ->01.03% (2,200B) 0x45510E: with_input_from_buffered_stream (in /usr/bin/bash)
+| |     ->01.03% (2,200B) 0x4193BD: main (in /usr/bin/bash)
+| |       
+| ->00.52% (1,098B) in 1+ places, all below ms_print's threshold (01.00%)
+| 
+->00.67% (1,434B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n        time(B)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 39        356,248          211,480          164,720        46,760            0
+ 40        366,264          211,768          164,901        46,867            0
+ 41        372,976          213,504          165,955        47,549            0
+ 42        379,640          210,232          163,874        46,358            0
+77.95% (163,874B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->26.55% (55,824B) 0x550AB8E: add_module.isra.0 (in /usr/lib/libc-2.23.so)
+| ->26.55% (55,824B) 0x550B401: __gconv_read_conf (in /usr/lib/libc-2.23.so)
+|   ->26.55% (55,824B) 0x550A683: __gconv_find_transform (in /usr/lib/libc-2.23.so)
+|     ->26.55% (55,824B) 0x558E866: __wcsmbs_getfct (in /usr/lib/libc-2.23.so)
+|       ->26.55% (55,824B) 0x558EA0A: __wcsmbs_load_conv (in /usr/lib/libc-2.23.so)
+|         ->26.55% (55,824B) 0x5583912: mbrtowc (in /usr/lib/libc-2.23.so)
+|           ->26.55% (55,824B) 0x551E28D: mblen (in /usr/lib/libc-2.23.so)
+|             ->26.55% (55,824B) 0x449D6B: setifs (in /usr/bin/bash)
+|               ->26.55% (55,824B) 0x437DD1: initialize_shell_variables (in /usr/bin/bash)
+|                 ->26.55% (55,824B) 0x417CA5: ??? (in /usr/bin/bash)
+|                   ->26.55% (55,824B) 0x418DE7: main (in /usr/bin/bash)
+|                     
+->16.67% (35,053B) 0x550ACBD: add_alias2.isra.1.part.2 (in /usr/lib/libc-2.23.so)
+| ->15.92% (33,479B) 0x550B544: __gconv_read_conf (in /usr/lib/libc-2.23.so)
+| | ->15.92% (33,479B) 0x550A683: __gconv_find_transform (in /usr/lib/libc-2.23.so)
+| |   ->15.92% (33,479B) 0x558E866: __wcsmbs_getfct (in /usr/lib/libc-2.23.so)
+| |     ->15.92% (33,479B) 0x558EA0A: __wcsmbs_load_conv (in /usr/lib/libc-2.23.so)
+| |       ->15.92% (33,479B) 0x5583912: mbrtowc (in /usr/lib/libc-2.23.so)
+| |         ->15.92% (33,479B) 0x551E28D: mblen (in /usr/lib/libc-2.23.so)
+| |           ->15.92% (33,479B) 0x449D6B: setifs (in /usr/bin/bash)
+| |             ->15.92% (33,479B) 0x437DD1: initialize_shell_variables (in /usr/bin/bash)
+| |               ->15.92% (33,479B) 0x417CA5: ??? (in /usr/bin/bash)
+| |                 ->15.92% (33,479B) 0x418DE7: main (in /usr/bin/bash)
+| |                   
+| ->00.75% (1,574B) in 1+ places, all below ms_print's threshold (01.00%)
+| 
+->15.40% (32,377B) 0x46B9E9: xmalloc (in /usr/bin/bash)
+| ->08.00% (16,812B) in 101 places, all below massif's threshold (1.00%)
+| | 
+| ->01.83% (3,840B) 0x432C71: ??? (in /usr/bin/bash)
+| | ->01.64% (3,456B) 0x435C8D: ??? (in /usr/bin/bash)
+| | | ->01.39% (2,928B) 0x436192: ??? (in /usr/bin/bash)
+| | | | ->01.39% (2,928B) in 26 places, all below massif's threshold (1.00%)
+| | | |   
+| | | ->00.25% (528B) in 1+ places, all below ms_print's threshold (01.00%)
+| | | 
+| | ->00.18% (384B) in 1+ places, all below ms_print's threshold (01.00%)
+| | 
+| ->01.56% (3,277B) 0x454BA9: fd_to_buffered_stream (in /usr/bin/bash)
+| | ->01.56% (3,277B) 0x45510E: with_input_from_buffered_stream (in /usr/bin/bash)
+| |   ->01.56% (3,277B) 0x4193BD: main (in /usr/bin/bash)
+| |     
+| ->01.46% (3,072B) 0x4391CE: copy_command (in /usr/bin/bash)
+| | ->01.46% (3,072B) in 8 places, all below massif's threshold (1.00%)
+| |   
+| ->01.34% (2,816B) 0x45246E: hash_insert (in /usr/bin/bash)
+| | ->01.10% (2,304B) 0x435CC6: ??? (in /usr/bin/bash)
+| | | ->01.10% (2,304B) in 3 places, all below massif's threshold (1.00%)
+| | |   
+| | ->00.24% (512B) in 1+ places, all below ms_print's threshold (01.00%)
+| | 
+| ->01.22% (2,560B) 0x451FDD: hash_create (in /usr/bin/bash)
+|   ->01.22% (2,560B) in 4 places, all below massif's threshold (1.00%)
+|     
+->13.65% (28,704B) 0x55CCDDF: tsearch (in /usr/lib/libc-2.23.so)
+| ->13.64% (28,672B) 0x550ACF7: add_alias2.isra.1.part.2 (in /usr/lib/libc-2.23.so)
+| | ->13.09% (27,520B) 0x550B544: __gconv_read_conf (in /usr/lib/libc-2.23.so)
+| | | ->13.09% (27,520B) 0x550A683: __gconv_find_transform (in /usr/lib/libc-2.23.so)
+| | |   ->13.09% (27,520B) 0x558E866: __wcsmbs_getfct (in /usr/lib/libc-2.23.so)
+| | |     ->13.09% (27,520B) 0x558EA0A: __wcsmbs_load_conv (in /usr/lib/libc-2.23.so)
+| | |       ->13.09% (27,520B) 0x5583912: mbrtowc (in /usr/lib/libc-2.23.so)
+| | |         ->13.09% (27,520B) 0x551E28D: mblen (in /usr/lib/libc-2.23.so)
+| | |           ->13.09% (27,520B) 0x449D6B: setifs (in /usr/bin/bash)
+| | |             ->13.09% (27,520B) 0x437DD1: initialize_shell_variables (in /usr/bin/bash)
+| | |               ->13.09% (27,520B) 0x417CA5: ??? (in /usr/bin/bash)
+| | |                 ->13.09% (27,520B) 0x418DE7: main (in /usr/bin/bash)
+| | |                   
+| | ->00.55% (1,152B) in 1+ places, all below ms_print's threshold (01.00%)
+| | 
+| ->00.02% (32B) in 1+ places, all below ms_print's threshold (01.00%)
+| 
+->01.95% (4,096B) 0x554D863: _IO_file_doallocate (in /usr/lib/libc-2.23.so)
+| ->01.95% (4,096B) 0x555A942: _IO_doallocbuf (in /usr/lib/libc-2.23.so)
+|   ->01.95% (4,096B) 0x5559DC6: _IO_file_overflow@@GLIBC_2.2.5 (in /usr/lib/libc-2.23.so)
+|   | ->01.95% (4,096B) 0x5558F78: _IO_file_xsputn@@GLIBC_2.2.5 (in /usr/lib/libc-2.23.so)
+|   |   ->01.95% (4,096B) 0x554FC96: puts (in /usr/lib/libc-2.23.so)
+|   |     ->01.95% (4,096B) 0x47A8BE: describe_command (in /usr/bin/bash)
+|   |       ->01.95% (4,096B) 0x46D2E4: command_builtin (in /usr/bin/bash)
+|   |         ->01.95% (4,096B) 0x42C09C: ??? (in /usr/bin/bash)
+|   |           ->01.95% (4,096B) 0x42E12B: ??? (in /usr/bin/bash)
+|   |             ->01.95% (4,096B) 0x42F15E: execute_command_internal (in /usr/bin/bash)
+|   |               ->01.95% (4,096B) 0x430C1C: execute_command (in /usr/bin/bash)
+|   |                 ->01.95% (4,096B) 0x42F261: execute_command_internal (in /usr/bin/bash)
+|   |                   ->01.95% (4,096B) 0x42EF76: execute_command_internal (in /usr/bin/bash)
+|   |                     ->01.95% (4,096B) 0x43217F: ??? (in /usr/bin/bash)
+|   |                       ->01.95% (4,096B) 0x42E436: ??? (in /usr/bin/bash)
+|   |                         ->01.95% (4,096B) 0x42F15E: execute_command_internal (in /usr/bin/bash)
+|   |                           ->01.95% (4,096B) 0x430C1C: execute_command (in /usr/bin/bash)
+|   |                             ->01.95% (4,096B) 0x41A9AC: reader_loop (in /usr/bin/bash)
+|   |                               ->01.95% (4,096B) 0x419444: main (in /usr/bin/bash)
+|   |                                 
+|   ->00.00% (0B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->01.59% (3,344B) 0x551275B: _nl_intern_locale_data (in /usr/lib/libc-2.23.so)
+| ->01.59% (3,344B) 0x5513042: _nl_load_locale_from_archive (in /usr/lib/libc-2.23.so)
+|   ->01.59% (3,344B) 0x5512489: _nl_find_locale (in /usr/lib/libc-2.23.so)
+|     ->01.59% (3,344B) 0x5511CED: setlocale (in /usr/lib/libc-2.23.so)
+|       ->01.59% (3,344B) 0x46595E: set_default_locale (in /usr/bin/bash)
+|         ->01.59% (3,344B) 0x41864F: main (in /usr/bin/bash)
+|           
+->01.45% (3,042B) 0x46BAB3: xrealloc (in /usr/bin/bash)
+| ->01.05% (2,200B) 0x454745: ??? (in /usr/bin/bash)
+| | ->01.05% (2,200B) 0x454C30: fd_to_buffered_stream (in /usr/bin/bash)
+| |   ->01.05% (2,200B) 0x45510E: with_input_from_buffered_stream (in /usr/bin/bash)
+| |     ->01.05% (2,200B) 0x4193BD: main (in /usr/bin/bash)
+| |       
+| ->00.40% (842B) in 1+ places, all below ms_print's threshold (01.00%)
+| 
+->00.68% (1,434B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n        time(B)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 43        390,288          211,536          164,911        46,625            0
+ 44        400,368          211,088          164,469        46,619            0
+ 45        407,064          213,080          165,715        47,365            0
+ 46        417,040          212,816          165,993        46,823            0
+ 47        423,856          211,472          164,834        46,638            0
+ 48        434,168          210,296          162,984        47,312            0
+ 49        440,824          212,888          164,826        48,062            0
+ 50        446,104          212,056          164,256        47,800            0
+ 51        451,352          211,576          163,862        47,714            0
+77.45% (163,862B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->26.38% (55,824B) 0x550AB8E: add_module.isra.0 (in /usr/lib/libc-2.23.so)
+| ->26.38% (55,824B) 0x550B401: __gconv_read_conf (in /usr/lib/libc-2.23.so)
+|   ->26.38% (55,824B) 0x550A683: __gconv_find_transform (in /usr/lib/libc-2.23.so)
+|     ->26.38% (55,824B) 0x558E866: __wcsmbs_getfct (in /usr/lib/libc-2.23.so)
+|       ->26.38% (55,824B) 0x558EA0A: __wcsmbs_load_conv (in /usr/lib/libc-2.23.so)
+|         ->26.38% (55,824B) 0x5583912: mbrtowc (in /usr/lib/libc-2.23.so)
+|           ->26.38% (55,824B) 0x551E28D: mblen (in /usr/lib/libc-2.23.so)
+|             ->26.38% (55,824B) 0x449D6B: setifs (in /usr/bin/bash)
+|               ->26.38% (55,824B) 0x437DD1: initialize_shell_variables (in /usr/bin/bash)
+|                 ->26.38% (55,824B) 0x417CA5: ??? (in /usr/bin/bash)
+|                   ->26.38% (55,824B) 0x418DE7: main (in /usr/bin/bash)
+|                     
+->16.57% (35,053B) 0x550ACBD: add_alias2.isra.1.part.2 (in /usr/lib/libc-2.23.so)
+| ->15.82% (33,479B) 0x550B544: __gconv_read_conf (in /usr/lib/libc-2.23.so)
+| | ->15.82% (33,479B) 0x550A683: __gconv_find_transform (in /usr/lib/libc-2.23.so)
+| |   ->15.82% (33,479B) 0x558E866: __wcsmbs_getfct (in /usr/lib/libc-2.23.so)
+| |     ->15.82% (33,479B) 0x558EA0A: __wcsmbs_load_conv (in /usr/lib/libc-2.23.so)
+| |       ->15.82% (33,479B) 0x5583912: mbrtowc (in /usr/lib/libc-2.23.so)
+| |         ->15.82% (33,479B) 0x551E28D: mblen (in /usr/lib/libc-2.23.so)
+| |           ->15.82% (33,479B) 0x449D6B: setifs (in /usr/bin/bash)
+| |             ->15.82% (33,479B) 0x437DD1: initialize_shell_variables (in /usr/bin/bash)
+| |               ->15.82% (33,479B) 0x417CA5: ??? (in /usr/bin/bash)
+| |                 ->15.82% (33,479B) 0x418DE7: main (in /usr/bin/bash)
+| |                   
+| ->00.74% (1,574B) in 1+ places, all below ms_print's threshold (01.00%)
+| 
+->15.30% (32,365B) 0x46B9E9: xmalloc (in /usr/bin/bash)
+| ->08.39% (17,741B) in 102 places, all below massif's threshold (1.00%)
+| | 
+| ->01.84% (3,888B) 0x432C71: ??? (in /usr/bin/bash)
+| | ->01.66% (3,504B) 0x435C8D: ??? (in /usr/bin/bash)
+| | | ->01.41% (2,976B) 0x436192: ??? (in /usr/bin/bash)
+| | | | ->01.41% (2,976B) in 26 places, all below massif's threshold (1.00%)
+| | | |   
+| | | ->00.25% (528B) in 1+ places, all below ms_print's threshold (01.00%)
+| | | 
+| | ->00.18% (384B) in 1+ places, all below ms_print's threshold (01.00%)
+| | 
+| ->01.51% (3,200B) 0x4391CE: copy_command (in /usr/bin/bash)
+| | ->01.51% (3,200B) in 8 places, all below massif's threshold (1.00%)
+| |   
+| ->01.35% (2,848B) 0x45246E: hash_insert (in /usr/bin/bash)
+| | ->01.10% (2,336B) 0x435CC6: ??? (in /usr/bin/bash)
+| | | ->01.10% (2,336B) in 3 places, all below massif's threshold (1.00%)
+| | |   
+| | ->00.24% (512B) in 1+ places, all below ms_print's threshold (01.00%)
+| | 
+| ->01.21% (2,560B) 0x451FDD: hash_create (in /usr/bin/bash)
+| | ->01.21% (2,560B) in 4 places, all below massif's threshold (1.00%)
+| |   
+| ->01.01% (2,128B) 0x427A65: make_word_list (in /usr/bin/bash)
+|   ->01.01% (2,128B) in 6 places, all below massif's threshold (1.00%)
+|     
+->13.57% (28,704B) 0x55CCDDF: tsearch (in /usr/lib/libc-2.23.so)
+| ->13.55% (28,672B) 0x550ACF7: add_alias2.isra.1.part.2 (in /usr/lib/libc-2.23.so)
+| | ->13.01% (27,520B) 0x550B544: __gconv_read_conf (in /usr/lib/libc-2.23.so)
+| | | ->13.01% (27,520B) 0x550A683: __gconv_find_transform (in /usr/lib/libc-2.23.so)
+| | |   ->13.01% (27,520B) 0x558E866: __wcsmbs_getfct (in /usr/lib/libc-2.23.so)
+| | |     ->13.01% (27,520B) 0x558EA0A: __wcsmbs_load_conv (in /usr/lib/libc-2.23.so)
+| | |       ->13.01% (27,520B) 0x5583912: mbrtowc (in /usr/lib/libc-2.23.so)
+| | |         ->13.01% (27,520B) 0x551E28D: mblen (in /usr/lib/libc-2.23.so)
+| | |           ->13.01% (27,520B) 0x449D6B: setifs (in /usr/bin/bash)
+| | |             ->13.01% (27,520B) 0x437DD1: initialize_shell_variables (in /usr/bin/bash)
+| | |               ->13.01% (27,520B) 0x417CA5: ??? (in /usr/bin/bash)
+| | |                 ->13.01% (27,520B) 0x418DE7: main (in /usr/bin/bash)
+| | |                   
+| | ->00.54% (1,152B) in 1+ places, all below ms_print's threshold (01.00%)
+| | 
+| ->00.02% (32B) in 1+ places, all below ms_print's threshold (01.00%)
+| 
+->01.94% (4,096B) 0x554D863: _IO_file_doallocate (in /usr/lib/libc-2.23.so)
+| ->01.94% (4,096B) 0x555A942: _IO_doallocbuf (in /usr/lib/libc-2.23.so)
+|   ->01.94% (4,096B) 0x5559DC6: _IO_file_overflow@@GLIBC_2.2.5 (in /usr/lib/libc-2.23.so)
+|   | ->01.94% (4,096B) 0x5558F78: _IO_file_xsputn@@GLIBC_2.2.5 (in /usr/lib/libc-2.23.so)
+|   |   ->01.94% (4,096B) 0x554FC96: puts (in /usr/lib/libc-2.23.so)
+|   |     ->01.94% (4,096B) 0x47A8BE: describe_command (in /usr/bin/bash)
+|   |       ->01.94% (4,096B) 0x46D2E4: command_builtin (in /usr/bin/bash)
+|   |         ->01.94% (4,096B) 0x42C09C: ??? (in /usr/bin/bash)
+|   |           ->01.94% (4,096B) 0x42E12B: ??? (in /usr/bin/bash)
+|   |             ->01.94% (4,096B) 0x42F15E: execute_command_internal (in /usr/bin/bash)
+|   |               ->01.94% (4,096B) 0x430C1C: execute_command (in /usr/bin/bash)
+|   |                 ->01.94% (4,096B) 0x42F261: execute_command_internal (in /usr/bin/bash)
+|   |                   ->01.94% (4,096B) 0x42EF76: execute_command_internal (in /usr/bin/bash)
+|   |                     ->01.94% (4,096B) 0x43217F: ??? (in /usr/bin/bash)
+|   |                       ->01.94% (4,096B) 0x42E436: ??? (in /usr/bin/bash)
+|   |                         ->01.94% (4,096B) 0x42F15E: execute_command_internal (in /usr/bin/bash)
+|   |                           ->01.94% (4,096B) 0x430C1C: execute_command (in /usr/bin/bash)
+|   |                             ->01.94% (4,096B) 0x41A9AC: reader_loop (in /usr/bin/bash)
+|   |                               ->01.94% (4,096B) 0x419444: main (in /usr/bin/bash)
+|   |                                 
+|   ->00.00% (0B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->01.58% (3,344B) 0x551275B: _nl_intern_locale_data (in /usr/lib/libc-2.23.so)
+| ->01.58% (3,344B) 0x5513042: _nl_load_locale_from_archive (in /usr/lib/libc-2.23.so)
+|   ->01.58% (3,344B) 0x5512489: _nl_find_locale (in /usr/lib/libc-2.23.so)
+|     ->01.58% (3,344B) 0x5511CED: setlocale (in /usr/lib/libc-2.23.so)
+|       ->01.58% (3,344B) 0x46595E: set_default_locale (in /usr/bin/bash)
+|         ->01.58% (3,344B) 0x41864F: main (in /usr/bin/bash)
+|           
+->01.44% (3,042B) 0x46BAB3: xrealloc (in /usr/bin/bash)
+| ->01.04% (2,200B) 0x454745: ??? (in /usr/bin/bash)
+| | ->01.04% (2,200B) 0x454C30: fd_to_buffered_stream (in /usr/bin/bash)
+| |   ->01.04% (2,200B) 0x45510E: with_input_from_buffered_stream (in /usr/bin/bash)
+| |     ->01.04% (2,200B) 0x4193BD: main (in /usr/bin/bash)
+| |       
+| ->00.40% (842B) in 1+ places, all below ms_print's threshold (01.00%)
+| 
+->00.68% (1,434B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n        time(B)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 52        456,656          208,336          161,645        46,691            0
+ 53        461,888          203,392          157,306        46,086            0
+ 54        467,120          198,160          153,478        44,682            0
+ 55        472,360          192,920          149,826        43,094            0
+ 56        477,592          187,688          146,214        41,474            0
+ 57        482,840          182,440          142,292        40,148            0
+ 58        488,080          177,200          138,522        38,678            0
+ 59        493,336          171,944          134,561        37,383            0
+ 60        498,592          166,688          130,540        36,148            0
+ 61        503,832          161,448          126,603        34,845            0
+78.42% (126,603B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->34.58% (55,824B) 0x550AB8E: add_module.isra.0 (in /usr/lib/libc-2.23.so)
+| ->34.58% (55,824B) 0x550B401: __gconv_read_conf (in /usr/lib/libc-2.23.so)
+|   ->34.58% (55,824B) 0x550A683: __gconv_find_transform (in /usr/lib/libc-2.23.so)
+|     ->34.58% (55,824B) 0x558E866: __wcsmbs_getfct (in /usr/lib/libc-2.23.so)
+|       ->34.58% (55,824B) 0x558EA0A: __wcsmbs_load_conv (in /usr/lib/libc-2.23.so)
+|         ->34.58% (55,824B) 0x5583912: mbrtowc (in /usr/lib/libc-2.23.so)
+|           ->34.58% (55,824B) 0x551E28D: mblen (in /usr/lib/libc-2.23.so)
+|             ->34.58% (55,824B) 0x449D6B: setifs (in /usr/bin/bash)
+|               ->34.58% (55,824B) 0x437DD1: initialize_shell_variables (in /usr/bin/bash)
+|                 ->34.58% (55,824B) 0x417CA5: ??? (in /usr/bin/bash)
+|                   ->34.58% (55,824B) 0x418DE7: main (in /usr/bin/bash)
+|                     
+->18.63% (30,076B) 0x46B9E9: xmalloc (in /usr/bin/bash)
+| ->08.44% (13,628B) in 109 places, all below massif's threshold (1.00%)
+| | 
+| ->02.41% (3,888B) 0x432C71: ??? (in /usr/bin/bash)
+| | ->02.17% (3,504B) 0x435C8D: ??? (in /usr/bin/bash)
+| | | ->01.84% (2,976B) 0x436192: ??? (in /usr/bin/bash)
+| | | | ->01.84% (2,976B) in 26 places, all below massif's threshold (1.00%)
+| | | |   
+| | | ->00.33% (528B) in 1+ places, all below ms_print's threshold (01.00%)
+| | | 
+| | ->00.24% (384B) in 1+ places, all below ms_print's threshold (01.00%)
+| | 
+| ->01.90% (3,072B) 0x4391CE: copy_command (in /usr/bin/bash)
+| | ->01.90% (3,072B) in 8 places, all below massif's threshold (1.00%)
+| |   
+| ->01.76% (2,848B) 0x45246E: hash_insert (in /usr/bin/bash)
+| | ->01.45% (2,336B) 0x435CC6: ??? (in /usr/bin/bash)
+| | | ->01.23% (1,984B) 0x436192: ??? (in /usr/bin/bash)
+| | | | ->01.23% (1,984B) in 26 places, all below massif's threshold (1.00%)
+| | | |   
+| | | ->00.22% (352B) in 1+ places, all below ms_print's threshold (01.00%)
+| | | 
+| | ->00.32% (512B) in 1+ places, all below ms_print's threshold (01.00%)
+| | 
+| ->01.59% (2,560B) 0x451FDD: hash_create (in /usr/bin/bash)
+| | ->01.59% (2,560B) in 4 places, all below massif's threshold (1.00%)
+| |   
+| ->01.32% (2,128B) 0x427A65: make_word_list (in /usr/bin/bash)
+| | ->01.32% (2,128B) in 6 places, all below massif's threshold (1.00%)
+| |   
+| ->01.21% (1,952B) 0x420DF5: ??? (in /usr/bin/bash)
+|   ->01.21% (1,952B) 0x423097: yyparse (in /usr/bin/bash)
+|     ->01.21% (1,952B) 0x41A699: parse_command (in /usr/bin/bash)
+|       ->01.07% (1,728B) 0x41A766: read_command (in /usr/bin/bash)
+|       | ->01.07% (1,728B) 0x41A947: reader_loop (in /usr/bin/bash)
+|       |   ->01.07% (1,728B) 0x419444: main (in /usr/bin/bash)
+|       |     
+|       ->00.14% (224B) in 1+ places, all below ms_print's threshold (01.00%)
+|       
+->11.14% (17,979B) 0x550ACBD: add_alias2.isra.1.part.2 (in /usr/lib/libc-2.23.so)
+| ->10.38% (16,764B) 0x550B544: __gconv_read_conf (in /usr/lib/libc-2.23.so)
+| | ->10.38% (16,764B) 0x550A683: __gconv_find_transform (in /usr/lib/libc-2.23.so)
+| |   ->10.38% (16,764B) 0x558E866: __wcsmbs_getfct (in /usr/lib/libc-2.23.so)
+| |     ->10.38% (16,764B) 0x558EA0A: __wcsmbs_load_conv (in /usr/lib/libc-2.23.so)
+| |       ->10.38% (16,764B) 0x5583912: mbrtowc (in /usr/lib/libc-2.23.so)
+| |         ->10.38% (16,764B) 0x551E28D: mblen (in /usr/lib/libc-2.23.so)
+| |           ->10.38% (16,764B) 0x449D6B: setifs (in /usr/bin/bash)
+| |             ->10.38% (16,764B) 0x437DD1: initialize_shell_variables (in /usr/bin/bash)
+| |               ->10.38% (16,764B) 0x417CA5: ??? (in /usr/bin/bash)
+| |                 ->10.38% (16,764B) 0x418DE7: main (in /usr/bin/bash)
+| |                   
+| ->00.75% (1,215B) in 1+ places, all below ms_print's threshold (01.00%)
+| 
+->08.96% (14,464B) 0x55CCDDF: tsearch (in /usr/lib/libc-2.23.so)
+| ->08.94% (14,432B) 0x550ACF7: add_alias2.isra.1.part.2 (in /usr/lib/libc-2.23.so)
+| | ->08.38% (13,536B) 0x550B544: __gconv_read_conf (in /usr/lib/libc-2.23.so)
+| | | ->08.38% (13,536B) 0x550A683: __gconv_find_transform (in /usr/lib/libc-2.23.so)
+| | |   ->08.38% (13,536B) 0x558E866: __wcsmbs_getfct (in /usr/lib/libc-2.23.so)
+| | |     ->08.38% (13,536B) 0x558EA0A: __wcsmbs_load_conv (in /usr/lib/libc-2.23.so)
+| | |       ->08.38% (13,536B) 0x5583912: mbrtowc (in /usr/lib/libc-2.23.so)
+| | |         ->08.38% (13,536B) 0x551E28D: mblen (in /usr/lib/libc-2.23.so)
+| | |           ->08.38% (13,536B) 0x449D6B: setifs (in /usr/bin/bash)
+| | |             ->08.38% (13,536B) 0x437DD1: initialize_shell_variables (in /usr/bin/bash)
+| | |               ->08.38% (13,536B) 0x417CA5: ??? (in /usr/bin/bash)
+| | |                 ->08.38% (13,536B) 0x418DE7: main (in /usr/bin/bash)
+| | |                   
+| | ->00.55% (896B) in 1+ places, all below ms_print's threshold (01.00%)
+| | 
+| ->00.02% (32B) in 1+ places, all below ms_print's threshold (01.00%)
+| 
+->02.54% (4,096B) 0x554D863: _IO_file_doallocate (in /usr/lib/libc-2.23.so)
+| ->02.54% (4,096B) 0x555A942: _IO_doallocbuf (in /usr/lib/libc-2.23.so)
+|   ->02.54% (4,096B) 0x5559DC6: _IO_file_overflow@@GLIBC_2.2.5 (in /usr/lib/libc-2.23.so)
+|   | ->02.54% (4,096B) 0x5558F78: _IO_file_xsputn@@GLIBC_2.2.5 (in /usr/lib/libc-2.23.so)
+|   |   ->02.54% (4,096B) 0x554FC96: puts (in /usr/lib/libc-2.23.so)
+|   |     ->02.54% (4,096B) 0x47A8BE: describe_command (in /usr/bin/bash)
+|   |       ->02.54% (4,096B) 0x46D2E4: command_builtin (in /usr/bin/bash)
+|   |         ->02.54% (4,096B) 0x42C09C: ??? (in /usr/bin/bash)
+|   |           ->02.54% (4,096B) 0x42E12B: ??? (in /usr/bin/bash)
+|   |             ->02.54% (4,096B) 0x42F15E: execute_command_internal (in /usr/bin/bash)
+|   |               ->02.54% (4,096B) 0x430C1C: execute_command (in /usr/bin/bash)
+|   |                 ->02.54% (4,096B) 0x42F261: execute_command_internal (in /usr/bin/bash)
+|   |                   ->02.54% (4,096B) 0x42EF76: execute_command_internal (in /usr/bin/bash)
+|   |                     ->02.54% (4,096B) 0x43217F: ??? (in /usr/bin/bash)
+|   |                       ->02.54% (4,096B) 0x42E436: ??? (in /usr/bin/bash)
+|   |                         ->02.54% (4,096B) 0x42F15E: execute_command_internal (in /usr/bin/bash)
+|   |                           ->02.54% (4,096B) 0x430C1C: execute_command (in /usr/bin/bash)
+|   |                             ->02.54% (4,096B) 0x41A9AC: reader_loop (in /usr/bin/bash)
+|   |                               ->02.54% (4,096B) 0x419444: main (in /usr/bin/bash)
+|   |                                 
+|   ->00.00% (0B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->01.89% (3,050B) 0x46BAB3: xrealloc (in /usr/bin/bash)
+| ->01.36% (2,200B) 0x454745: ??? (in /usr/bin/bash)
+| | ->01.36% (2,200B) 0x454C30: fd_to_buffered_stream (in /usr/bin/bash)
+| |   ->01.36% (2,200B) 0x45510E: with_input_from_buffered_stream (in /usr/bin/bash)
+| |     ->01.36% (2,200B) 0x4193BD: main (in /usr/bin/bash)
+| |       
+| ->00.53% (850B) in 1+ places, all below ms_print's threshold (01.00%)
+| 
+->00.69% (1,114B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n        time(B)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 62        509,096          156,184          122,774        33,410            0
+ 63        514,352          150,928          118,935        31,993            0
+ 64        519,608          145,672          114,925        30,747            0
+ 65        524,864          140,416          110,939        29,477            0
+ 66        530,128          135,152          106,873        28,279            0
+ 67        535,376          129,904          103,036        26,868            0
+ 68        540,648          124,632           99,053        25,579            0
+ 69        545,880          119,400           95,177        24,223            0
+ 70        551,208          114,072           90,837        23,235            0
+ 71        556,520          108,760           86,233        22,527            0
+79.29% (86,233B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->44.04% (47,897B) 0x550AB8E: add_module.isra.0 (in /usr/lib/libc-2.23.so)
+| ->44.04% (47,897B) 0x550B401: __gconv_read_conf (in /usr/lib/libc-2.23.so)
+|   ->44.04% (47,897B) 0x550A683: __gconv_find_transform (in /usr/lib/libc-2.23.so)
+|     ->44.04% (47,897B) 0x558E866: __wcsmbs_getfct (in /usr/lib/libc-2.23.so)
+|       ->44.04% (47,897B) 0x558EA0A: __wcsmbs_load_conv (in /usr/lib/libc-2.23.so)
+|         ->44.04% (47,897B) 0x5583912: mbrtowc (in /usr/lib/libc-2.23.so)
+|           ->44.04% (47,897B) 0x551E28D: mblen (in /usr/lib/libc-2.23.so)
+|             ->44.04% (47,897B) 0x449D6B: setifs (in /usr/bin/bash)
+|               ->44.04% (47,897B) 0x437DD1: initialize_shell_variables (in /usr/bin/bash)
+|                 ->44.04% (47,897B) 0x417CA5: ??? (in /usr/bin/bash)
+|                   ->44.04% (47,897B) 0x418DE7: main (in /usr/bin/bash)
+|                     
+->27.65% (30,076B) 0x46B9E9: xmalloc (in /usr/bin/bash)
+| ->08.15% (8,865B) in 105 places, all below massif's threshold (1.00%)
+| | 
+| ->03.57% (3,888B) 0x432C71: ??? (in /usr/bin/bash)
+| | ->03.22% (3,504B) 0x435C8D: ??? (in /usr/bin/bash)
+| | | ->02.74% (2,976B) 0x436192: ??? (in /usr/bin/bash)
+| | | | ->01.37% (1,488B) 0x43837E: initialize_shell_variables (in /usr/bin/bash)
+| | | | | ->01.37% (1,488B) 0x417CA5: ??? (in /usr/bin/bash)
+| | | | |   ->01.37% (1,488B) 0x418DE7: main (in /usr/bin/bash)
+| | | | |     
+| | | | ->01.37% (1,488B) in 25 places, all below massif's threshold (1.00%)
+| | | |   
+| | | ->00.49% (528B) in 1+ places, all below ms_print's threshold (01.00%)
+| | | 
+| | ->00.35% (384B) in 1+ places, all below ms_print's threshold (01.00%)
+| | 
+| ->02.82% (3,072B) 0x4391CE: copy_command (in /usr/bin/bash)
+| | ->02.82% (3,072B) in 8 places, all below massif's threshold (1.00%)
+| |   
+| ->02.62% (2,848B) 0x45246E: hash_insert (in /usr/bin/bash)
+| | ->02.15% (2,336B) 0x435CC6: ??? (in /usr/bin/bash)
+| | | ->01.82% (1,984B) 0x436192: ??? (in /usr/bin/bash)
+| | | | ->01.82% (1,984B) in 26 places, all below massif's threshold (1.00%)
+| | | |   
+| | | ->00.32% (352B) in 1+ places, all below ms_print's threshold (01.00%)
+| | | 
+| | ->00.47% (512B) in 1+ places, all below ms_print's threshold (01.00%)
+| | 
+| ->02.35% (2,560B) 0x451FDD: hash_create (in /usr/bin/bash)
+| | ->02.35% (2,560B) in 4 places, all below massif's threshold (1.00%)
+| |   
+| ->01.96% (2,128B) 0x427A65: make_word_list (in /usr/bin/bash)
+| | ->01.41% (1,536B) 0x43903C: copy_word_list (in /usr/bin/bash)
+| | | ->01.19% (1,296B) 0x439595: copy_command (in /usr/bin/bash)
+| | | | ->01.19% (1,296B) in 4 places, all below massif's threshold (1.00%)
+| | | |   
+| | | ->00.22% (240B) in 1+ places, all below ms_print's threshold (01.00%)
+| | | 
+| | ->00.54% (592B) in 1+ places, all below ms_print's threshold (01.00%)
+| | 
+| ->01.79% (1,952B) 0x420DF5: ??? (in /usr/bin/bash)
+| | ->01.79% (1,952B) 0x423097: yyparse (in /usr/bin/bash)
+| |   ->01.79% (1,952B) 0x41A699: parse_command (in /usr/bin/bash)
+| |     ->01.59% (1,728B) 0x41A766: read_command (in /usr/bin/bash)
+| |     | ->01.59% (1,728B) 0x41A947: reader_loop (in /usr/bin/bash)
+| |     |   ->01.59% (1,728B) 0x419444: main (in /usr/bin/bash)
+| |     |     
+| |     ->00.21% (224B) in 1+ places, all below ms_print's threshold (01.00%)
+| |     
+| ->01.25% (1,355B) 0x427847: make_bare_word (in /usr/bin/bash)
+| | ->01.15% (1,246B) 0x43902B: copy_word_list (in /usr/bin/bash)
+| | | ->01.15% (1,246B) 0x439595: copy_command (in /usr/bin/bash)
+| | | | ->01.15% (1,246B) in 5 places, all below massif's threshold (1.00%)
+| | | |   
+| | | ->00.00% (0B) in 1+ places, all below ms_print's threshold (01.00%)
+| | | 
+| | ->00.10% (109B) in 1+ places, all below ms_print's threshold (01.00%)
+| | 
+| ->01.07% (1,168B) 0x434E57: make_variable_value (in /usr/bin/bash)
+| | ->01.07% (1,168B) in 2 places, all below massif's threshold (1.00%)
+| |   
+| ->01.06% (1,152B) 0x439584: copy_command (in /usr/bin/bash)
+| | ->01.06% (1,152B) in 5 places, all below massif's threshold (1.00%)
+| |   
+| ->01.00% (1,088B) 0x43391F: ??? (in /usr/bin/bash)
+|   ->01.00% (1,088B) 0x43700F: ??? (in /usr/bin/bash)
+|     ->01.00% (1,088B) 0x4483D3: command_substitute (in /usr/bin/bash)
+|     | ->01.00% (1,088B) 0x44AFF8: ??? (in /usr/bin/bash)
+|     |   ->01.00% (1,088B) 0x44E1B2: ??? (in /usr/bin/bash)
+|     |     ->01.00% (1,088B) 0x44F8EA: ??? (in /usr/bin/bash)
+|     |       ->01.00% (1,088B) 0x44FA48: expand_string_assignment (in /usr/bin/bash)
+|     |         ->01.00% (1,088B) 0x44970C: ??? (in /usr/bin/bash)
+|     |           ->01.00% (1,088B) 0x449AFD: ??? (in /usr/bin/bash)
+|     |             ->01.00% (1,088B) 0x4516CD: ??? (in /usr/bin/bash)
+|     |               ->01.00% (1,088B) 0x42D1AF: ??? (in /usr/bin/bash)
+|     |                 ->01.00% (1,088B) 0x42F15E: execute_command_internal (in /usr/bin/bash)
+|     |                   ->01.00% (1,088B) 0x430C1C: execute_command (in /usr/bin/bash)
+|     |                     ->01.00% (1,088B) 0x41A9AC: reader_loop (in /usr/bin/bash)
+|     |                       ->01.00% (1,088B) 0x419444: main (in /usr/bin/bash)
+|     |                         
+|     ->00.00% (0B) in 1+ places, all below ms_print's threshold (01.00%)
+|     
+->03.77% (4,096B) 0x554D863: _IO_file_doallocate (in /usr/lib/libc-2.23.so)
+| ->03.77% (4,096B) 0x555A942: _IO_doallocbuf (in /usr/lib/libc-2.23.so)
+|   ->03.77% (4,096B) 0x5559DC6: _IO_file_overflow@@GLIBC_2.2.5 (in /usr/lib/libc-2.23.so)
+|   | ->03.77% (4,096B) 0x5558F78: _IO_file_xsputn@@GLIBC_2.2.5 (in /usr/lib/libc-2.23.so)
+|   |   ->03.77% (4,096B) 0x554FC96: puts (in /usr/lib/libc-2.23.so)
+|   |     ->03.77% (4,096B) 0x47A8BE: describe_command (in /usr/bin/bash)
+|   |       ->03.77% (4,096B) 0x46D2E4: command_builtin (in /usr/bin/bash)
+|   |         ->03.77% (4,096B) 0x42C09C: ??? (in /usr/bin/bash)
+|   |           ->03.77% (4,096B) 0x42E12B: ??? (in /usr/bin/bash)
+|   |             ->03.77% (4,096B) 0x42F15E: execute_command_internal (in /usr/bin/bash)
+|   |               ->03.77% (4,096B) 0x430C1C: execute_command (in /usr/bin/bash)
+|   |                 ->03.77% (4,096B) 0x42F261: execute_command_internal (in /usr/bin/bash)
+|   |                   ->03.77% (4,096B) 0x42EF76: execute_command_internal (in /usr/bin/bash)
+|   |                     ->03.77% (4,096B) 0x43217F: ??? (in /usr/bin/bash)
+|   |                       ->03.77% (4,096B) 0x42E436: ??? (in /usr/bin/bash)
+|   |                         ->03.77% (4,096B) 0x42F15E: execute_command_internal (in /usr/bin/bash)
+|   |                           ->03.77% (4,096B) 0x430C1C: execute_command (in /usr/bin/bash)
+|   |                             ->03.77% (4,096B) 0x41A9AC: reader_loop (in /usr/bin/bash)
+|   |                               ->03.77% (4,096B) 0x419444: main (in /usr/bin/bash)
+|   |                                 
+|   ->00.00% (0B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->02.80% (3,050B) 0x46BAB3: xrealloc (in /usr/bin/bash)
+| ->02.02% (2,200B) 0x454745: ??? (in /usr/bin/bash)
+| | ->02.02% (2,200B) 0x454C30: fd_to_buffered_stream (in /usr/bin/bash)
+| |   ->02.02% (2,200B) 0x45510E: with_input_from_buffered_stream (in /usr/bin/bash)
+| |     ->02.02% (2,200B) 0x4193BD: main (in /usr/bin/bash)
+| |       
+| ->00.78% (850B) in 1+ places, all below ms_print's threshold (01.00%)
+| 
+->01.02% (1,114B) in 18 places, all below massif's threshold (1.00%)
+  
+--------------------------------------------------------------------------------
+  n        time(B)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 72        561,800          103,480           81,789        21,691            0
+ 73        567,080           98,200           77,405        20,795            0
+ 74        572,360           92,920           72,843        20,077            0
+ 75        577,672           87,608           68,292        19,316            0
+ 76        582,928           82,352           63,692        18,660            0
+ 77        588,272           77,008           59,014        17,994            0
+ 78        593,552           71,728           54,652        17,076            0
+ 79        598,784           66,496           50,286        16,210            0
+ 80        604,128           61,152           45,690        15,462            0
+ 81        609,440           55,840           41,204        14,636            0
+73.79% (41,204B) (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+->53.86% (30,076B) 0x46B9E9: xmalloc (in /usr/bin/bash)
+| ->07.12% (3,978B) in 99 places, all below massif's threshold (1.00%)
+| | 
+| ->06.96% (3,888B) 0x432C71: ??? (in /usr/bin/bash)
+| | ->06.28% (3,504B) 0x435C8D: ??? (in /usr/bin/bash)
+| | | ->05.33% (2,976B) 0x436192: ??? (in /usr/bin/bash)
+| | | | ->02.66% (1,488B) 0x43837E: initialize_shell_variables (in /usr/bin/bash)
+| | | | | ->02.66% (1,488B) 0x417CA5: ??? (in /usr/bin/bash)
+| | | | |   ->02.66% (1,488B) 0x418DE7: main (in /usr/bin/bash)
+| | | | |     
+| | | | ->02.66% (1,488B) in 25 places, all below massif's threshold (1.00%)
+| | | |   
+| | | ->00.95% (528B) in 1+ places, all below ms_print's threshold (01.00%)
+| | | 
+| | ->00.69% (384B) in 1+ places, all below ms_print's threshold (01.00%)
+| | 
+| ->05.50% (3,072B) 0x4391CE: copy_command (in /usr/bin/bash)
+| | ->02.52% (1,408B) in 6 places, all below massif's threshold (1.00%)
+| | | 
+| | ->01.49% (832B) 0x439276: copy_command (in /usr/bin/bash)
+| | | ->01.03% (576B) 0x439276: copy_command (in /usr/bin/bash)
+| | | | ->01.03% (576B) in 2 places, all below massif's threshold (1.00%)
+| | | |   
+| | | ->00.46% (256B) in 1+ places, all below ms_print's threshold (01.00%)
+| | | 
+| | ->01.49% (832B) 0x439287: copy_command (in /usr/bin/bash)
+| |   ->01.03% (576B) 0x439276: copy_command (in /usr/bin/bash)
+| |   | ->01.03% (576B) in 2 places, all below massif's threshold (1.00%)
+| |   |   
+| |   ->00.46% (256B) in 1+ places, all below ms_print's threshold (01.00%)
+| |   
+| ->05.10% (2,848B) 0x45246E: hash_insert (in /usr/bin/bash)
+| | ->04.18% (2,336B) 0x435CC6: ??? (in /usr/bin/bash)
+| | | ->03.55% (1,984B) 0x436192: ??? (in /usr/bin/bash)
+| | | | ->01.78% (992B) 0x43837E: initialize_shell_variables (in /usr/bin/bash)
+| | | | | ->01.78% (992B) 0x417CA5: ??? (in /usr/bin/bash)
+| | | | |   ->01.78% (992B) 0x418DE7: main (in /usr/bin/bash)
+| | | | |     
+| | | | ->01.78% (992B) in 25 places, all below massif's threshold (1.00%)
+| | | |   
+| | | ->00.63% (352B) in 1+ places, all below ms_print's threshold (01.00%)
+| | | 
+| | ->00.92% (512B) in 1+ places, all below ms_print's threshold (01.00%)
+| | 
+| ->04.58% (2,560B) 0x451FDD: hash_create (in /usr/bin/bash)
+| | ->02.75% (1,536B) in 3 places, all below massif's threshold (1.00%)
+| | | 
+| | ->01.83% (1,024B) 0x4366A9: make_new_assoc_variable (in /usr/bin/bash)
+| |   ->01.83% (1,024B) in 2 places, all below massif's threshold (1.00%)
+| |     
+| ->03.81% (2,128B) 0x427A65: make_word_list (in /usr/bin/bash)
+| | ->02.75% (1,536B) 0x43903C: copy_word_list (in /usr/bin/bash)
+| | | ->02.32% (1,296B) 0x439595: copy_command (in /usr/bin/bash)
+| | | | ->02.32% (1,296B) in 4 places, all below massif's threshold (1.00%)
+| | | |   
+| | | ->00.43% (240B) in 1+ places, all below ms_print's threshold (01.00%)
+| | | 
+| | ->01.06% (592B) in 5 places, all below massif's threshold (1.00%)
+| |   
+| ->03.50% (1,952B) 0x420DF5: ??? (in /usr/bin/bash)
+| | ->03.50% (1,952B) 0x423097: yyparse (in /usr/bin/bash)
+| |   ->03.50% (1,952B) 0x41A699: parse_command (in /usr/bin/bash)
+| |     ->03.09% (1,728B) 0x41A766: read_command (in /usr/bin/bash)
+| |     | ->03.09% (1,728B) 0x41A947: reader_loop (in /usr/bin/bash)
+| |     |   ->03.09% (1,728B) 0x419444: main (in /usr/bin/bash)
+| |     |     
+| |     ->00.40% (224B) in 1+ places, all below ms_print's threshold (01.00%)
+| |     
+| ->02.43% (1,355B) 0x427847: make_bare_word (in /usr/bin/bash)
+| | ->02.23% (1,246B) 0x43902B: copy_word_list (in /usr/bin/bash)
+| | | ->02.23% (1,246B) 0x439595: copy_command (in /usr/bin/bash)
+| | | | ->01.49% (832B) 0x439287: copy_command (in /usr/bin/bash)
+| | | | | ->01.21% (674B) 0x439276: copy_command (in /usr/bin/bash)
+| | | | | | ->01.21% (674B) in 2 places, all below massif's threshold (1.00%)
+| | | | | |   
+| | | | | ->00.28% (158B) in 1+ places, all below ms_print's threshold (01.00%)
+| | | | | 
+| | | | ->00.74% (414B) in 1+ places, all below ms_print's threshold (01.00%)
+| | | | 
+| | | ->00.00% (0B) in 1+ places, all below ms_print's threshold (01.00%)
+| | | 
+| | ->00.20% (109B) in 1+ places, all below ms_print's threshold (01.00%)
+| | 
+| ->02.09% (1,168B) 0x434E57: make_variable_value (in /usr/bin/bash)
+| | ->01.93% (1,078B) 0x4361A2: ??? (in /usr/bin/bash)
+| | | ->01.42% (794B) 0x43837E: initialize_shell_variables (in /usr/bin/bash)
+| | | | ->01.42% (794B) 0x417CA5: ??? (in /usr/bin/bash)
+| | | |   ->01.42% (794B) 0x418DE7: main (in /usr/bin/bash)
+| | | |     
+| | | ->00.51% (284B) in 1+ places, all below ms_print's threshold (01.00%)
+| | | 
+| | ->00.16% (90B) in 1+ places, all below ms_print's threshold (01.00%)
+| | 
+| ->02.06% (1,152B) 0x439584: copy_command (in /usr/bin/bash)
+| | ->01.12% (624B) 0x439287: copy_command (in /usr/bin/bash)
+| | | ->01.12% (624B) in 2 places, all below massif's threshold (1.00%)
+| | |   
+| | ->00.95% (528B) in 1+ places, all below ms_print's threshold (01.00%)
+| | 
+| ->01.95% (1,088B) 0x43391F: ??? (in /usr/bin/bash)
+| | ->01.95% (1,088B) 0x43700F: ??? (in /usr/bin/bash)
+| |   ->01.95% (1,088B) 0x4483D3: command_substitute (in /usr/bin/bash)
+| |   | ->01.95% (1,088B) 0x44AFF8: ??? (in /usr/bin/bash)
+| |   |   ->01.95% (1,088B) 0x44E1B2: ??? (in /usr/bin/bash)
+| |   |     ->01.95% (1,088B) 0x44F8EA: ??? (in /usr/bin/bash)
+| |   |       ->01.95% (1,088B) 0x44FA48: expand_string_assignment (in /usr/bin/bash)
+| |   |         ->01.95% (1,088B) 0x44970C: ??? (in /usr/bin/bash)
+| |   |           ->01.95% (1,088B) 0x449AFD: ??? (in /usr/bin/bash)
+| |   |             ->01.95% (1,088B) 0x4516CD: ??? (in /usr/bin/bash)
+| |   |               ->01.95% (1,088B) 0x42D1AF: ??? (in /usr/bin/bash)
+| |   |                 ->01.95% (1,088B) 0x42F15E: execute_command_internal (in /usr/bin/bash)
+| |   |                   ->01.95% (1,088B) 0x430C1C: execute_command (in /usr/bin/bash)
+| |   |                     ->01.95% (1,088B) 0x41A9AC: reader_loop (in /usr/bin/bash)
+| |   |                       ->01.95% (1,088B) 0x419444: main (in /usr/bin/bash)
+| |   |                         
+| |   ->00.00% (0B) in 1+ places, all below ms_print's threshold (01.00%)
+| |   
+| ->01.93% (1,080B) 0x4383D5: initialize_shell_variables (in /usr/bin/bash)
+| | ->01.93% (1,080B) 0x417CA5: ??? (in /usr/bin/bash)
+| |   ->01.93% (1,080B) 0x418DE7: main (in /usr/bin/bash)
+| |     
+| ->01.49% (832B) 0x439260: copy_command (in /usr/bin/bash)
+| | ->01.03% (576B) 0x439276: copy_command (in /usr/bin/bash)
+| | | ->01.03% (576B) in 2 places, all below massif's threshold (1.00%)
+| | |   
+| | ->00.46% (256B) in 1+ places, all below ms_print's threshold (01.00%)
+| | 
+| ->01.43% (796B) 0x432C85: ??? (in /usr/bin/bash)
+| | ->01.27% (707B) 0x435C8D: ??? (in /usr/bin/bash)
+| | | ->01.06% (590B) 0x436192: ??? (in /usr/bin/bash)
+| | | | ->01.06% (590B) in 26 places, all below massif's threshold (1.00%)
+| | | |   
+| | | ->00.21% (117B) in 1+ places, all below ms_print's threshold (01.00%)
+| | | 
+| | ->00.16% (89B) in 1+ places, all below ms_print's threshold (01.00%)
+| | 
+| ->01.32% (736B) 0x4277DC: alloc_word_desc (in /usr/bin/bash)
+| | ->01.29% (720B) 0x42780C: make_bare_word (in /usr/bin/bash)
+| | | ->01.29% (720B) in 5 places, all below massif's threshold (1.00%)
+| | |   
+| | ->00.03% (16B) in 1+ places, all below ms_print's threshold (01.00%)
+| | 
+| ->01.32% (736B) 0x458B42: array_create_element (in /usr/bin/bash)
+| | ->01.32% (736B) in 4 places, all below massif's threshold (1.00%)
+| |   
+| ->01.27% (707B) 0x435CAB: ??? (in /usr/bin/bash)
+|   ->01.06% (590B) 0x436192: ??? (in /usr/bin/bash)
+|   | ->01.06% (590B) in 26 places, all below massif's threshold (1.00%)
+|   |   
+|   ->00.21% (117B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->07.34% (4,096B) 0x554D863: _IO_file_doallocate (in /usr/lib/libc-2.23.so)
+| ->07.34% (4,096B) 0x555A942: _IO_doallocbuf (in /usr/lib/libc-2.23.so)
+|   ->07.34% (4,096B) 0x5559DC6: _IO_file_overflow@@GLIBC_2.2.5 (in /usr/lib/libc-2.23.so)
+|   | ->07.34% (4,096B) 0x5558F78: _IO_file_xsputn@@GLIBC_2.2.5 (in /usr/lib/libc-2.23.so)
+|   |   ->07.34% (4,096B) 0x554FC96: puts (in /usr/lib/libc-2.23.so)
+|   |     ->07.34% (4,096B) 0x47A8BE: describe_command (in /usr/bin/bash)
+|   |       ->07.34% (4,096B) 0x46D2E4: command_builtin (in /usr/bin/bash)
+|   |         ->07.34% (4,096B) 0x42C09C: ??? (in /usr/bin/bash)
+|   |           ->07.34% (4,096B) 0x42E12B: ??? (in /usr/bin/bash)
+|   |             ->07.34% (4,096B) 0x42F15E: execute_command_internal (in /usr/bin/bash)
+|   |               ->07.34% (4,096B) 0x430C1C: execute_command (in /usr/bin/bash)
+|   |                 ->07.34% (4,096B) 0x42F261: execute_command_internal (in /usr/bin/bash)
+|   |                   ->07.34% (4,096B) 0x42EF76: execute_command_internal (in /usr/bin/bash)
+|   |                     ->07.34% (4,096B) 0x43217F: ??? (in /usr/bin/bash)
+|   |                       ->07.34% (4,096B) 0x42E436: ??? (in /usr/bin/bash)
+|   |                         ->07.34% (4,096B) 0x42F15E: execute_command_internal (in /usr/bin/bash)
+|   |                           ->07.34% (4,096B) 0x430C1C: execute_command (in /usr/bin/bash)
+|   |                             ->07.34% (4,096B) 0x41A9AC: reader_loop (in /usr/bin/bash)
+|   |                               ->07.34% (4,096B) 0x419444: main (in /usr/bin/bash)
+|   |                                 
+|   ->00.00% (0B) in 1+ places, all below ms_print's threshold (01.00%)
+|   
+->05.46% (3,050B) 0x46BAB3: xrealloc (in /usr/bin/bash)
+| ->03.94% (2,200B) 0x454745: ??? (in /usr/bin/bash)
+| | ->03.94% (2,200B) 0x454C30: fd_to_buffered_stream (in /usr/bin/bash)
+| |   ->03.94% (2,200B) 0x45510E: with_input_from_buffered_stream (in /usr/bin/bash)
+| |     ->03.94% (2,200B) 0x4193BD: main (in /usr/bin/bash)
+| |       
+| ->01.52% (850B) in 7 places, all below massif's threshold (1.00%)
+|   
+->05.14% (2,868B) 0x550AB8E: add_module.isra.0 (in /usr/lib/libc-2.23.so)
+| ->05.14% (2,868B) 0x550B401: __gconv_read_conf (in /usr/lib/libc-2.23.so)
+|   ->05.14% (2,868B) 0x550A683: __gconv_find_transform (in /usr/lib/libc-2.23.so)
+|     ->05.14% (2,868B) 0x558E866: __wcsmbs_getfct (in /usr/lib/libc-2.23.so)
+|       ->05.14% (2,868B) 0x558EA0A: __wcsmbs_load_conv (in /usr/lib/libc-2.23.so)
+|         ->05.14% (2,868B) 0x5583912: mbrtowc (in /usr/lib/libc-2.23.so)
+|           ->05.14% (2,868B) 0x551E28D: mblen (in /usr/lib/libc-2.23.so)
+|             ->05.14% (2,868B) 0x449D6B: setifs (in /usr/bin/bash)
+|               ->05.14% (2,868B) 0x437DD1: initialize_shell_variables (in /usr/bin/bash)
+|                 ->05.14% (2,868B) 0x417CA5: ??? (in /usr/bin/bash)
+|                   ->05.14% (2,868B) 0x418DE7: main (in /usr/bin/bash)
+|                     
+->01.05% (584B) 0x46BA74: xrealloc (in /usr/bin/bash)
+| ->01.05% (584B) 0x437061: ??? (in /usr/bin/bash)
+|   ->01.05% (584B) 0x4483D3: command_substitute (in /usr/bin/bash)
+|     ->01.05% (584B) 0x44AFF8: ??? (in /usr/bin/bash)
+|       ->01.05% (584B) 0x44E1B2: ??? (in /usr/bin/bash)
+|         ->01.05% (584B) 0x44F8EA: ??? (in /usr/bin/bash)
+|           ->01.05% (584B) 0x44FA48: expand_string_assignment (in /usr/bin/bash)
+|             ->01.05% (584B) 0x44970C: ??? (in /usr/bin/bash)
+|               ->01.05% (584B) 0x449AFD: ??? (in /usr/bin/bash)
+|                 ->01.05% (584B) 0x4516CD: ??? (in /usr/bin/bash)
+|                   ->01.05% (584B) 0x42D1AF: ??? (in /usr/bin/bash)
+|                     ->01.05% (584B) 0x42F15E: execute_command_internal (in /usr/bin/bash)
+|                       ->01.05% (584B) 0x430C1C: execute_command (in /usr/bin/bash)
+|                         ->01.05% (584B) 0x41A9AC: reader_loop (in /usr/bin/bash)
+|                           ->01.05% (584B) 0x419444: main (in /usr/bin/bash)
+|                             
+->00.95% (530B) in 1+ places, all below ms_print's threshold (01.00%)
+
+--------------------------------------------------------------------------------
+  n        time(B)         total(B)   useful-heap(B) extra-heap(B)    stacks(B)
+--------------------------------------------------------------------------------
+ 82        617,568           47,712           33,722        13,990            0
