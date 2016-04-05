@@ -135,7 +135,7 @@ impl Backend for ScopeManager {
     }
 
     /// Try to load the variable behind a binding
-    fn load(&self, bnd: &Binding) -> Result<(JsVar, Option<JsPtrEnum>)> {
+    fn load(&mut self, bnd: &Binding) -> Result<(JsVar, Option<JsPtrEnum>)> {
         let lookup = || {
             for scope in self.scopes.iter().rev() {
                 match scope.get_var_copy(bnd) {
@@ -250,7 +250,7 @@ mod tests {
     #[test]
     fn test_load_fail() {
         let alloc_box = test_utils::make_alloc_box();
-        let mgr = ScopeManager::new(alloc_box);
+        let mut mgr = ScopeManager::new(alloc_box);
         let bnd = Binding::new("".to_owned());
         let res = mgr.load(&bnd);
         assert!(res.is_err());
