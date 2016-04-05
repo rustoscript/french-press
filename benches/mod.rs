@@ -17,6 +17,13 @@ use jsrs_common::types::js_obj::JsObjStruct;
 use jsrs_common::types::js_str::JsStrStruct;
 use jsrs_common::types::js_var::{JsKey, JsPtrEnum, JsPtrTag, JsType, JsVar};
 
+#[bench]
+fn test_iter(b: &mut Bencher) {
+    let mut i = 0;
+    b.iter(|| i += 1);
+    println!("{}", i);
+}
+
 fn make_num(i: f64) -> JsVar {
     JsVar::new(JsType::JsNum(i))
 }
@@ -93,7 +100,7 @@ fn small_heap_alloc_no_gc_2(b: &mut Bencher) {
 }
 
 #[bench]
-fn large_alloc_no_gc_flat_obj(b: &mut Bencher) {
+fn large_flat_alloc_no_gc(b: &mut Bencher) {
     let mut mgr = init_gc();
     let kvs = vec![(JsKey::JsSym("0".to_string()), make_num(0.), None),
                    (JsKey::JsSym("1".to_string()), make_num(1.), None),
@@ -111,6 +118,28 @@ fn large_alloc_no_gc_flat_obj(b: &mut Bencher) {
             let (var, ptr) = make_obj(kvs.clone(), mgr.alloc_box.clone());
             mgr.alloc(var, Some(ptr)).unwrap();
         }
+    });
+}
+
+#[bench]
+fn huge_alloc_no_gc(b: &mut Bencher) {
+    let mut mgr = init_gc();
+    let kvs: Vec<_> = (0..100_000).map(|i| (JsKey::JsSym(i.to_string()), make_num(i as f64), None)).collect();
+    b.iter(|| {
+        let (var, ptr) = make_obj(kvs.clone(), mgr.alloc_box.clone());
+        mgr.alloc(var, Some(ptr)).unwrap();
+    });
+}
+
+#[bench]
+fn huge_alloc_gc(b: &mut Bencher) {
+    let mut mgr = init_gc();
+    let kvs: Vec<_> = (0..100_000).map(|i| (JsKey::JsSym(i.to_string()), make_num(i as f64), None)).collect();
+    b.iter(|| {
+        mgr.push_scope(&Exp::Call(box Exp::Undefined, vec![]));
+        let (var, ptr) = make_obj(kvs.clone(), mgr.alloc_box.clone());
+        mgr.alloc(var, Some(ptr)).unwrap();
+        mgr.pop_scope(None, true).unwrap();
     });
 }
 

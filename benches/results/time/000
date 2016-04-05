@@ -15,4 +15,5 @@ test small_heap_alloc_no_gc     ... bench:       5,221 ns/iter (+/- 1,394)
 test small_heap_alloc_no_gc_2   ... bench:       5,069 ns/iter (+/- 1,091)
 test small_local_store          ... bench:         285 ns/iter (+/- 51)
 test small_stack_alloc_no_gc    ... bench:       4,325 ns/iter (+/- 323)
-
+test huge_alloc_no_gc           ... bench:  41,158,483 ns/iter (+/- 7,813,261)
+test huge_alloc_gc              ... bench:  43,094,594 ns/iter (+/- 6,752,839)
