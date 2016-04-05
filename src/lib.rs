@@ -24,28 +24,31 @@ use std::rc::Rc;
 
 use jsrs_common::ast::Exp;
 use jsrs_common::backend::Backend;
+use jsrs_common::gc_error::{GcError, Result};
 use jsrs_common::types::js_var::{JsPtrEnum, JsVar};
 use jsrs_common::types::binding::{Binding, UniqueBinding};
+use uuid::Uuid;
 
 use alloc::AllocBox;
 use cache::LruCache;
-use jsrs_common::gc_error::{GcError, Result};
 use scope::{LookupError, Scope, ScopeTag};
 
 // Totally arbitrary cache capacity
 const CACHE_CAP: usize = 16;
 
+type CacheEntry = (JsVar, Option<JsPtrEnum>, Uuid);
+
 pub struct ScopeManager {
     scopes: Vec<Scope>,
     closures: HashMap<UniqueBinding, Scope>,
-    binding_cache: LruCache<Binding, (JsVar, Option<JsPtrEnum>)>,
+    binding_cache: LruCache<Binding, CacheEntry>,
     pub alloc_box: Rc<RefCell<AllocBox>>,
 }
 
 impl ScopeManager {
     fn new(alloc_box: Rc<RefCell<AllocBox>>) -> ScopeManager {
         ScopeManager {
-            scopes: vec![Scope::new(ScopeTag::Call, &alloc_box)],
+            scopes: vec![Scope::new(ScopeTag::Call, &alloc_box, Uuid::new_v4())],
             closures: HashMap::new(),
             binding_cache: LruCache::with_capacity(CACHE_CAP),
             alloc_box: alloc_box,
@@ -80,11 +83,11 @@ impl ScopeManager {
     }
 
     pub fn push_scope(&mut self, exp: &Exp) {
-        let tag = match *exp {
-            Exp::Call(..) => ScopeTag::Call,
-            _ => ScopeTag::Block,
+        let (tag, id) = match *exp {
+            Exp::Call(..) => (ScopeTag::Call, Uuid::new_v4()),
+            _ => (ScopeTag::Block, self.curr_scope().id),
         };
-        self.scopes.push(Scope::new(tag, &self.alloc_box));
+        self.scopes.push(Scope::new(tag, &self.alloc_box, id));
     }
 
     pub fn pop_scope(&mut self, returning_closure: Option<UniqueBinding>, gc_yield: bool) -> Result<()> {
@@ -98,7 +101,7 @@ impl ScopeManager {
             for (bnd, _) in &locals {
                 if let Some(wb) = self.binding_cache.remove(bnd) {
                     if wb.is_dirty() {
-                        let (var, ptr) = wb.into_inner();
+                        let (var, ptr, _) = wb.into_inner();
                         scope.write_back(var, ptr)?;
                     }
                 }
@@ -113,7 +116,7 @@ impl ScopeManager {
                 return Err(GcError::Scope);
             }
             if let Some(unique) = returning_closure {
-                let mut closure_scope = Scope::new(ScopeTag::Closure(unique.clone()), &self.alloc_box);
+                let mut closure_scope = Scope::new(ScopeTag::Closure(unique.clone()), &self.alloc_box, Uuid::new_v4());
                 scope.transfer_stack(&mut closure_scope, true)?;
                 self.closures.insert(unique, closure_scope);
             } else {
@@ -150,6 +153,7 @@ impl Backend for ScopeManager {
     fn alloc(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<Binding> {
         let binding = var.binding.clone();
         let is_allocated = self.alloc_box.borrow().is_allocated(&var.unique);
+        let id = self.curr_scope().id;
 
         // If the ptr is already allocated in the heap, just push it onto the stack
         if is_allocated && ptr.is_some() {
@@ -157,15 +161,19 @@ impl Backend for ScopeManager {
         } else {
             self.curr_scope_mut().push_var(var.clone(), ptr.clone())?;
         }
-        //self.binding_cache.insert(var.binding.clone(), (var, ptr));
+        self.binding_cache.insert(var.binding.clone(), (var, ptr, id));
         Ok(binding)
     }
 
     /// Try to load the variable behind a binding
     fn load(&mut self, bnd: &Binding) -> Result<(JsVar, Option<JsPtrEnum>)> {
         // Check the cache
-        if let Some(&(ref var, ref ptr)) = self.binding_cache.get(bnd) {
-            return Ok((var.clone(), ptr.clone()));
+        if let Some(&(ref var, ref ptr, ref id)) = self.binding_cache.get(bnd){
+            if *id == self.curr_scope().id {
+                return Ok((var.clone(), ptr.clone()));
+            } else {
+                return Err(GcError::Load(bnd.clone()));
+            }
         }
         // Otherwise, check the scope stack
         let lookup = {
@@ -185,7 +193,8 @@ impl Backend for ScopeManager {
         };
         match lookup {
             Ok((v, p)) => {
-                self.binding_cache.insert(v.binding.clone(), (v.clone(), p.clone()));
+                let id = self.curr_scope().id;
+                self.binding_cache.insert(v.binding.clone(), (v.clone(), p.clone(), id));
                 Ok((v, p))
             },
             Err(GcError::Load(bnd)) =>
@@ -197,9 +206,10 @@ impl Backend for ScopeManager {
 
     fn store(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
         if self.binding_cache.contains_key(&var.binding) {
-            if let Some((_, wb)) = self.binding_cache.insert(var.binding.clone(), (var, ptr)) {
+            let id = self.curr_scope().id;
+            if let Some((_, wb)) = self.binding_cache.insert(var.binding.clone(), (var, ptr, id)) {
                 if wb.is_dirty() {
-                    let (var, ptr) = wb.into_inner();
+                    let (var, ptr, _) = wb.into_inner();
                     self.curr_scope_mut().update_var(var, ptr)?;
                 }
             }

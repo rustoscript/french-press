@@ -3,11 +3,13 @@ use std::collections::hash_map::{Entry, HashMap};
 use std::rc::Rc;
 use std::result;
 
-use alloc::AllocBox;
 use jsrs_common::gc_error::{GcError, Result};
 use jsrs_common::types::js_var::{JsPtrEnum, JsType, JsVar};
 use jsrs_common::types::binding::{Binding, UniqueBinding};
 use jsrs_common::types::allocator::Allocator;
+use uuid::Uuid;
+
+use alloc::AllocBox;
 
 /// A logical scope in the AST. Represents any scoped block of Javascript code.
 /// parent: An optional parent scope, e.g. the caller of this function scope,
@@ -21,6 +23,7 @@ pub struct Scope {
     pub locals: HashMap<Binding, UniqueBinding>,
     stack: HashMap<UniqueBinding, JsVar>,
     pub tag: ScopeTag,
+    pub id: Uuid,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -38,13 +41,14 @@ pub enum LookupError {
 }
 
 impl Scope {
-    /// Create a new, parentless scope node.
-    pub fn new(tag: ScopeTag, heap: &Rc<RefCell<AllocBox>>) -> Scope {
+    /// Create a new scope node.
+    pub fn new(tag: ScopeTag, heap: &Rc<RefCell<AllocBox>>, id: Uuid) -> Scope {
         Scope {
             heap: heap.clone(),
             locals: HashMap::new(),
             stack: HashMap::new(),
             tag: tag,
+            id: id,
         }
     }
 
@@ -226,12 +230,13 @@ mod tests {
     use jsrs_common::types::js_var::{JsVar, JsPtrEnum, JsKey, JsType};
     use jsrs_common::types::binding::Binding;
     use jsrs_common::types::js_str::JsStrStruct;
+    use uuid::Uuid;
     use test_utils;
 
     #[test]
     fn test_push_var() {
         let heap = test_utils::make_alloc_box();
-        let mut test_scope = Scope::new(ScopeTag::Block, &heap);
+        let mut test_scope = Scope::new(ScopeTag::Block, &heap, Uuid::new_v4());
         let (var, ptr) = test_utils::make_str("test");
         assert!(test_scope.push_var(var, Some(ptr)).is_ok());
         assert_eq!(test_scope.heap.borrow().len(), 1);
@@ -243,7 +248,7 @@ mod tests {
     #[test]
     fn test_push_var_fail() {
         let heap = test_utils::make_alloc_box();
-        let mut test_scope = Scope::new(ScopeTag::Block, &heap);
+        let mut test_scope = Scope::new(ScopeTag::Block, &heap, Uuid::new_v4());
         let (var, ptr) = test_utils::make_str("test");
         let res = test_scope.push_var(var, None);
         assert!(res.is_err());
@@ -259,7 +264,7 @@ mod tests {
     #[test]
     fn test_get_var_copy() {
         let heap = test_utils::make_alloc_box();
-        let mut test_scope = Scope::new(ScopeTag::Block, &heap);
+        let mut test_scope = Scope::new(ScopeTag::Block, &heap, Uuid::new_v4());
         let (x, x_ptr) = test_utils::make_str("x");
         let x_bnd = x.binding.clone();
         test_scope.push_var(x, Some(x_ptr)).unwrap();
@@ -274,7 +279,7 @@ mod tests {
     #[test]
     fn test_get_var_copy_fail() {
         let heap = test_utils::make_alloc_box();
-        let test_scope = Scope::new(ScopeTag::Block, &heap);
+        let test_scope = Scope::new(ScopeTag::Block, &heap, Uuid::new_v4());
         let copy = test_scope.get_var_copy(&Binding::new("".to_string()));
         assert!(copy.is_err());
     }
@@ -282,7 +287,7 @@ mod tests {
     #[test]
     fn test_update_var() {
         let heap = test_utils::make_alloc_box();
-        let mut test_scope = Scope::new(ScopeTag::Block, &heap);
+        let mut test_scope = Scope::new(ScopeTag::Block, &heap, Uuid::new_v4());
         let (x, x_ptr) = test_utils::make_str("x");
         let x_bnd = x.binding.clone();
         assert!(test_scope.push_var(x, Some(x_ptr)).is_ok());
@@ -301,7 +306,7 @@ mod tests {
     #[test]
     fn test_update_var_fail() {
         let heap = test_utils::make_alloc_box();
-        let mut test_scope = Scope::new(ScopeTag::Block, &heap);
+        let mut test_scope = Scope::new(ScopeTag::Block, &heap, Uuid::new_v4());
         let (x, x_ptr) = test_utils::make_str("x");
         let x_bnd = x.binding.clone();
         assert!(test_scope.push_var(x, Some(x_ptr)).is_ok());
@@ -319,9 +324,9 @@ mod tests {
     #[test]
     fn test_transfer_stack_no_closure() {
         let heap = test_utils::make_alloc_box();
-        let mut parent_scope = Scope::new(ScopeTag::Block, &heap);
+        let mut parent_scope = Scope::new(ScopeTag::Block, &heap, Uuid::new_v4());
         {
-            let mut test_scope = Scope::new(ScopeTag::Block, &heap);
+            let mut test_scope = Scope::new(ScopeTag::Block, &heap, Uuid::new_v4());
             test_scope.push_var(test_utils::make_num(0.), None).unwrap();
             test_scope.push_var(test_utils::make_num(1.), None).unwrap();
             test_scope.push_var(test_utils::make_num(2.), None).unwrap();
@@ -337,10 +342,10 @@ mod tests {
     #[test]
     fn test_transfer_stack_return_closure() {
         let heap = test_utils::make_alloc_box();
-        let mut closure_scope = Scope::new(ScopeTag::Block, &heap);
+        let mut closure_scope = Scope::new(ScopeTag::Block, &heap, Uuid::new_v4());
         let fn_unique = {
             // Create a child scope
-            let mut test_scope = Scope::new(ScopeTag::Block, &heap);
+            let mut test_scope = Scope::new(ScopeTag::Block, &heap, Uuid::new_v4());
 
             // Create a function object
             let (var, test_fn) = test_utils::make_fn(&Some("test".to_owned()), &Vec::new());
