@@ -20,6 +20,7 @@ use std::rc::Rc;
 
 use jsrs_common::ast::Exp;
 use jsrs_common::backend::Backend;
+use jsrs_common::types::allocator::Allocator;
 use jsrs_common::types::js_var::{JsPtrEnum, JsVar};
 use jsrs_common::types::binding::{Binding, UniqueBinding};
 
@@ -132,6 +133,10 @@ impl Backend for ScopeManager {
             self.curr_scope_mut().push_var(var, ptr)?;
         }
         Ok(binding)
+    }
+
+    fn get_allocator(&self) -> Rc<RefCell<Allocator<Error=GcError>>> {
+        self.alloc_box.clone()
     }
 
     /// Try to load the variable behind a binding
