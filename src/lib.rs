@@ -31,7 +31,7 @@ use uuid::Uuid;
 
 use alloc::AllocBox;
 use cache::LruCache;
-use scope::{LookupError, Scope, ScopeTag};
+use scope::{LookupError, Scope, ScopeTag, StoreError};
 
 // Totally arbitrary cache capacity
 const CACHE_CAP: usize = 16;
@@ -209,17 +209,70 @@ impl Backend for ScopeManager {
             let id = self.curr_scope().id;
             if let Some((_, wb)) = self.binding_cache.insert(var.binding.clone(), (var, ptr, id)) {
                 if wb.is_dirty() {
-                    let (var, ptr, _) = wb.into_inner();
-                    self.curr_scope_mut().update_var(var, ptr)?;
+                    // monkeypatching. TODO dedup this block.
+                    let (mut var, mut ptr, _) = wb.into_inner();
+                    let lookup = {
+                        let mut res = Err(GcError::Store(var.clone(), ptr.clone()));
+                        for ref mut scope in self.scopes.iter_mut().rev() {
+                            match scope.update_var(var, ptr) {
+                                Ok(()) => {
+                                    res = Ok(());
+                                    break;
+                                }
+                                Err(StoreError::CheckParent(v, p)) => { var = v; ptr = p; },
+                                Err(StoreError::FnBoundary(v, p)) => {
+                                    res = Err(GcError::Store(v, p));
+                                    break;
+                                },
+                                Err(StoreError::PtrTypeMismatch) |
+                                Err(StoreError::BadStore) => {
+                                    res = Err(GcError::PtrAlloc);
+                                    break;
+                                },
+                            }
+                        }
+                        res
+                    };
+                    match lookup {
+                        Ok(()) => {},
+                        Err(GcError::Store(var, ptr)) =>
+                            self.global_scope_mut().update_var(var.clone(), ptr.clone())
+                                .map_err(|_| GcError::Store(var, ptr))?,
+                        Err(_) => return lookup,
+                    }
                 }
             }
             return Ok(());
         }
-        let res = self.curr_scope_mut().update_var(var, ptr);
-        if let Err(GcError::Store(var, ptr)) = res {
-            self.global_scope_mut().update_var(var, ptr)
-        } else {
+        let (mut var, mut ptr) = (var, ptr);
+        let lookup = {
+            let mut res = Err(GcError::Store(var.clone(), ptr.clone()));
+            for ref mut scope in self.scopes.iter_mut().rev() {
+                match scope.update_var(var, ptr) {
+                    Ok(()) => {
+                        res = Ok(());
+                        break;
+                    }
+                    Err(StoreError::CheckParent(v, p)) => { var = v; ptr = p; },
+                    Err(StoreError::FnBoundary(v, p)) => {
+                        res = Err(GcError::Store(v, p));
+                        break;
+                    },
+                    Err(StoreError::PtrTypeMismatch) |
+                    Err(StoreError::BadStore) => {
+                        res = Err(GcError::PtrAlloc);
+                        break;
+                    },
+                }
+            }
             res
+        };
+        match lookup {
+            Ok(()) => Ok(()),
+            Err(GcError::Store(var, ptr)) =>
+                self.global_scope_mut().update_var(var.clone(), ptr.clone())
+                    .map_err(|_| GcError::Store(var, ptr)),
+            Err(_) => lookup,
         }
     }
 }
@@ -337,6 +390,46 @@ mod tests {
         let mut mgr = ScopeManager::new(alloc_box);
         let x = test_utils::make_num(1.);
         assert!(mgr.store(x, None).is_err());
+    }
+
+    #[test]
+    fn test_store_to_parent_scope() {
+        let alloc_box = test_utils::make_alloc_box();
+        let mut mgr = ScopeManager::new(alloc_box);
+
+        // Avoids having just the global scope available
+        mgr.push_scope(&Exp::Call(box Exp::Undefined, vec![]));
+        let x = test_utils::make_num(1.);
+        let x_bnd = mgr.alloc(x, None).unwrap();
+        let copy = mgr.load(&x_bnd);
+        let (mut x, _) = copy.unwrap();
+
+        mgr.push_scope(&Exp::Undefined);
+        match x.t {
+            JsType::JsNum(_) => x.t = JsType::JsNum(1.),
+            _ => unreachable!(),
+        };
+        assert!(mgr.store(x, None).is_ok())
+    }
+
+    #[test]
+    fn test_store_to_parent_scope_across_fn_boundary() {
+        let alloc_box = test_utils::make_alloc_box();
+        let mut mgr = ScopeManager::new(alloc_box);
+
+        // Avoids having just the global scope available
+        mgr.push_scope(&Exp::Call(box Exp::Undefined, vec![]));
+        let x = test_utils::make_num(1.);
+        let x_bnd = mgr.alloc(x, None).unwrap();
+        let copy = mgr.load(&x_bnd);
+        let (mut x, _) = copy.unwrap();
+
+        mgr.push_scope(&Exp::Call(box Exp::Undefined, vec![]));
+        match x.t {
+            JsType::JsNum(_) => x.t = JsType::JsNum(1.),
+            _ => unreachable!(),
+        };
+        assert!(mgr.store(x, None).is_err())
     }
 
     #[test]

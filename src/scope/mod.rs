@@ -40,6 +40,14 @@ pub enum LookupError {
     CheckParent,
 }
 
+#[derive(Clone, Debug)]
+pub enum StoreError {
+    FnBoundary(JsVar, Option<JsPtrEnum>),
+    CheckParent(JsVar, Option<JsPtrEnum>),
+    PtrTypeMismatch,
+    BadStore,
+}
+
 impl Scope {
     /// Create a new scope node.
     pub fn new(tag: ScopeTag, heap: &Rc<RefCell<AllocBox>>, id: Uuid) -> Scope {
@@ -132,25 +140,30 @@ impl Scope {
     }
 
     /// Try to update a variable that's been allocated.
-    pub fn update_var(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
+    pub fn update_var(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> result::Result<(), StoreError> {
         if !self.locals.contains_key(&var.binding) {
-            // Variable was not allocated.
-            return Err(GcError::Store(var, ptr));
+            if self.tag == ScopeTag::Call || matches!(self.tag, ScopeTag::Closure(_)) {
+                // Variable was not allocated.
+                return Err(StoreError::FnBoundary(var, ptr));
+            } else {
+                return Err(StoreError::CheckParent(var, ptr));
+            }
         }
         match var.t {
             JsType::JsPtr(ref tag) =>
                 if let Some(ref ptr) = ptr {
                     // If the pointer and its underlying type are not equal, return an error.
-                    if !tag.eq_ptr_type(&ptr) { return Err(GcError::PtrAlloc); }
+                    if !tag.eq_ptr_type(&ptr) { return Err(StoreError::PtrTypeMismatch); }
                     // A new root was potentially created
                     // TODO FIXME? Cloning ptr is potentially expensive
-                    self.heap.borrow_mut().update_ptr(&var.unique, ptr.clone())?;
+                    self.heap.borrow_mut().update_ptr(&var.unique, ptr.clone())
+                        .map_err(|_| StoreError::BadStore)?;
                 } else {
-                    return Err(GcError::PtrAlloc);
+                    return Err(StoreError::PtrTypeMismatch);
                 },
             _ => {
                 if let Some(_) = ptr {
-                    return Err(GcError::PtrAlloc);
+                    return Err(StoreError::PtrTypeMismatch);
                 }
                 // A root was potentially removed.
                 // Blindly accept this Result, since we have no information
@@ -165,7 +178,7 @@ impl Scope {
             *view.get_mut() = var;
             Ok(())
         } else {
-            Err(GcError::Store(var, ptr))
+            Err(StoreError::BadStore)
         }
     }
 
@@ -313,12 +326,12 @@ mod tests {
         let (mut update, update_ptr) = test_scope.get_var_copy(&x_bnd).unwrap();
         let res = test_scope.update_var(update.clone(), None);
         assert!(res.is_err());
-        assert!(matches!(res, Err(GcError::PtrAlloc)));
+        assert!(matches!(res, Err(StoreError::PtrTypeMismatch)));
 
         update.t = JsType::JsNum(1.);
         let res = test_scope.update_var(update, update_ptr);
         assert!(res.is_err());
-        assert!(matches!(res, Err(GcError::PtrAlloc)));
+        assert!(matches!(res, Err(StoreError::PtrTypeMismatch)));
     }
 
     #[test]
