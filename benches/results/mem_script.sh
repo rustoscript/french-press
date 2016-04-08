@@ -12,6 +12,5 @@ for bench in "${benches[@]}"
 do
     mkdir -p $workdir/benches/results/space/$bench
     (cd $workdir/benches/mem &&
-     valgrind --tool=massif --time-unit=B --massif-out-file=$workdir/benches/results/space/$bench/$num ./target/debug/mem $bench)
-    ms_print ./space/$bench/$num > ./space/$bench/pp_${num}
+        RUST_LOG=mem,french-press::* cargo run $bench &> ../results/space/$bench/$num)
 done

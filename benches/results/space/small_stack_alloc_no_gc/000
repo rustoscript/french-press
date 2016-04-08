@@ -1,11 +1,3 @@
-desc: --massif-out-file=/home/djmally/src/penn/masters/thesis/rustoscript/french_press//benches/results/space/small_stack_alloc_no_gc/000
-cmd: ./target/debug/mem small_stack_alloc_no_gc
-time_unit: i
-#-----------
-snapshot=0
-#-----------
-time=0
-mem_heap_B=0
-mem_heap_extra_B=0
-mem_stacks_B=0
-heap_tree=empty
+     Running `target/debug/mem small_stack_alloc_no_gc`
+INFO:mem: Beginning memory profile...
+INFO:french_press: ScopeManager::alloc: total size: 5232

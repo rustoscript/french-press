@@ -1,11 +1,2 @@
-desc: --massif-out-file=/home/djmally/src/penn/masters/thesis/rustoscript/french_press//benches/results/space/init_only/000
-cmd: ./target/debug/mem init_only
-time_unit: i
-#-----------
-snapshot=0
-#-----------
-time=0
-mem_heap_B=0
-mem_heap_extra_B=0
-mem_stacks_B=0
-heap_tree=empty
+     Running `target/debug/mem init_only`
+INFO:mem: Beginning memory profile...

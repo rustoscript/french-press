@@ -1,11 +1,5 @@
-desc: --massif-out-file=/home/djmally/src/penn/masters/thesis/rustoscript/french_press//benches/results/space/push_pop_gc/000
-cmd: ./target/debug/mem push_pop_gc
-time_unit: i
-#-----------
-snapshot=0
-#-----------
-time=0
-mem_heap_B=0
-mem_heap_extra_B=0
-mem_stacks_B=0
-heap_tree=empty
+     Running `target/debug/mem push_pop_gc`
+INFO:mem: Beginning memory profile...
+INFO:french_press: ScopeManager::push_scope: total size: 256
+INFO:french_press::alloc: AllocBox::sweep_ptrs: heap size: 928
+INFO:french_press: ScopeManager::pop_scope: total size: 2112

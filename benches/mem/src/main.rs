@@ -1,8 +1,11 @@
 #![feature(box_patterns, box_syntax)]
 
+extern crate env_logger;
 extern crate french_press;
+extern crate heapsize;
 extern crate jsrs_common;
-extern crate rustc_serialize;
+#[macro_use]
+extern crate log;
 
 use std::cell::RefCell;
 use std::env;
@@ -12,12 +15,13 @@ use french_press::*;
 use french_press::alloc::AllocBox;
 use jsrs_common::ast::Exp;
 use jsrs_common::backend::Backend;
-use jsrs_common::types::js_fn::JsFnStruct;
 use jsrs_common::types::js_obj::JsObjStruct;
 use jsrs_common::types::js_str::JsStrStruct;
 use jsrs_common::types::js_var::{JsKey, JsPtrEnum, JsPtrTag, JsType, JsVar};
 
 fn main() {
+    env_logger::init().unwrap();
+    info!("Beginning memory profile...");
     // TODO docopt
     let mut args = env::args();
     if args.len() != 2 {
@@ -59,7 +63,7 @@ fn push_pop_no_gc() {
     let mut mgr = init_gc();
     let exp = Exp::Undefined;
     mgr.push_scope(&exp);
-    mgr.pop_scope(None, false);
+    mgr.pop_scope(None, false).unwrap();
 }
 
 
@@ -67,7 +71,7 @@ fn push_pop_gc() {
     let mut mgr = init_gc();
     let exp = Exp::Undefined;
     mgr.push_scope(&exp);
-    mgr.pop_scope(None, true);
+    mgr.pop_scope(None, true).unwrap();
 }
 
 
@@ -114,7 +118,6 @@ fn small_local_store() {
     let mut mgr = init_gc();
     mgr.push_scope(&Exp::Call(box Exp::Undefined, vec![]));
     let var = make_num(0.);
-    let (bnd, unique) = (var.binding.clone(), var.unique.clone());
     mgr.alloc(var.clone(), None).unwrap();
     mgr.store(var.clone(), None).unwrap();
 }
@@ -210,7 +213,7 @@ fn leak_many() {
     mgr.alloc(var.clone(), Some(ptr.clone())).unwrap();
 
     let copy = mgr.load(&bnd);
-    let (mut var, mut ptr) = copy.unwrap();
+    let (var, mut ptr) = copy.unwrap();
 
     for _ in 0..1000 {
         let (leak_var, leak_ptr) = make_str("test");

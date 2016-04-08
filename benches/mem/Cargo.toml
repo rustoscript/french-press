@@ -4,14 +4,16 @@ version = "0.1.0"
 authors = ["David Mally <djmally@gmail.com>"]
 
 [dependencies]
-docopt = "0.6"
-docopt_macros = "0.6"
-rustc-serialize = "0.3"
+heapsize = "0.3.5"
+log = "0.3.6"
+env_logger = "0.3.3"
 
 [dependencies.french_press]
 git = "https://github.com/rustoscript/french-press"
+branch = "mem-benches"
 #path = "/home/djmally/src/penn/masters/thesis/rustoscript/french_press"
 
 [dependencies.jsrs-common]
 git = "https://github.com/rustoscript/js.rs-common.git"
+branch = "mem-benches"
 #path = "/home/djmally/src/penn/masters/thesis/rustoscript/js.rs-common"

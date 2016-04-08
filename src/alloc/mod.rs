@@ -40,6 +40,7 @@ impl Allocator for AllocBox {
 
     fn alloc(&mut self, binding: UniqueBinding, ptr: JsPtrEnum) -> Result<()> {
         if self.grey_set.insert(binding.clone(), Alloc::new(ptr)).is_none() {
+            info!(target: "mem", "AllocBox::alloc: heap size: {}", self.heap_size_of_children());
             Ok(())
         } else {
             // If a binding already exists and we try to allocate it, this should
@@ -52,6 +53,7 @@ impl Allocator for AllocBox {
     fn condemn(&mut self, unique: UniqueBinding) -> Result<()> {
         if let Some(ptr) = self.remove_binding(&unique) {
             self.white_set.insert(unique, ptr);
+            info!(target: "mem", "AllocBox::condemn: heap size: {}", self.heap_size_of_children());
             Ok(())
         } else {
             Err(GcError::HeapUpdate)
@@ -99,6 +101,7 @@ impl AllocBox {
         // TODO is it a good assumption to reset everything to grey?
         self.grey_set = self.black_set.drain().collect();
         self.black_set.clear();
+        info!(target: "mem", "AllocBox::sweep_ptrs: heap size: {}", self.heap_size_of_children());
     }
 
     pub fn find_id(&self, bnd: &UniqueBinding) -> Option<&Alloc<JsPtrEnum>> {
@@ -118,6 +121,7 @@ impl AllocBox {
         if let Some(alloc) = self.remove_binding(binding) {
             *alloc.inner.borrow_mut() = ptr;
             self.grey_set.insert(binding.clone(), alloc);
+            info!(target: "mem", "AllocBox::update_ptr: heap size: {}", self.heap_size_of_children());
             Ok(())
         } else {
             Err(GcError::HeapUpdate)

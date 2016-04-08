@@ -75,7 +75,7 @@ impl ScopeManager {
     pub fn push_closure_scope(&mut self, closure: &UniqueBinding) -> Result<()> {
         let closure_scope = self.closures.remove(closure).ok_or(GcError::Scope)?;
         self.scopes.push(closure_scope);
-        info!(target: "mem", "ScopeManager::push_closure_scope: {}", self.heap_size_of_children());
+        info!(target: "mem", "ScopeManager::push_closure_scope: total size: {}", self.heap_size_of_children());
         Ok(())
     }
 
@@ -85,7 +85,7 @@ impl ScopeManager {
             _ => ScopeTag::Block,
         };
         self.scopes.push(Scope::new(tag, &self.alloc_box));
-        info!(target: "mem", "ScopeManager::push_scope: {}", self.heap_size_of_children());
+        info!(target: "mem", "ScopeManager::push_scope: total size: {}", self.heap_size_of_children());
     }
 
     pub fn pop_scope(&mut self, returning_closure: Option<UniqueBinding>, gc_yield: bool) -> Result<()> {
@@ -113,7 +113,7 @@ impl ScopeManager {
             if let ScopeTag::Closure(unique) = scope.tag.clone() {
                 self.closures.insert(unique.clone(), scope);
             }
-            info!(target: "mem", "ScopeManager::pop_scope: {}", self.heap_size_of_children());
+            info!(target: "mem", "ScopeManager::pop_scope: total size: {}", self.heap_size_of_children());
             Ok(())
         } else {
             Err(GcError::Scope)
@@ -143,7 +143,7 @@ impl Backend for ScopeManager {
         } else {
             self.curr_scope_mut().push_var(var, ptr)?;
         }
-        info!(target: "mem", "ScopeManager::alloc: {}", self.heap_size_of_children());
+        info!(target: "mem", "ScopeManager::alloc: total size: {}", self.heap_size_of_children());
         Ok(binding)
     }
 
@@ -163,7 +163,7 @@ impl Backend for ScopeManager {
             Err(GcError::Load(bnd.clone()))
         };
         match lookup() {
-            Ok(v) => { info!(target: "mem", "ScopeManager::load: {}", self.heap_size_of_children()); Ok(v) },
+            Ok(v) => { info!(target: "mem", "ScopeManager::load: total size: {}", self.heap_size_of_children()); Ok(v) },
             Err(GcError::Load(bnd)) =>
                 self.global_scope().get_var_copy(&bnd)
                 .map_err(|_| GcError::Load(bnd.clone())),
@@ -196,7 +196,7 @@ impl Backend for ScopeManager {
             res
         };
         match lookup {
-            Ok(()) => { info!(target: "mem", "ScopeManager::store: {}", self.heap_size_of_children()); Ok(()) },
+            Ok(()) => { info!(target: "mem", "ScopeManager::store: total size: {}", self.heap_size_of_children()); Ok(()) },
             Err(GcError::Store(var, ptr)) =>
                 self.global_scope_mut().update_var(var.clone(), ptr.clone())
                     .map_err(|_| GcError::Store(var, ptr)),
