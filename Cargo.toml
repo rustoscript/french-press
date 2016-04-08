@@ -11,6 +11,7 @@ heapsize_plugin = "0.1.4"
 
 [dependencies.jsrs-common]
 git = "https://github.com/rustoscript/js.rs-common.git"
+branch = "mem-benches"
 
 [profile.dev]
 opt-level = 0
