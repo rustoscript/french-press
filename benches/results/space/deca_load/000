@@ -1,0 +1,15 @@
+     Running `target/debug/mem deca_load`
+INFO:mem: Beginning memory profile...
+INFO:french_press: ScopeManager::push_scope: total size: 256
+INFO:french_press: ScopeManager::alloc: total size: 5360
+INFO:french_press: ScopeManager::push_scope: total size: 5616
+INFO:french_press: ScopeManager::push_scope: total size: 5616
+INFO:french_press: ScopeManager::push_scope: total size: 6128
+INFO:french_press: ScopeManager::push_scope: total size: 6128
+INFO:french_press: ScopeManager::push_scope: total size: 6128
+INFO:french_press: ScopeManager::push_scope: total size: 6128
+INFO:french_press: ScopeManager::push_scope: total size: 7152
+INFO:french_press: ScopeManager::push_scope: total size: 7152
+INFO:french_press: ScopeManager::push_scope: total size: 7152
+INFO:french_press: ScopeManager::push_scope: total size: 7152
+INFO:french_press: ScopeManager::load: total size: 7152

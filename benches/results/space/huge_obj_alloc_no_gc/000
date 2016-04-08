@@ -1,0 +1,6 @@
+     Running `target/debug/mem huge_obj_alloc_no_gc`
+INFO:mem: Beginning memory profile...
+INFO:french_press: ScopeManager::push_scope: total size: 256
+INFO:french_press::alloc: AllocBox::alloc: heap size: 31099872
+INFO:french_press: ScopeManager::alloc: total size: 93304976
+INFO:french_press: ScopeManager::pop_scope: total size: 62205184

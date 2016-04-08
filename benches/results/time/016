@@ -1,5 +1,3 @@
-16-Entry Cache:
-
 test centi_load              ... bench:         112 ns/iter (+/- 17)
 test deca_load               ... bench:         112 ns/iter (+/- 6)
 test huge_obj_alloc_gc       ... bench:  77,850,992 ns/iter (+/- 6,018,279)
@@ -27,4 +25,3 @@ test small_str_alloc_gc      ... bench:     266,693 ns/iter (+/- 23,799)
 test small_str_alloc_gc_2    ... bench:     186,551 ns/iter (+/- 15,616)
 test small_str_alloc_no_gc   ... bench:       7,879 ns/iter (+/- 705)
 test small_str_alloc_no_gc_2 ... bench:       7,864 ns/iter (+/- 314)
-

@@ -1,0 +1,7 @@
+     Running `target/debug/mem small_str_alloc_gc`
+INFO:mem: Beginning memory profile...
+INFO:french_press: ScopeManager::push_scope: total size: 256
+INFO:french_press::alloc: AllocBox::alloc: heap size: 1024
+INFO:french_press: ScopeManager::alloc: total size: 8432
+INFO:french_press::alloc: AllocBox::sweep_ptrs: heap size: 1952
+INFO:french_press: ScopeManager::pop_scope: total size: 9344

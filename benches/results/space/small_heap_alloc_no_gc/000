@@ -1,4 +1,0 @@
-     Running `target/debug/mem small_heap_alloc_no_gc`
-INFO:mem: Beginning memory profile...
-INFO:french_press::alloc: AllocBox::alloc: heap size: 1024
-INFO:french_press: ScopeManager::alloc: total size: 7280
