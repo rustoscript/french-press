@@ -101,7 +101,7 @@ impl Scope {
                 match var.t {
                     JsType::JsPtr(_) => {
                         if let Some(alloc) = self.heap.borrow().find_id(unique) {
-                            Ok((var.clone(), Some(alloc.borrow().clone())))
+                            Ok((var.clone(), Some(alloc.inner.borrow().clone())))
                         } else {
                             // This case should be impossible unless you have an
                             // invalid ptr, which should also be impossible.

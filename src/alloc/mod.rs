@@ -9,7 +9,24 @@ use jsrs_common::types::js_var::JsPtrEnum;
 use jsrs_common::types::allocator::Allocator;
 use jsrs_common::types::binding::UniqueBinding;
 
-pub type Alloc<T> = Rc<RefCell<T>>;
+#[derive(Clone, Debug)]
+pub struct Alloc<T> {
+    pub inner: Rc<RefCell<T>>,
+}
+
+impl<T: HeapSizeOf> HeapSizeOf for Alloc<T> {
+    fn heap_size_of_children(&self) -> usize {
+        (*self.inner).heap_size_of_children()
+    }
+}
+
+impl<T: HeapSizeOf> Alloc<T> {
+    fn new(t: T) -> Alloc<T> {
+        Alloc {
+            inner: Rc::new(RefCell::new(t)),
+        }
+    }
+}
 
 #[derive(Debug, HeapSizeOf)]
 pub struct AllocBox {
@@ -22,7 +39,7 @@ impl Allocator for AllocBox {
     type Error = GcError;
 
     fn alloc(&mut self, binding: UniqueBinding, ptr: JsPtrEnum) -> Result<()> {
-        if self.grey_set.insert(binding.clone(), Rc::new(RefCell::new(ptr))).is_none() {
+        if self.grey_set.insert(binding.clone(), Alloc::new(ptr)).is_none() {
             Ok(())
         } else {
             // If a binding already exists and we try to allocate it, this should
@@ -99,7 +116,7 @@ impl AllocBox {
     pub fn update_ptr(&mut self, binding: &UniqueBinding, ptr: JsPtrEnum) -> Result<()> {
         // Updating a pointer means it is definitely reachable
         if let Some(alloc) = self.remove_binding(binding) {
-            *alloc.borrow_mut() = ptr;
+            *alloc.inner.borrow_mut() = ptr;
             self.grey_set.insert(binding.clone(), alloc);
             Ok(())
         } else {
@@ -114,7 +131,7 @@ impl AllocBox {
     }
 
     fn get_ptr_children(ptr: &Alloc<JsPtrEnum>) -> HashSet<UniqueBinding> {
-        if let JsPtrEnum::JsObj(ref obj) = *ptr.borrow() {
+        if let JsPtrEnum::JsObj(ref obj) = *ptr.inner.borrow() {
             obj.get_children()
         } else { HashSet::new() }
     }
