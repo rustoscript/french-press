@@ -205,42 +205,47 @@ impl Backend for ScopeManager {
     }
 
     fn store(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
-        if self.binding_cache.contains_key(&var.binding) {
-            let id = self.curr_scope().id;
-            if let Some((_, wb)) = self.binding_cache.insert(var.binding.clone(), (var, ptr, id)) {
-                if wb.is_dirty() {
-                    // monkeypatching. TODO dedup this block.
-                    let (mut var, mut ptr, _) = wb.into_inner();
-                    let lookup = {
-                        let mut res = Err(GcError::Store(var.clone(), ptr.clone()));
-                        for ref mut scope in self.scopes.iter_mut().rev() {
-                            match scope.update_var(var, ptr) {
-                                Ok(()) => {
-                                    res = Ok(());
-                                    break;
+        let id = self.curr_scope().id;
+        if let Some(&(_, _, cache_id)) = self.binding_cache.get(&var.binding) {
+            if id == cache_id {
+                if let Some((_, wb)) = self.binding_cache.insert(var.binding.clone(), (var, ptr, id)) {
+                    if wb.is_dirty() {
+                        // monkeypatching. TODO dedup this block.
+                        let (mut var, mut ptr, _) = wb.into_inner();
+                        let lookup = {
+                            let mut res = Err(GcError::Store(var.clone(), ptr.clone()));
+                            for ref mut scope in self.scopes.iter_mut().rev() {
+                                match scope.update_var(var, ptr) {
+                                    Ok(()) => {
+                                        res = Ok(());
+                                        break;
+                                    }
+                                    Err(StoreError::CheckParent(v, p)) => { var = v; ptr = p; },
+                                    Err(StoreError::FnBoundary(v, p)) => {
+                                        res = Err(GcError::Store(v, p));
+                                        break;
+                                    },
+                                    Err(StoreError::PtrTypeMismatch) |
+                                    Err(StoreError::BadStore) => {
+                                        res = Err(GcError::PtrAlloc);
+                                        break;
+                                    },
                                 }
-                                Err(StoreError::CheckParent(v, p)) => { var = v; ptr = p; },
-                                Err(StoreError::FnBoundary(v, p)) => {
-                                    res = Err(GcError::Store(v, p));
-                                    break;
-                                },
-                                Err(StoreError::PtrTypeMismatch) |
-                                Err(StoreError::BadStore) => {
-                                    res = Err(GcError::PtrAlloc);
-                                    break;
-                                },
                             }
+                            res
+                        };
+                        match lookup {
+                            Ok(()) => {},
+                            Err(GcError::Store(var, ptr)) =>
+                                self.global_scope_mut().update_var(var.clone(), ptr.clone())
+                                    .map_err(|_| GcError::Store(var, ptr))?,
+                            Err(_) => return lookup,
                         }
-                        res
-                    };
-                    match lookup {
-                        Ok(()) => {},
-                        Err(GcError::Store(var, ptr)) =>
-                            self.global_scope_mut().update_var(var.clone(), ptr.clone())
-                                .map_err(|_| GcError::Store(var, ptr))?,
-                        Err(_) => return lookup,
                     }
                 }
+            } else {
+                // TODO change this error type
+                return Err(GcError::PtrAlloc);
             }
             return Ok(());
         }
@@ -429,7 +434,7 @@ mod tests {
             JsType::JsNum(_) => x.t = JsType::JsNum(1.),
             _ => unreachable!(),
         };
-        assert!(mgr.store(x, None).is_err())
+        assert!(mgr.store(x, None).is_err());
     }
 
     #[test]
