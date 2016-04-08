@@ -1,14 +1,19 @@
 #![feature(associated_consts)]
 #![feature(box_patterns)]
 #![feature(box_syntax)]
+#![feature(custom_attribute)]
+#![feature(custom_derive)]
+#![feature(plugin)]
 #![feature(question_mark)]
-//#![feature(plugin)]
 
+#![plugin(heapsize_plugin)]
 //#![plugin(clippy)]
 
+#[macro_use]
+extern crate heapsize;
 extern crate jsrs_common;
-
-#[macro_use] extern crate matches;
+#[macro_use]
+extern crate matches;
 
 pub mod alloc;
 mod scope;
@@ -27,6 +32,7 @@ use alloc::AllocBox;
 use jsrs_common::gc_error::{GcError, Result};
 use scope::{LookupError, Scope, ScopeTag, StoreError};
 
+#[derive(HeapSizeOf)]
 pub struct ScopeManager {
     scopes: Vec<Scope>,
     closures: HashMap<UniqueBinding, Scope>,

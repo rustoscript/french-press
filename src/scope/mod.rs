@@ -3,11 +3,13 @@ use std::collections::hash_map::{Entry, HashMap};
 use std::rc::Rc;
 use std::result;
 
-use alloc::AllocBox;
+use heapsize::HeapSizeOf;
 use jsrs_common::gc_error::{GcError, Result};
 use jsrs_common::types::js_var::{JsPtrEnum, JsType, JsVar};
 use jsrs_common::types::binding::{Binding, UniqueBinding};
 use jsrs_common::types::allocator::Allocator;
+
+use alloc::AllocBox;
 
 /// A logical scope in the AST. Represents any scoped block of Javascript code.
 /// parent: An optional parent scope, e.g. the caller of this function scope,
@@ -15,7 +17,7 @@ use jsrs_common::types::allocator::Allocator;
 /// heap: A shared reference to the heap allocator.
 /// stack: The stack of the current scope, containing all variables allocated
 ///        by this scope.
-#[derive(Debug)]
+#[derive(Debug, HeapSizeOf)]
 pub struct Scope {
     heap: Rc<RefCell<AllocBox>>,
     locals: HashMap<Binding, UniqueBinding>,
@@ -23,21 +25,21 @@ pub struct Scope {
     pub tag: ScopeTag,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, HeapSizeOf, PartialEq)]
 pub enum ScopeTag {
     Call,
     Closure(UniqueBinding),
     Block,
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, HeapSizeOf)]
 pub enum LookupError {
     Unreachable,
     FnBoundary,
     CheckParent,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, HeapSizeOf)]
 pub enum StoreError {
     FnBoundary(JsVar, Option<JsPtrEnum>),
     CheckParent(JsVar, Option<JsPtrEnum>),
