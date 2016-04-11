@@ -10,7 +10,6 @@ extern crate jsrs_common;
 
 #[macro_use] extern crate matches;
 
-pub mod alloc;
 mod scope;
 mod test_utils;
 
@@ -18,13 +17,12 @@ use std::cell::RefCell;
 use std::collections::hash_map::HashMap;
 use std::rc::Rc;
 
+use jsrs_common::alloc_box::AllocBox;
 use jsrs_common::ast::Exp;
 use jsrs_common::backend::Backend;
-use jsrs_common::types::allocator::Allocator;
 use jsrs_common::types::js_var::{JsPtrEnum, JsVar};
 use jsrs_common::types::binding::{Binding, UniqueBinding};
 
-use alloc::AllocBox;
 use jsrs_common::gc_error::{GcError, Result};
 use scope::{LookupError, Scope, ScopeTag};
 
@@ -135,10 +133,6 @@ impl Backend for ScopeManager {
         Ok(binding)
     }
 
-    fn get_allocator(&self) -> Rc<RefCell<Allocator<Error=GcError>>> {
-        self.alloc_box.clone()
-    }
-
     /// Try to load the variable behind a binding
     fn load(&mut self, bnd: &Binding) -> Result<(JsVar, Option<JsPtrEnum>)> {
         let lookup = || {
@@ -170,6 +164,10 @@ impl Backend for ScopeManager {
         } else {
             res
         }
+    }
+
+    fn get_alloc_box(&self) -> Rc<RefCell<AllocBox>> {
+        self.alloc_box.clone()
     }
 }
 
