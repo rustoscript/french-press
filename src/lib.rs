@@ -11,7 +11,6 @@ extern crate jsrs_common;
 #[macro_use] extern crate matches;
 
 mod scope;
-mod test_utils;
 
 use std::cell::RefCell;
 use std::collections::hash_map::HashMap;
@@ -213,11 +212,10 @@ mod tests {
 
     use jsrs_common::ast::Exp;
     use jsrs_common::backend::Backend;
+    use jsrs_common::gc_error::GcError;
+    use jsrs_common::test_utils;
     use jsrs_common::types::js_var::{JsKey, JsPtrEnum, JsType, JsVar};
     use jsrs_common::types::binding::Binding;
-
-    use jsrs_common::gc_error::GcError;
-    use test_utils;
 
     #[test]
     fn test_push_closure_scope() {

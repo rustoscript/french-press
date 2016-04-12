@@ -223,8 +223,8 @@ mod tests {
     use jsrs_common::gc_error::GcError;
     use jsrs_common::types::js_var::{JsVar, JsPtrEnum, JsKey, JsType};
     use jsrs_common::types::binding::Binding;
+    use jsrs_common::test_utils;
     use jsrs_common::types::js_str::JsStrStruct;
-    use test_utils;
 
     #[test]
     fn test_push_var() {
