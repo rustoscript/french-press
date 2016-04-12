@@ -2,7 +2,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use alloc::AllocBox;
+use jsrs_common::alloc_box::AllocBox;
 use jsrs_common::ast::{Exp, Stmt};
 use jsrs_common::types::js_fn::JsFnStruct;
 use jsrs_common::types::js_obj::JsObjStruct;
