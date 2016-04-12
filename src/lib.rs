@@ -10,20 +10,18 @@ extern crate jsrs_common;
 
 #[macro_use] extern crate matches;
 
-pub mod alloc;
 mod scope;
-mod test_utils;
 
 use std::cell::RefCell;
 use std::collections::hash_map::HashMap;
 use std::rc::Rc;
 
+use jsrs_common::alloc_box::AllocBox;
 use jsrs_common::ast::Exp;
 use jsrs_common::backend::Backend;
 use jsrs_common::types::js_var::{JsPtrEnum, JsVar};
 use jsrs_common::types::binding::{Binding, UniqueBinding};
 
-use alloc::AllocBox;
 use jsrs_common::gc_error::{GcError, Result};
 use scope::{LookupError, Scope, ScopeTag, StoreError};
 
@@ -196,6 +194,10 @@ impl Backend for ScopeManager {
             res
         }*/
     }
+
+    fn get_alloc_box(&self) -> Rc<RefCell<AllocBox>> {
+        self.alloc_box.clone()
+    }
 }
 
 pub fn init_gc() -> ScopeManager {
@@ -210,11 +212,10 @@ mod tests {
 
     use jsrs_common::ast::Exp;
     use jsrs_common::backend::Backend;
+    use jsrs_common::gc_error::GcError;
+    use jsrs_common::test_utils;
     use jsrs_common::types::js_var::{JsKey, JsPtrEnum, JsType, JsVar};
     use jsrs_common::types::binding::Binding;
-
-    use jsrs_common::gc_error::GcError;
-    use test_utils;
 
     #[test]
     fn test_push_closure_scope() {
