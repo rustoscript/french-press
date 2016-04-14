@@ -426,7 +426,7 @@ mod tests {
             let key = JsKey::JsSym("false".to_string());
             match *&mut ptr_cp {
                 Some(JsPtrEnum::JsObj(ref mut obj)) => {
-                    obj.add_key(key, test_utils::make_num(-1.), None, &mut *(mgr.alloc_box.borrow_mut()));
+                    obj.add_key(&var_cp.unique, key, test_utils::make_num(-1.), None, &mut *(mgr.alloc_box.borrow_mut()));
                 },
                 _ => unreachable!()
             }
