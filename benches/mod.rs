@@ -9,7 +9,7 @@ use std::rc::Rc;
 
 use test::Bencher;
 use french_press::*;
-use french_press::alloc::AllocBox;
+use jsrs_common::alloc_box::AllocBox;
 use jsrs_common::ast::Exp;
 use jsrs_common::backend::Backend;
 use jsrs_common::types::js_obj::JsObjStruct;
@@ -391,7 +391,7 @@ fn leak_many_no_gc(b: &mut Bencher) {
             let (leak_var, leak_ptr) = make_str("test");
             match *&mut ptr {
                 Some(JsPtrEnum::JsObj(ref mut obj)) => {
-                    obj.add_key(key.clone(), leak_var, Some(leak_ptr), &mut *(mgr.alloc_box.borrow_mut()));
+                    obj.add_key(&var.unique, key.clone(), leak_var, Some(leak_ptr), &mut *(mgr.alloc_box.borrow_mut()));
                 },
                 _ => unreachable!()
             }
@@ -422,7 +422,7 @@ fn leak_many_gc(b: &mut Bencher) {
             let (leak_var, leak_ptr) = make_str("test");
             match *&mut ptr {
                 Some(JsPtrEnum::JsObj(ref mut obj)) => {
-                    obj.add_key(key.clone(), leak_var, Some(leak_ptr), &mut *(mgr.alloc_box.borrow_mut()));
+                    obj.add_key(&var.unique, key.clone(), leak_var, Some(leak_ptr), &mut *(mgr.alloc_box.borrow_mut()));
                 },
                 _ => unreachable!()
             }
