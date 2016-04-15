@@ -97,10 +97,10 @@ impl AllocBox {
 
     pub fn sweep_ptrs(&mut self) {
         // Delete all white pointers and reset the GC state.
-        self.white_set.clear();
+        self.white_set = HashMap::new();
         // TODO is it a good assumption to reset everything to grey?
         self.grey_set = self.black_set.drain().collect();
-        self.black_set.clear();
+        self.black_set = HashMap::new();
         info!(target: "mem", "AllocBox::sweep_ptrs: heap size: {}", self.heap_size_of_children());
     }
 
