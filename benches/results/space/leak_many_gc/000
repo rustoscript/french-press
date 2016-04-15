@@ -2007,5 +2007,5 @@ INFO:french_press::alloc: AllocBox::condemn: heap size: 168264
 INFO:french_press::alloc: AllocBox::alloc: heap size: 168368
 INFO:french_press::alloc: AllocBox::update_ptr: heap size: 168368
 INFO:french_press: ScopeManager::store: total size: 510416
-INFO:french_press::alloc: AllocBox::sweep_ptrs: heap size: 65296
-INFO:french_press: ScopeManager::pop_scope: total size: 136000
+INFO:french_press::alloc: AllocBox::sweep_ptrs: heap size: 4784
+INFO:french_press: ScopeManager::pop_scope: total size: 14976
