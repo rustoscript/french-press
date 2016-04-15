@@ -4,7 +4,7 @@ benches=( init_only push_scope push_pop_no_gc push_pop_gc small_stack_alloc_no_g
 
 num=000
 
-workdir=/home/djmally/src/penn/masters/thesis/rustoscript/french_press/
+workdir=/home/djmally/src/penn/masters/thesis/rustoscript/french-press/
 
 (cd $workdir/benches/mem && cargo build)
 
