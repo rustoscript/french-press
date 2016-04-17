@@ -5,7 +5,7 @@ authors = ["David Mally <djmally@gmail.com>"]
 
 [dependencies]
 matches = "0.1.2"
-#clippy = "0.0.51"
+clippy = "0.0.63"
 
 [dependencies.jsrs-common]
 git = "https://github.com/rustoscript/js.rs-common.git"

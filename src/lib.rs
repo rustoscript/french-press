@@ -1,14 +1,15 @@
 #![feature(associated_consts)]
 #![feature(box_patterns)]
 #![feature(box_syntax)]
+#![feature(plugin)]
 #![feature(question_mark)]
-//#![feature(plugin)]
 
-//#![plugin(clippy)]
+#![plugin(clippy)]
 
 extern crate jsrs_common;
 
-#[macro_use] extern crate matches;
+#[macro_use]
+extern crate matches;
 
 mod scope;
 
@@ -75,7 +76,10 @@ impl ScopeManager {
         self.scopes.push(Scope::new(tag, &self.alloc_box));
     }
 
-    pub fn pop_scope(&mut self, returning_closure: Option<UniqueBinding>, gc_yield: bool) -> Result<()> {
+    pub fn pop_scope(&mut self,
+                     returning_closure: Option<UniqueBinding>,
+                     gc_yield: bool)
+                     -> Result<()> {
         if let Some(mut scope) = self.scopes.pop() {
             // Clean up the dying scope's stack and take ownership of its heap-allocated data for
             // later collection
@@ -85,7 +89,8 @@ impl ScopeManager {
                 return Err(GcError::Scope);
             }
             if let Some(unique) = returning_closure {
-                let mut closure_scope = Scope::new(ScopeTag::Closure(unique.clone()), &self.alloc_box);
+                let mut closure_scope = Scope::new(ScopeTag::Closure(unique.clone()),
+                                                   &self.alloc_box);
                 scope.transfer_stack(&mut closure_scope, true)?;
                 self.closures.insert(unique, closure_scope);
             } else {
@@ -137,11 +142,13 @@ impl Backend for ScopeManager {
         let lookup = || {
             for scope in self.scopes.iter().rev() {
                 match scope.get_var_copy(bnd) {
-                    Ok(v) => { return Ok(v); },
+                    Ok(v) => {
+                        return Ok(v);
+                    }
                     Err(LookupError::FnBoundary) => {
                         return Err(GcError::Load(bnd.clone()));
-                    },
-                    Err(LookupError::CheckParent) => {},
+                    }
+                    Err(LookupError::CheckParent) => {}
                     Err(LookupError::Unreachable) => unreachable!(),
                 }
             }
@@ -149,9 +156,11 @@ impl Backend for ScopeManager {
         };
         match lookup() {
             Ok(v) => Ok(v),
-            Err(GcError::Load(bnd)) =>
-                self.global_scope().get_var_copy(&bnd)
-                .map_err(|_| GcError::Load(bnd.clone())),
+            Err(GcError::Load(bnd)) => {
+                self.global_scope()
+                    .get_var_copy(&bnd)
+                    .map_err(|_| GcError::Load(bnd.clone()))
+            }
             _ => unreachable!(),
         }
     }
@@ -166,33 +175,38 @@ impl Backend for ScopeManager {
                         res = Ok(());
                         break;
                     }
-                    Err(StoreError::CheckParent(v, p)) => { var = v; ptr = p; },
+                    Err(StoreError::CheckParent(v, p)) => {
+                        var = v;
+                        ptr = p;
+                    }
                     Err(StoreError::FnBoundary(v, p)) => {
                         res = Err(GcError::Store(v, p));
                         break;
-                    },
+                    }
                     Err(StoreError::PtrTypeMismatch) |
                     Err(StoreError::BadStore) => {
                         res = Err(GcError::PtrAlloc);
                         break;
-                    },
+                    }
                 }
             }
             res
         };
         match lookup {
             Ok(()) => Ok(()),
-            Err(GcError::Store(var, ptr)) =>
-                self.global_scope_mut().update_var(var.clone(), ptr.clone())
-                    .map_err(|_| GcError::Store(var, ptr)),
+            Err(GcError::Store(var, ptr)) => {
+                self.global_scope_mut()
+                    .update_var(var.clone(), ptr.clone())
+                    .map_err(|_| GcError::Store(var, ptr))
+            }
             Err(_) => lookup,
         }
-        /*let res = self.curr_scope_mut().update_var(var, ptr);
-        if let Err(GcError::Store(var, ptr)) = res {
-            self.global_scope_mut().update_var(var, ptr)
-        } else {
-            res
-        }*/
+        // let res = self.curr_scope_mut().update_var(var, ptr);
+        // if let Err(GcError::Store(var, ptr)) = res {
+        // self.global_scope_mut().update_var(var, ptr)
+        // } else {
+        // res
+        // }
     }
 
     fn get_alloc_box(&self) -> Rc<RefCell<AllocBox>> {
@@ -294,7 +308,7 @@ mod tests {
     #[test]
     fn test_store() {
         let alloc_box = test_utils::make_alloc_box();
-        let mut mgr = ScopeManager::new(alloc_box,);
+        let mut mgr = ScopeManager::new(alloc_box);
         mgr.push_scope(&Exp::Undefined);
 
         let x = test_utils::make_num(1.);
@@ -410,9 +424,9 @@ mod tests {
 
             // Create an obj of { true: 1.0, false: heap("test") }
             let kvs = vec![(JsKey::JsSym("true".to_string()),
-                            test_utils::make_num(1.), None),
-                           (JsKey::JsSym("false".to_string()),
-                            var, Some(ptr))];
+                            test_utils::make_num(1.),
+                            None),
+                           (JsKey::JsSym("false".to_string()), var, Some(ptr))];
             let (var, ptr) = test_utils::make_obj(kvs, mgr.alloc_box.clone());
 
             // Push the obj into the current scope
@@ -426,9 +440,13 @@ mod tests {
             let key = JsKey::JsSym("false".to_string());
             match *&mut ptr_cp {
                 Some(JsPtrEnum::JsObj(ref mut obj)) => {
-                    obj.add_key(&var_cp.unique, key, test_utils::make_num(-1.), None, &mut *(mgr.alloc_box.borrow_mut()));
-                },
-                _ => unreachable!()
+                    obj.add_key(&var_cp.unique,
+                                key,
+                                test_utils::make_num(-1.),
+                                None,
+                                &mut *(mgr.alloc_box.borrow_mut()));
+                }
+                _ => unreachable!(),
             }
             mgr.store(var_cp, ptr_cp).unwrap();
             // The heap should still have 2 things in it: an object and a string

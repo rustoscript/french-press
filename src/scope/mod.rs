@@ -65,14 +65,21 @@ impl Scope {
     pub fn push_var(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> Result<()> {
         // Maybe insert the variable's pointer data into the heap
         let res = match var.t {
-            JsType::JsPtr(_) =>
+            JsType::JsPtr(_) => {
                 if let Some(ptr) = ptr {
                     // Creating a new pointer creates a new root
                     self.heap.borrow_mut().alloc(var.unique.clone(), ptr)
                 } else {
                     return Err(GcError::PtrAlloc);
-                },
-            _ => if let Some(_) = ptr { Err(GcError::PtrAlloc) } else { Ok(()) },
+                }
+            }
+            _ => {
+                if let Some(_) = ptr {
+                    Err(GcError::PtrAlloc)
+                } else {
+                    Ok(())
+                }
+            }
         };
         self.bind_var(var);
         res
@@ -92,7 +99,9 @@ impl Scope {
     }
 
     /// Return an optional copy of a variable and an optional pointer into the heap.
-    pub fn get_var_copy(&self, local: &Binding) -> result::Result<(JsVar, Option<JsPtrEnum>), LookupError> {
+    pub fn get_var_copy(&self,
+                        local: &Binding)
+                        -> result::Result<(JsVar, Option<JsPtrEnum>), LookupError> {
         if let Some(unique) = self.locals.get(local) {
             if let Some(var) = self.stack.get(unique) {
                 match var.t {
@@ -104,10 +113,12 @@ impl Scope {
                             // invalid ptr, which should also be impossible.
                             Err(LookupError::Unreachable)
                         }
-                    },
+                    }
                     _ => Ok((var.clone(), None)),
                 }
-            } else { Err(LookupError::Unreachable) }
+            } else {
+                Err(LookupError::Unreachable)
+            }
         } else if self.tag == ScopeTag::Call || matches!(self.tag, ScopeTag::Closure(_)) {
             // A nonexistent binding in the current scope might require searching
             // the scope tree upwards for the binding. However, if the current
@@ -121,7 +132,10 @@ impl Scope {
     }
 
     /// Try to update a variable that's been allocated.
-    pub fn update_var(&mut self, var: JsVar, ptr: Option<JsPtrEnum>) -> result::Result<(), StoreError> {
+    pub fn update_var(&mut self,
+                      var: JsVar,
+                      ptr: Option<JsPtrEnum>)
+                      -> result::Result<(), StoreError> {
         if !self.locals.contains_key(&var.binding) {
             if self.tag == ScopeTag::Call || matches!(self.tag, ScopeTag::Closure(_)) {
                 // Variable was not allocated.
@@ -131,17 +145,22 @@ impl Scope {
             }
         }
         match var.t {
-            JsType::JsPtr(ref tag) =>
+            JsType::JsPtr(ref tag) => {
                 if let Some(ref ptr) = ptr {
                     // If the pointer and its underlying type are not equal, return an error.
-                    if !tag.eq_ptr_type(&ptr) { return Err(StoreError::PtrTypeMismatch); }
+                    if !tag.eq_ptr_type(&ptr) {
+                        return Err(StoreError::PtrTypeMismatch);
+                    }
                     // A new root was potentially created
                     // TODO FIXME? Cloning ptr is potentially expensive
-                    self.heap.borrow_mut().update_ptr(&var.unique, ptr.clone())
-                        .map_err(|_| StoreError::BadStore)?;
+                    self.heap
+                             .borrow_mut()
+                             .update_ptr(&var.unique, ptr.clone())
+                             .map_err(|_| StoreError::BadStore)?;
                 } else {
                     return Err(StoreError::PtrTypeMismatch);
-                },
+                }
+            }
             _ => {
                 if let Some(_) = ptr {
                     return Err(StoreError::PtrTypeMismatch);
@@ -152,7 +171,7 @@ impl Scope {
                 // a stack-allocated variable that's completely fine, since the
                 // heap doesn't store those anyway.
                 self.heap.borrow_mut().condemn(var.unique.clone()).ok();
-            },
+            }
         }
         // Update the variable on the stack
         if let Entry::Occupied(mut view) = self.stack.entry(var.unique.clone()) {
@@ -170,12 +189,10 @@ impl Scope {
         // Pop any heap-allocated variables we just deleted
         let uniques = self.stack.clone();
         for (unique, var) in uniques {
-            match var.t {
-                JsType::JsPtr(_) =>
-                    if self.heap.borrow().find_id(&unique).is_none() {
-                        self.stack.remove(&unique);
-                    },
-                _ => {},
+            if let JsType::JsPtr(_) = var.t {
+                if self.heap.borrow().find_id(&unique).is_none() {
+                    self.stack.remove(&unique);
+                }
             }
         }
         let locals = self.locals.clone();
@@ -324,7 +341,8 @@ mod tests {
             test_scope.push_var(test_utils::make_num(1.), None).unwrap();
             test_scope.push_var(test_utils::make_num(2.), None).unwrap();
             let kvs = vec![(JsKey::JsSym("true".to_string()),
-                            test_utils::make_num(1.), None)];
+                            test_utils::make_num(1.),
+                            None)];
             let (var, ptr) = test_utils::make_obj(kvs, heap.clone());
             test_scope.push_var(var, Some(ptr)).unwrap();
             test_scope.transfer_stack(&mut parent_scope, false).unwrap();
