@@ -56,7 +56,7 @@ impl Scope {
             stack: HashMap::new(),
             tag: tag,
         };
-        info!(target: "mem", "Scope::new: total size: {}", s.heap_size_of_children());
+        println!("Scope::new: total size: {}", s.heap_size_of_children());
         s
     }
 

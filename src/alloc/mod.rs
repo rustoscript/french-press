@@ -68,7 +68,7 @@ impl AllocBox {
             grey_set: HashMap::new(),
             white_set: HashMap::new(),
         };
-        info!(target: "mem", "AllocBox::new: total size: {}", ab.heap_size_of_children());
+        println!("AllocBox::new: total size: {}", ab.heap_size_of_children());
         ab
     }
 
