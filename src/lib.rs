@@ -44,11 +44,13 @@ pub struct ScopeManager {
 
 impl ScopeManager {
     fn new(alloc_box: Rc<RefCell<AllocBox>>) -> ScopeManager {
-        ScopeManager {
+        let sm = ScopeManager {
             scopes: vec![Scope::new(ScopeTag::Call, &alloc_box)],
             closures: HashMap::new(),
             alloc_box: alloc_box,
-        }
+        };
+        info!(target: "mem", "ScopeManager::new: total size: {}", sm.heap_size_of_children());
+        sm
     }
 
     #[allow(dead_code)]

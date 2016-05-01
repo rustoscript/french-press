@@ -50,12 +50,14 @@ pub enum StoreError {
 impl Scope {
     /// Create a new, parentless scope node.
     pub fn new(tag: ScopeTag, heap: &Rc<RefCell<AllocBox>>) -> Scope {
-        Scope {
+        let s = Scope {
             heap: heap.clone(),
             locals: HashMap::new(),
             stack: HashMap::new(),
             tag: tag,
-        }
+        };
+        info!(target: "mem", "Scope::new: total size: {}", s.heap_size_of_children());
+        s
     }
 
     #[allow(dead_code)]

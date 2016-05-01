@@ -63,11 +63,13 @@ impl Allocator for AllocBox {
 
 impl AllocBox {
     pub fn new() -> AllocBox {
-        AllocBox {
+        let ab = AllocBox {
             black_set: HashMap::new(),
             grey_set: HashMap::new(),
             white_set: HashMap::new(),
-        }
+        };
+        info!(target: "mem", "AllocBox::new: total size: {}", ab.heap_size_of_children());
+        ab
     }
 
     #[inline]
