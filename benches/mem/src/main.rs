@@ -13,6 +13,7 @@ use std::rc::Rc;
 
 use french_press::*;
 use french_press::alloc::AllocBox;
+use french_press::scope::{Scope, ScopeTag};
 use jsrs_common::ast::Exp;
 use jsrs_common::backend::Backend;
 use jsrs_common::types::js_obj::JsObjStruct;
@@ -22,6 +23,8 @@ use jsrs_common::types::js_var::{JsKey, JsPtrEnum, JsPtrTag, JsType, JsVar};
 static UNDEF: Exp = Exp::Undefined;
 
 fn main() {
+    data_structures();
+    return;
     env_logger::init().unwrap();
     info!("Beginning memory profile...");
     // TODO docopt
@@ -60,6 +63,20 @@ fn main() {
         _                         => panic!("Invalid benchmark"),
     }
 }
+
+// vv Data Structure Sizes vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+fn data_structures() {
+    let ab = Rc::new(RefCell::new(AllocBox::new()));
+    let mut mgr = init_gc();
+    mgr.push_scope(&UNDEF);
+    mgr.alloc(make_num(0.), None).unwrap();
+    mgr.alloc(make_num(0.), None).unwrap();
+    mgr.alloc(make_num(0.), None).unwrap();
+    mgr.alloc(make_num(0.), None).unwrap();
+    mgr.alloc(make_num(0.), None).unwrap();
+}
+// ^^ Data Structure Sizes ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 // vv GC-Independent Tests vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 fn init_only() {
     init_gc();
