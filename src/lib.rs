@@ -18,7 +18,7 @@ extern crate log;
 extern crate matches;
 
 pub mod alloc;
-mod scope;
+pub mod scope;
 mod test_utils;
 
 use std::cell::RefCell;
