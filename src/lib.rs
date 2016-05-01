@@ -49,7 +49,7 @@ impl ScopeManager {
             closures: HashMap::new(),
             alloc_box: alloc_box,
         };
-        info!(target: "mem", "ScopeManager::new: total size: {}", sm.heap_size_of_children());
+        println!("ScopeManager::new: total size: {}", sm.heap_size_of_children());
         sm
     }
 
