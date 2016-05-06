@@ -12,10 +12,8 @@ extern crate uuid;
 
 #[macro_use] extern crate matches;
 
-pub mod alloc;
 mod cache;
 mod scope;
-mod test_utils;
 
 use std::cell::RefCell;
 use std::collections::hash_map::HashMap;
@@ -25,15 +23,14 @@ use std::rc::Rc;
 use jsrs_common::ast::Exp;
 use jsrs_common::backend::Backend;
 use jsrs_common::gc_error::{GcError, Result};
+use jsrs_common::alloc_box::AllocBox;
 use jsrs_common::types::js_var::{JsPtrEnum, JsVar};
 use jsrs_common::types::binding::{Binding, UniqueBinding};
 use uuid::Uuid;
 
-use alloc::AllocBox;
 use cache::LruCache;
 use scope::{LookupError, Scope, ScopeTag, StoreError};
 
-// Totally arbitrary cache capacity
 const CACHE_CAP: usize = 16;
 
 type CacheEntry = (JsVar, Option<JsPtrEnum>, Uuid);
@@ -280,6 +277,10 @@ impl Backend for ScopeManager {
             Err(_) => lookup,
         }
     }
+
+    fn get_alloc_box(&self) -> Rc<RefCell<AllocBox>> {
+        self.alloc_box.clone()
+    }
 }
 
 pub fn init_gc() -> ScopeManager {
@@ -298,7 +299,7 @@ mod tests {
     use jsrs_common::types::binding::Binding;
 
     use jsrs_common::gc_error::GcError;
-    use test_utils;
+    use jsrs_common::test_utils;
 
     #[test]
     fn test_push_closure_scope() {
@@ -510,7 +511,11 @@ mod tests {
             let key = JsKey::JsSym("false".to_string());
             match *&mut ptr_cp {
                 Some(JsPtrEnum::JsObj(ref mut obj)) => {
-                    obj.add_key(key, test_utils::make_num(-1.), None, &mut *(mgr.alloc_box.borrow_mut()));
+                    obj.add_key(&var_cp.unique,
+                                key,
+                                test_utils::make_num(-1.),
+                                None,
+                                &mut *(mgr.alloc_box.borrow_mut()));
                 },
                 _ => unreachable!()
             }

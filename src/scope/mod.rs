@@ -6,10 +6,9 @@ use std::result;
 use jsrs_common::gc_error::{GcError, Result};
 use jsrs_common::types::js_var::{JsPtrEnum, JsType, JsVar};
 use jsrs_common::types::binding::{Binding, UniqueBinding};
-use jsrs_common::types::allocator::Allocator;
+use jsrs_common::alloc_box::AllocBox;
 use uuid::Uuid;
 
-use alloc::AllocBox;
 
 /// A logical scope in the AST. Represents any scoped block of Javascript code.
 /// parent: An optional parent scope, e.g. the caller of this function scope,
@@ -244,7 +243,7 @@ mod tests {
     use jsrs_common::types::binding::Binding;
     use jsrs_common::types::js_str::JsStrStruct;
     use uuid::Uuid;
-    use test_utils;
+    use jsrs_common::test_utils;
 
     #[test]
     fn test_push_var() {

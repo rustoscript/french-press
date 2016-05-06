@@ -9,7 +9,7 @@ use std::rc::Rc;
 
 use test::Bencher;
 use french_press::*;
-use french_press::alloc::AllocBox;
+use jsrs_common::alloc_box::AllocBox;
 use jsrs_common::ast::Exp;
 use jsrs_common::backend::Backend;
 use jsrs_common::types::js_obj::JsObjStruct;
@@ -334,6 +334,55 @@ fn mega_load(b: &mut Bencher) {
         mgr.load(&bnd).unwrap();
     });
 }
+
+#[bench]
+fn tight_loop_10x(b: &mut Bencher) {
+    let mut mgr = init_gc();
+    mgr.push_scope(&UNDEF);
+    let var = make_num(0.);
+    let bnd = var.binding.clone();
+    mgr.alloc(var, None).unwrap();
+    b.iter(|| {
+        mgr.push_scope(&UNDEF);
+        for i in 0..10 {
+            mgr.load(&bnd).unwrap();
+        }
+        mgr.pop_scope(None, false).unwrap();
+    });
+}
+
+#[bench]
+fn tight_loop_100x(b: &mut Bencher) {
+    let mut mgr = init_gc();
+    mgr.push_scope(&UNDEF);
+    let var = make_num(0.);
+    let bnd = var.binding.clone();
+    mgr.alloc(var, None).unwrap();
+    b.iter(|| {
+        mgr.push_scope(&UNDEF);
+        for i in 0..100 {
+            mgr.load(&bnd).unwrap();
+        }
+        mgr.pop_scope(None, false).unwrap();
+    });
+}
+
+#[bench]
+fn tight_loop_1000x(b: &mut Bencher) {
+    let mut mgr = init_gc();
+    mgr.push_scope(&UNDEF);
+    let var = make_num(0.);
+    let bnd = var.binding.clone();
+    mgr.alloc(var, None).unwrap();
+    b.iter(|| {
+        mgr.push_scope(&UNDEF);
+        for i in 0..1000 {
+            mgr.load(&bnd).unwrap();
+        }
+        mgr.pop_scope(None, false).unwrap();
+    });
+}
+
 // ^^ Variable Load Tests ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 // vv Variable Store Tests vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 #[bench]
@@ -391,7 +440,7 @@ fn leak_many_no_gc(b: &mut Bencher) {
             let (leak_var, leak_ptr) = make_str("test");
             match *&mut ptr {
                 Some(JsPtrEnum::JsObj(ref mut obj)) => {
-                    obj.add_key(key.clone(), leak_var, Some(leak_ptr), &mut *(mgr.alloc_box.borrow_mut()));
+                    obj.add_key(&var.unique, key.clone(), leak_var, Some(leak_ptr), &mut *(mgr.alloc_box.borrow_mut()));
                 },
                 _ => unreachable!()
             }
@@ -422,7 +471,7 @@ fn leak_many_gc(b: &mut Bencher) {
             let (leak_var, leak_ptr) = make_str("test");
             match *&mut ptr {
                 Some(JsPtrEnum::JsObj(ref mut obj)) => {
-                    obj.add_key(key.clone(), leak_var, Some(leak_ptr), &mut *(mgr.alloc_box.borrow_mut()));
+                    obj.add_key(&var.unique, key.clone(), leak_var, Some(leak_ptr), &mut *(mgr.alloc_box.borrow_mut()));
                 },
                 _ => unreachable!()
             }
