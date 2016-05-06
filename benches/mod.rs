@@ -334,6 +334,55 @@ fn mega_load(b: &mut Bencher) {
         mgr.load(&bnd).unwrap();
     });
 }
+
+#[bench]
+fn tight_loop_10x(b: &mut Bencher) {
+    let mut mgr = init_gc();
+    mgr.push_scope(&UNDEF);
+    let var = make_num(0.);
+    let bnd = var.binding.clone();
+    mgr.alloc(var, None).unwrap();
+    b.iter(|| {
+        mgr.push_scope(&UNDEF);
+        for i in 0..10 {
+            mgr.load(&bnd).unwrap();
+        }
+        mgr.pop_scope(None, false).unwrap();
+    });
+}
+
+#[bench]
+fn tight_loop_100x(b: &mut Bencher) {
+    let mut mgr = init_gc();
+    mgr.push_scope(&UNDEF);
+    let var = make_num(0.);
+    let bnd = var.binding.clone();
+    mgr.alloc(var, None).unwrap();
+    b.iter(|| {
+        mgr.push_scope(&UNDEF);
+        for i in 0..100 {
+            mgr.load(&bnd).unwrap();
+        }
+        mgr.pop_scope(None, false).unwrap();
+    });
+}
+
+#[bench]
+fn tight_loop_1000x(b: &mut Bencher) {
+    let mut mgr = init_gc();
+    mgr.push_scope(&UNDEF);
+    let var = make_num(0.);
+    let bnd = var.binding.clone();
+    mgr.alloc(var, None).unwrap();
+    b.iter(|| {
+        mgr.push_scope(&UNDEF);
+        for i in 0..1000 {
+            mgr.load(&bnd).unwrap();
+        }
+        mgr.pop_scope(None, false).unwrap();
+    });
+}
+
 // ^^ Variable Load Tests ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 // vv Variable Store Tests vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 #[bench]
